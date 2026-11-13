@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Architecture Research Breakdown — Senior Research Scientist Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
+<style>
+  :root {
+    --bg:        #0a0c10;
+    --surface:   #0f1218;
+    --surface2:  #161b24;
+    --border:    #1e2740;
+    --accent:    #4f9fff;
+    --accent2:   #a78bfa;
+    --accent3:   #34d399;
+    --warn:      #f87171;
+    --warn2:     #fb923c;
+    --text:      #c9d1e0;
+    --text-dim:  #6b7a99;
+    --text-head: #e2e8f5;
+    --code-bg:   #0d1117;
+    --mono:      'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    --sans:      'Inter', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 15px;
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    background: linear-gradient(135deg, #080b12 0%, #0e1526 50%, #080b12 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 40px 50px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 600px 400px at 20% 50%, rgba(79,159,255,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 400px 300px at 80% 30%, rgba(167,139,250,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 900px; margin: 0 auto; position: relative; }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 18px;
+  }
+  .hero h1 {
+    font-size: clamp(26px, 4vw, 40px);
+    font-weight: 800;
+    color: var(--text-head);
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero-sub {
+    font-size: 15px;
+    color: var(--text-dim);
+    max-width: 620px;
+    line-height: 1.7;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+  }
+  .meta-pill {
+    background: rgba(79,159,255,0.08);
+    border: 1px solid rgba(79,159,255,0.2);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--accent);
+  }
+
+  /* ─── TOC ─── */
+  .toc-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .toc-bar::-webkit-scrollbar { display: none; }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-decoration: none;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+    letter-spacing: .4px;
+  }
+  .toc-item:hover { color: var(--accent); border-color: var(--accent); }
+  .toc-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    background: rgba(79,159,255,0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  /* ─── LAYOUT ─── */
+  .main { max-width: 900px; margin: 0 auto; padding: 50px 40px 100px; }
+
+  /* ─── SECTION HEADERS ─── */
+  .section {
+    margin-bottom: 70px;
+    scroll-margin-top: 60px;
+  }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .section > h2 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text-head);
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+  .section-lead {
+    font-size: 15px;
+    color: var(--text-dim);
+    margin-bottom: 36px;
+    line-height: 1.7;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+  }
+
+  h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-head);
+    margin: 36px 0 12px;
+  }
+  h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent2);
+    margin: 24px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+  }
+  p { margin-bottom: 14px; color: var(--text); }
+  ul, ol { padding-left: 20px; margin-bottom: 16px; }
+  li { margin-bottom: 8px; line-height: 1.7; }
+  strong { color: var(--text-head); font-weight: 600; }
+  em { color: var(--text-dim); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ─── STATUS CARDS ─── */
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+  .status-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .status-card-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    margin-bottom: 6px;
+  }
+  .status-card p { font-size: 13px; color: var(--text-dim); margin: 0; }
+  .card-green  { border-left: 3px solid var(--accent3); }
+  .card-green  .status-card-title { color: var(--accent3); }
+  .card-blue   { border-left: 3px solid var(--accent); }
+  .card-blue   .status-card-title { color: var(--accent); }
+  .card-purple { border-left: 3px solid var(--accent2); }
+  .card-purple .status-card-title { color: var(--accent2); }
+  .card-red    { border-left: 3px solid var(--warn); }
+  .card-red    .status-card-title { color: var(--warn); }
+  .card-orange { border-left: 3px solid var(--warn2); }
+  .card-orange .status-card-title { color: var(--warn2); }
+
+  /* ─── GAP TABLE ─── */
+  .gap-table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; }
+  .gap-table th {
+    background: var(--surface2);
+    color: var(--text-head);
+    font-weight: 700;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 2px solid var(--border);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .gap-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .gap-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+  .badge-green  { background: rgba(52,211,153,.15); color: #34d399; }
+  .badge-yellow { background: rgba(251,191,36,.15);  color: #fbbf24; }
+  .badge-red    { background: rgba(248,113,113,.15); color: #f87171; }
+  .badge-blue   { background: rgba(79,159,255,.15);  color: #4f9fff; }
+
+  /* ─── BOTTLENECK BLOCKS ─── */
+  .bottleneck {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 26px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .bottleneck::before {
+    content: attr(data-num);
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    font-family: var(--mono);
+    font-size: 32px;
+    font-weight: 900;
+    color: rgba(248,113,113,0.07);
+    line-height: 1;
+  }
+  .bottleneck h3 { margin: 0 0 10px; color: var(--warn); font-size: 16px; }
+  .bottleneck .math-note {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--warn);
+    background: rgba(248,113,113,0.08);
+    border: 1px solid rgba(248,113,113,0.2);
+    padding: 4px 10px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+
+  /* ─── ARCHITECTURE COMPARISON ─── */
+  .arch-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px 24px;
+    margin-bottom: 18px;
+  }
+  .arch-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .arch-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-head);
+  }
+  .arch-complexity {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    background: rgba(52,211,153,.12);
+    color: var(--accent3);
+    border: 1px solid rgba(52,211,153,.2);
+  }
+  .arch-year {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    margin-left: auto;
+  }
+  .arch-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 12px;
+  }
+  .arch-pro, .arch-con {
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+  .arch-pro-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--accent3); margin-bottom: 6px; }
+  .arch-con-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--warn); margin-bottom: 6px; }
+  .arch-pro li, .arch-con li { font-size: 12.5px; color: var(--text); margin-bottom: 4px; }
+
+  /* ─── PAPER LIST ─── */
+  .paper {
+    border-left: 2px solid var(--border);
+    padding: 16px 0 16px 22px;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .paper::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 22px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+  .paper.tier-1::before { background: var(--accent); }
+  .paper.tier-2::before { background: var(--accent2); }
+  .paper.tier-3::before { background: var(--accent3); }
+  .paper.tier-4::before { background: var(--warn2); }
+  .paper-title {
+    font-weight: 700;
+    color: var(--text-head);
+    font-size: 14px;
+    margin-bottom: 3px;
+  }
+  .paper-meta {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    margin-bottom: 6px;
+  }
+  .paper-why { font-size: 13px; color: var(--text); line-height: 1.6; }
+  .paper-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-family: var(--mono);
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin-right: 5px;
+    margin-bottom: 6px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .tag-foundation { background: rgba(79,159,255,.12); color: var(--accent); }
+  .tag-efficiency  { background: rgba(52,211,153,.12); color: var(--accent3); }
+  .tag-alternative { background: rgba(167,139,250,.12); color: var(--accent2); }
+  .tag-reasoning   { background: rgba(251,191,36,.12);  color: #fbbf24; }
+  .tag-alignment   { background: rgba(248,113,113,.12); color: var(--warn); }
+  .tag-novel       { background: rgba(251,146,60,.12);  color: var(--warn2); }
+
+  /* ─── ROADMAP ─── */
+  .roadmap-step {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 32px;
+    align-items: flex-start;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(79,159,255,0.1);
+    border: 1px solid rgba(79,159,255,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-top: 2px;
+  }
+  .step-body { flex: 1; }
+  .step-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-head);
+    margin-bottom: 8px;
+  }
+  .step-body p { font-size: 14px; }
+  .step-body ul { font-size: 14px; }
+
+  /* ─── CODE BLOCKS ─── */
+  code, .code-block {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: var(--accent3);
+  }
+  .code-block {
+    display: block;
+    padding: 16px 18px;
+    margin: 14px 0;
+    overflow-x: auto;
+    line-height: 1.7;
+    white-space: pre;
+  }
+
+  /* ─── CALLOUT ─── */
+  .callout {
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 13.5px;
+    line-height: 1.7;
+  }
+  .callout-info    { background: rgba(79,159,255,.06);  border-left: 3px solid var(--accent);  color: var(--text); }
+  .callout-warn    { background: rgba(248,113,113,.06); border-left: 3px solid var(--warn);    color: var(--text); }
+  .callout-success { background: rgba(52,211,153,.06);  border-left: 3px solid var(--accent3); color: var(--text); }
+  .callout-purple  { background: rgba(167,139,250,.06); border-left: 3px solid var(--accent2); color: var(--text); }
+  .callout-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .callout-info    .callout-label { color: var(--accent); }
+  .callout-warn    .callout-label { color: var(--warn); }
+  .callout-success .callout-label { color: var(--accent3); }
+  .callout-purple  .callout-label { color: var(--accent2); }
+
+  /* ─── COMPLEXITY TABLE ─── */
+  .cmp-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+  .cmp-table th {
+    background: var(--surface2);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-dim);
+    border-bottom: 2px solid var(--border);
+    font-weight: 700;
+  }
+  .cmp-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+    color: var(--text);
+  }
+  .cmp-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 50px 0;
+  }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 30px 40px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 640px) {
+    .main { padding: 30px 20px 80px; }
+    .hero { padding: 40px 20px 36px; }
+    .toc-bar { padding: 0 16px; }
+    .arch-grid { grid-template-columns: 1fr; }
+    .roadmap-step { flex-direction: column; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <p class="hero-eyebrow">Senior AI Research Scientist · Comprehensive Analysis</p>
+    <h1>Folder Audit + Research Roadmap to<br><span>Engineer a Next-Gen Sequence Model</span></h1>
+    <p class="hero-sub">A five-section expert breakdown covering curriculum gaps, Transformer bottlenecks, frontier architectures, a mandatory paper reading list, and a hardware-aware engineering roadmap for building architectures that surpass current SOTA.</p>
+    <div class="hero-meta">
+      <span class="meta-pill">Blant's Transformer Folder — 64 files analyzed</span>
+      <span class="meta-pill">~600 KB study material audited</span>
+      <span class="meta-pill">Research horizon: 2017 → 2026</span>
+    </div>
+  </div>
+</div>
+
+<!-- TOC -->
+<nav class="toc-bar">
+  <a class="toc-item" href="#s1"><span class="toc-num">01</span> Gap Analysis</a>
+  <a class="toc-item" href="#s2"><span class="toc-num">02</span> SOTA Bottlenecks</a>
+  <a class="toc-item" href="#s3"><span class="toc-num">03</span> Alt Architectures</a>
+  <a class="toc-item" href="#s4"><span class="toc-num">04</span> Paper Syllabus</a>
+  <a class="toc-item" href="#s5"><span class="toc-num">05</span> Engineering Roadmap</a>
+</nav>
+
+<main class="main">
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SECTION 1: GAP ANALYSIS                                        -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <p class="section-label">Section 01 · Curriculum Audit</p>
+  <h2>Gap Analysis &amp; Curriculum Evaluation</h2>
+  <p class="section-lead">After fully reading all 64 files — 21 deep dive reports, 21 code implementations, 8 overview reports, the study roadmap, and the future research map — here is an honest assessment of what this folder covers, and what's critically missing before you can realistically engineer a novel architecture.</p>
+
+  <h3>What the Folder Gets Right</h3>
+  <div class="status-grid">
+    <div class="status-card card-green">
+      <p class="status-card-title">✅ Conceptual Breadth</p>
+      <p>Covers 21 distinct architecture families — from perceptrons to JEPA and Active Inference. The architectural map is excellent.</p>
+    </div>
+    <div class="status-card card-green">
+      <p class="status-card-title">✅ Core Transformer Math</p>
+      <p>Scaled dot-product attention, residual connections, layer norm, backprop through attention — all explained clearly with correct equations.</p>
+    </div>
+    <div class="status-card card-green">
+      <p class="status-card-title">✅ SSM / Mamba Coverage</p>
+      <p>Continuous-time ODE formulation, discretization (ZOH rule), convolution equivalence, and data-dependent parameters — solid depth.</p>
+    </div>
+    <div class="status-card card-green">
+      <p class="status-card-title">✅ MoE Architecture</p>
+      <p>Top-K routing math, load-balancing auxiliary loss, the VRAM trade-off — well-explained. Good enough for GPT-4 level understanding.</p>
+    </div>
+    <div class="status-card card-green">
+      <p class="status-card-title">✅ JEPA / World Models</p>
+      <p>EMA stop-gradient trick for preventing information collapse, energy-based formulation, and AGI implications — one of the folder's strongest sections.</p>
+    </div>
+    <div class="status-card card-green">
+      <p class="status-card-title">✅ Frontier Architectures</p>
+      <p>KAN, Active Inference, Neurosymbolic AI, SNN, LNN — rare topics given the breadth of coverage. Well-structured.</p>
+    </div>
+  </div>
+
+  <h3>Critical Blind Spots — What's Missing</h3>
+  <p>The folder gives you an <strong>excellent conceptual map</strong> but is largely a <em>reader's introduction</em>, not a <em>researcher's toolkit</em>. To actually engineer something new, the following 25+ critical gaps must be filled:</p>
+
+  <table class="gap-table">
+    <thead>
+      <tr>
+        <th>Missing Topic</th>
+        <th>Category</th>
+        <th>Severity</th>
+        <th>Why It Blocks You</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Information Theory</strong> — Shannon entropy, mutual information, cross-entropy derivation, KL divergence proofs</td>
+        <td>Mathematics</td>
+        <td><span class="badge badge-red">CRITICAL</span></td>
+        <td>Without this, you cannot deeply understand why loss functions work, why ELBO matters, or design better objectives for novel models.</td>
+      </tr>
+      <tr>
+        <td><strong>Differential Geometry &amp; Manifold Theory</strong> — Riemannian manifolds, geodesics, tangent spaces</td>
+        <td>Mathematics</td>
+        <td><span class="badge badge-red">CRITICAL</span></td>
+        <td>The latent space of LLMs <em>is</em> a high-dimensional manifold. Navigating and designing better latent spaces requires this fluency.</td>
+      </tr>
+      <tr>
+        <td><strong>Probability Theory &amp; Bayesian Inference</strong> — posterior inference, variational inference, MCMC</td>
+        <td>Mathematics</td>
+        <td><span class="badge badge-red">CRITICAL</span></td>
+        <td>Needed for Active Inference, VAE derivations, diffusion score matching, and Bayesian scaling laws.</td>
+      </tr>
+      <tr>
+        <td><strong>Control Theory / ODE Theory</strong> — Lyapunov stability, controllability, observability of linear systems</td>
+        <td>Mathematics</td>
+        <td><span class="badge badge-yellow">HIGH</span></td>
+        <td>SSMs are directly derived from control theory. You cannot invent a new SSM variant without understanding what properties of A make a system stable.</td>
+      </tr>
+      <tr>
+        <td><strong>Fourier Analysis &amp; Signal Processing</strong> — DFT, FFT, convolution theorem, wavelet transforms</td>
+        <td>Mathematics</td>
+        <td><span class="badge badge-yellow">HIGH</span></td>
+        <td>SSM training via convolution uses FFT. Hyena, RWKV, and many linear attention methods are signal-processing primitives.</td>
+      </tr>
+      <tr>
+        <td><strong>Optimization Theory</strong> — convex/non-convex optimization, saddle points, loss landscape geometry</td>
+        <td>Mathematics</td>
+        <td><span class="badge badge-yellow">HIGH</span></td>
+        <td>Adam is covered but superficially. Designing new optimizers (Lion, SOAP, Muon) or understanding sharpness-aware minimization requires this.</td>
+      </tr>
+      <tr>
+        <td><strong>FlashAttention Internals</strong> — IO-aware algorithm, SRAM/HBM tiling, backward pass fused kernel</td>
+        <td>Systems Engineering</td>
+        <td><span class="badge badge-red">CRITICAL</span></td>
+        <td>Any novel attention mechanism that doesn't implement FlashAttention-equivalent IO-awareness will be 3-10× slower and die in practice.</td>
+      </tr>
+      <tr>
+        <td><strong>Triton / CUDA Kernel Programming</strong> — thread blocks, warps, shared memory management</td>
+        <td>Systems Engineering</td>
+        <td><span class="badge badge-red">CRITICAL</span></td>
+        <td>You cannot build a better architecture without writing the GPU kernel. PyTorch ops are too slow for novel primitive exploration.</td>
+      </tr>
+      <tr>
+        <td><strong>Positional Encoding Deep Dive</strong> — RoPE, ALiBi, YaRN, NTK-aware interpolation, LongRoPE</td>
+        <td>Architecture</td>
+        <td><span class="badge badge-yellow">HIGH</span></td>
+        <td>Only "Positional Encodings exist" is covered. RoPE is the current SOTA and requires complex number algebra to understand. Context extension is a design axis for novel models.</td>
+      </tr>
+      <tr>
+        <td><strong>Linear Attention Variants</strong> — Performer (FAVOR+), cosFormer, GLA, FlashLinearAttention</td>
+        <td>Architecture</td>
+        <td><span class="badge badge-yellow">HIGH</span></td>
+        <td>Completely absent. These are the core competitors in the subquadratic space — you need to know them to out-design them.</td>
+      </tr>
+      <tr>
+        <td><strong>RWKV / RetNet / xLSTM / Hawk</strong> — RNN-Transformer hybrids achieving linear complexity</td>
+        <td>Architecture</td>
+        <td><span class="badge badge-yellow">HIGH</span></td>
+        <td>Not mentioned at all. These are major architecture families a novel sequence model researcher must be able to position against.</td>
+      </tr>
+      <tr>
+        <td><strong>Speculative Decoding</strong> — draft-verify framework, acceptance probability math</td>
+        <td>Inference</td>
+        <td><span class="badge badge-blue">MEDIUM</span></td>
+        <td>The primary method for accelerating autoregressive generation in production. Essential for deployment of any new model.</td>
+      </tr>
+      <tr>
+        <td><strong>Reinforcement Learning Foundations</strong> — MDPs, Bellman equations, policy gradient, PPO</td>
+        <td>Training</td>
+        <td><span class="badge badge-red">CRITICAL</span></td>
+        <td>PPO and DPO are mentioned but their math is not taught. RLHF, GRPO (used in DeepSeek-R1), and process reward models require full RL fluency.</td>
+      </tr>
+      <tr>
+        <td><strong>Scaling Laws</strong> — Kaplan (2020), Chinchilla (2022), emergent capabilities thresholds</td>
+        <td>Training</td>
+        <td><span class="badge badge-red">CRITICAL</span></td>
+        <td>Scaling laws govern every compute allocation decision. Without knowing the Chinchilla formula, you will waste months on the wrong model size.</td>
+      </tr>
+      <tr>
+        <td><strong>Quantization</strong> — FP8 training, Int4 inference, AWQ, GPTQ, GGUF</td>
+        <td>Systems Engineering</td>
+        <td><span class="badge badge-yellow">HIGH</span></td>
+        <td>Mentioned only by name. Any novel model needs a quantization story from day one. FP8 training is now standard (DeepSeek-V3, Llama-4).</td>
+      </tr>
+      <tr>
+        <td><strong>Distributed Training</strong> — DP, TP, PP, SP, ZeRO optimizer, FSDP</td>
+        <td>Systems Engineering</td>
+        <td><span class="badge badge-yellow">HIGH</span></td>
+        <td>Barely mentioned. Training a model larger than 7B parameters across multiple GPUs requires full mastery of these paradigms.</td>
+      </tr>
+      <tr>
+        <td><strong>Multi-Head Latent Attention (MLA)</strong> — DeepSeek-V2's KV compression mechanism</td>
+        <td>Architecture</td>
+        <td><span class="badge badge-yellow">HIGH</span></td>
+        <td>Only named in the folder. MLA reduces KV cache by 93% — arguably the most impactful attention innovation of 2024.</td>
+      </tr>
+      <tr>
+        <td><strong>Tokenization</strong> — BPE, SentencePiece, byte-level BPE, Byte Latent Transformers</td>
+        <td>Architecture</td>
+        <td><span class="badge badge-blue">MEDIUM</span></td>
+        <td>Completely absent. The tokenizer is an architectural decision that affects model behavior, context length, and computational efficiency.</td>
+      </tr>
+      <tr>
+        <td><strong>Data Curation &amp; Filtering</strong> — FineWeb, DCLM, quality scoring pipelines</td>
+        <td>Training</td>
+        <td><span class="badge badge-blue">MEDIUM</span></td>
+        <td>Completely absent. The Chinchilla paper showed data quality often matters more than model size. This is a fundamental research axis.</td>
+      </tr>
+      <tr>
+        <td><strong>Mechanistic Interpretability</strong> — circuit analysis, superposition hypothesis, sparse autoencoders</td>
+        <td>Theory</td>
+        <td><span class="badge badge-blue">MEDIUM</span></td>
+        <td>Not covered. Understanding <em>why</em> your architecture makes the decisions it does is increasingly required for publication and for designing targeted improvements.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn">
+    <p class="callout-label">⚠ Verdict</p>
+    <p>This folder gives you an <strong>A-tier conceptual foundation</strong> — far better than most online courses. But it represents approximately <strong>30–35% of the total knowledge</strong> required to research and build a new architecture. The missing mathematics (information theory, differential geometry, probability) and the missing systems knowledge (FlashAttention internals, Triton, distributed training) are hard blockers. You would hit a wall the moment you open a research paper from 2023 onward.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SECTION 2: BOTTLENECKS                                         -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <p class="section-label">Section 02 · Theoretical &amp; Engineering Critique</p>
+  <h2>Structural Bottlenecks of Present SOTA Transformers</h2>
+  <p class="section-lead">The Transformer has dominated AI since 2017, but it is burdened by fundamental architectural choices that create hard physical ceilings. Understanding these bottlenecks precisely is the prerequisite to replacing them.</p>
+
+  <!-- Bottleneck 1 -->
+  <div class="bottleneck" data-num="01">
+    <h3>The Quadratic Attention Wall</h3>
+    <span class="math-note">Complexity: O(N²) time · O(N²) space</span>
+    <p>The core self-attention operation computes the score matrix \( QK^T \in \mathbb{R}^{N \times N} \) which scales quadratically with sequence length \( N \). For a single attention head:</p>
+    <p style="text-align:center; padding: 10px 0;">
+      \[ \text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^T}{\sqrt{d_k}}\right)V \]
+    </p>
+    <p>For a model with \( L \) layers, \( H \) heads, hidden dimension \( d \), and sequence length \( N \):</p>
+    <ul>
+      <li><strong>FLOPs per forward pass:</strong> \( O(LHN^2d) \)</li>
+      <li><strong>Memory for attention scores:</strong> \( O(LHN^2) \) — this is the critical constraint</li>
+    </ul>
+    <p>At \( N = 128{,}000 \) tokens (a typical long-context model), the raw attention matrix has \( 128{,}000^2 \approx 1.6 \times 10^{10} \) entries. At float32 precision, that's ~64 GB per head per layer — physically impossible on any single GPU. This is why FlashAttention (which keeps the attention matrix in fast SRAM by tiling) became mandatory, not optional.</p>
+    <div class="callout callout-info">
+      <p class="callout-label">Technical Precision</p>
+      <p>FlashAttention doesn't change the algorithmic complexity — it's still O(N²) in FLOPs. What it does is radically reduce <strong>HBM read/write operations</strong> from \( O(N^2) \) to \( O(N) \) by computing attention in tiled SRAM blocks. The bottleneck shifts from compute to <em>memory bandwidth</em>, and FlashAttention resolves the bandwidth bottleneck at the cost of greater arithmetic intensity.</p>
+    </div>
+  </div>
+
+  <!-- Bottleneck 2 -->
+  <div class="bottleneck" data-num="02">
+    <h3>The KV Cache Memory Wall</h3>
+    <span class="math-note">Memory: O(L · N · 2d) bytes per sequence</span>
+    <p>During autoregressive generation, a Transformer decodes one token at a time. To avoid recomputing the Key and Value tensors for all previous tokens at each step, they are cached in GPU HBM. For a model with \( L \) layers, hidden dimension \( d \), and \( H \) heads, each token adds:</p>
+    <p style="text-align:center; padding: 10px 0;">
+      \[ \text{KV Cache per token} = 2 \times L \times d \times \text{sizeof(dtype)} \]
+    </p>
+    <p>For Llama-3.1-70B (\( L = 80, d = 8192 \)) in BF16 (2 bytes): each generated token costs <strong>2.6 MB</strong> of KV cache. A 128K context uses ~334 GB — nearly 5× the VRAM of an H100 80GB card.</p>
+    <ul>
+      <li><strong>GQA (Grouped-Query Attention):</strong> Reduces KV heads from \( H \) to \( G \ll H \). Llama-3 uses \( G=8 \) vs \( H=64 \), giving an 8× reduction.</li>
+      <li><strong>MLA (Multi-Head Latent Attention):</strong> DeepSeek-V2 compresses KV to a low-rank joint matrix \( c^{KV} \in \mathbb{R}^{d_c}, d_c \ll d \), achieving a 93% cache reduction.</li>
+      <li><strong>PagedAttention (vLLM):</strong> Manages KV cache like virtual memory, allowing non-contiguous blocks and radical improvement in serving throughput.</li>
+    </ul>
+  </div>
+
+  <!-- Bottleneck 3 -->
+  <div class="bottleneck" data-num="03">
+    <h3>Autoregressive Decoding Latency</h3>
+    <span class="math-note">Throughput: 1 token per forward pass · Memory-bandwidth bound</span>
+    <p>Transformer generation is sequential: token \( t \) cannot be produced until token \( t-1 \) is finished. This creates a fundamental latency floor. Worse, during decoding, the model is <em>memory-bandwidth bound</em> rather than compute-bound — the GPU spends most of its cycles moving parameters from HBM into SRAM, not doing arithmetic.</p>
+    <p><strong>Arithmetic Intensity</strong> during generation: \( \approx \frac{\text{FLOPs per token}}{\text{bytes moved}} \ll \) the roofline for compute-optimal usage. For a 70B model generating one token, the GPU achieves &lt;5% of its theoretical FLOP/s utilization.</p>
+    <p><strong>Speculative Decoding</strong> (Leviathan et al., 2023) partially resolves this by using a small draft model to propose \( k \) candidate tokens in parallel, which the large target model then accepts or rejects in a single forward pass — giving \( 2–3\times \) real-world speedup with guaranteed identical output distribution.</p>
+  </div>
+
+  <!-- Bottleneck 4 -->
+  <div class="bottleneck" data-num="04">
+    <h3>Fixed Context &amp; "Lost in the Middle" Degradation</h3>
+    <span class="math-note">Retrieval degrades at positions away from the endpoints of the context window</span>
+    <p>Even with extended context windows (128K–2M tokens), Transformers exhibit a documented <strong>U-shaped recall curve</strong>: information placed at the very beginning or very end of a long context is retrieved reliably, but information buried in the middle is catastrophically degraded. This is an emergent consequence of softmax attention's distributional properties — the exponential scoring means a few dominant tokens attract nearly all the probability mass.</p>
+    <p>Mathematically: with \( N \) tokens, the softmax normalization is</p>
+    <p style="text-align:center; padding: 10px 0;">
+      \[ \text{softmax}(q_i k_j^T / \sqrt{d_k})_j = \frac{e^{q_i k_j^T/\sqrt{d_k}}}{\sum_{j'} e^{q_i k_{j'}^T/\sqrt{d_k}}} \]
+    </p>
+    <p>When \( N \) is large, the denominator is dominated by a handful of extreme values, making it statistically near-impossible for the model to "focus" on a middle-position token unless it has an extraordinarily high query-key alignment score.</p>
+    <p><strong>Positional encoding also becomes brittle.</strong> Standard sinusoidal encodings and naive RoPE extrapolate poorly beyond the training context length. NTK-aware RoPE, YaRN, and LongRoPE are engineering patches, not solutions to the underlying distributional problem.</p>
+  </div>
+
+  <!-- Bottleneck 5 -->
+  <div class="bottleneck" data-num="05">
+    <h3>Reasoning Deficiencies &amp; System 2 Absence</h3>
+    <span class="math-note">Core issue: fixed compute budget proportional only to sequence length, not problem complexity</span>
+    <p>Standard Transformers are <strong>constant-depth</strong> at inference: each forward pass executes exactly \( L \) layers regardless of whether the input is "What is 2+2?" or "Prove the Riemann Hypothesis." The model cannot "think harder." This is Kahneman's System 1 (fast, associative) without System 2 (slow, deliberate). Consequences:</p>
+    <ul>
+      <li><strong>Hallucinations:</strong> Transformers are next-token probability maximizers. When a statistically plausible but factually wrong continuation exists, the model will generate it confidently. There is no internal verification step.</li>
+      <li><strong>Mathematical failures:</strong> Multi-step arithmetic, symbolic manipulation, and proof steps require exact computation. Approximate pattern-matching produces compounding errors across steps.</li>
+      <li><strong>Planning horizon:</strong> Transformers have no persistent working memory across a plan. Each decoding step conditions on the entire prior context, but the "scratchpad" is simply the generated token stream — there is no structured intermediate representation.</li>
+    </ul>
+    <p>The partial solution is <strong>test-time compute</strong> (OpenAI o1, DeepSeek-R1): generate a chain-of-thought "thinking trace" before the answer. This allocates more compute by generating more tokens, but does not change the fundamental constant-depth architecture per forward pass.</p>
+  </div>
+
+  <!-- Bottleneck 6 -->
+  <div class="bottleneck" data-num="06">
+    <h3>Training Instability &amp; Catastrophic Forgetting</h3>
+    <span class="math-note">Continual learning is fundamentally unsolved in dense Transformers</span>
+    <p>Transformer weights encode knowledge via the same parameters that process every input. When fine-tuned on new data, the model overwrites previously learned associations — <strong>catastrophic forgetting</strong> — unless techniques like replay buffers, EWC (Elastic Weight Consolidation), or LoRA adapters are used. There is no structural separation between working memory, short-term memory, and long-term factual storage, unlike the brain's hippocampus-neocortex system.</p>
+    <p>Additionally, training at scale is brittle: attention entropy collapse, gradient explosions in deep stacks, and loss spikes during continued pre-training are active research problems. Modern solutions include QK-Norm (stabilizing attention logits), Z-loss regularization, and μP (maximal update parameterization) initialization.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SECTION 3: ALTERNATIVE ARCHITECTURES                           -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <p class="section-label">Section 03 · Competitive Landscape</p>
+  <h2>The Alternative Architecture Frontier</h2>
+  <p class="section-lead">Here is the current field of non-Transformer and hybrid paradigms organized by their computational strategy, with honest assessments of where each excels and where it still fails.</p>
+
+  <h3>Complexity Comparison Overview</h3>
+  <table class="cmp-table">
+    <thead>
+      <tr>
+        <th>Architecture</th>
+        <th>Training Complexity</th>
+        <th>Inference Memory</th>
+        <th>Recall (Needle-in-Haystack)</th>
+        <th>SOTA Perf</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Vanilla Transformer</strong></td><td>\(O(N^2 d)\)</td><td>O(N) KV cache</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>Mamba-2 (SSM)</strong></td><td>\(O(N d)\)</td><td>O(1) state</td><td>⭐⭐⭐</td><td>⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>Jamba / Zamba (Hybrid)</strong></td><td>\(O(N d)\) avg</td><td>Small KV + state</td><td>⭐⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>RWKV-6</strong></td><td>\(O(N d)\)</td><td>O(1) state</td><td>⭐⭐</td><td>⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>RetNet</strong></td><td>\(O(N d)\)</td><td>O(1) state</td><td>⭐⭐⭐</td><td>⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>Hyena</strong></td><td>\(O(N \log N)\)</td><td>O(N)</td><td>⭐⭐⭐</td><td>⭐⭐⭐</td></tr>
+      <tr><td><strong>Hawk / Griffin</strong></td><td>\(O(N d)\)</td><td>O(1) state</td><td>⭐⭐⭐</td><td>⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>xLSTM</strong></td><td>\(O(N d)\)</td><td>O(d²) matrix memory</td><td>⭐⭐⭐⭐</td><td>⭐⭐⭐⭐</td></tr>
+      <tr><td><strong>Titans (Neural Memory)</strong></td><td>\(O(N d)\)</td><td>O(1) + θ memory</td><td>⭐⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td></tr>
+    </tbody>
+  </table>
+
+  <h3>State Space Models: Mamba &amp; Mamba-2</h3>
+  <div class="arch-card">
+    <div class="arch-card-header">
+      <span class="arch-name">Mamba / Mamba-2 (Selective SSM)</span>
+      <span class="arch-complexity">O(N)</span>
+      <span class="arch-year">2023 / 2024</span>
+    </div>
+    <p style="font-size:13.5px;">The breakthrough in Mamba (Gu &amp; Dao, 2023) was <strong>data-dependent SSM parameters</strong>. Classic S4 had fixed \( A, B, C \) matrices — they couldn't selectively filter irrelevant tokens. Mamba makes \( B \), \( C \), and the discretization step \( \Delta \) functions of the current input \( x_t \), giving the model a learned forget gate analogous to an LSTM. Mamba-2 (2024) restructured this as a Semi-Separable Matrix Multiplication, enabling larger state dimensions and improved GPU parallelism via a "state space duality" connection to linear attention.</p>
+    <div class="arch-grid">
+      <div class="arch-pro">
+        <p class="arch-pro-label">Strengths</p>
+        <ul>
+          <li>True O(1) memory at inference — the fixed-size state replaces the KV cache entirely</li>
+          <li>Linear scaling in training via parallel scan or convolution view</li>
+          <li>Strong performance on long-range DNA, audio, and time-series tasks</li>
+          <li>Can use 10–20× longer contexts at same memory budget vs Transformer</li>
+        </ul>
+      </div>
+      <div class="arch-con">
+        <p class="arch-con-label">Weaknesses</p>
+        <ul>
+          <li>Compressed state cannot perform exact retrieval — "needle in a haystack" fails at long range</li>
+          <li>Expressivity limited by state dimension \( d_{\text{state}} \); large states recover cost</li>
+          <li>Currently underperforms dense Transformers on standard language benchmarks at equivalent scale</li>
+          <li>Custom CUDA kernels required for competitive speed (not pure PyTorch)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>Linear Attention Mechanisms</h3>
+  <div class="arch-card">
+    <div class="arch-card-header">
+      <span class="arch-name">GLA / FlashLinearAttention / HGRN2</span>
+      <span class="arch-complexity">O(N)</span>
+      <span class="arch-year">2023–2024</span>
+    </div>
+    <p style="font-size:13.5px;">Linear attention replaces softmax with a kernel function \( \phi \) and reorders computation from \( \text{softmax}(QK^T)V \) to \( Q(\phi(K)^T V) \), shifting from \( O(N^2) \) to \( O(Nd^2) \). <strong>Gated Linear Attention (GLA, Yang et al., 2024)</strong> added data-dependent gates, recovering much of Mamba's expressivity within the linear attention framework. FlashLinearAttention (Sun et al., 2024) provided the hardware-efficient chunked training algorithm. The key advantage over SSMs: linear attention retains the conceptual similarity to Transformer attention, making architectural ablations and hybrid construction more natural.</p>
+    <div class="arch-grid">
+      <div class="arch-pro">
+        <p class="arch-pro-label">Strengths</p>
+        <ul>
+          <li>Conceptual continuity with Transformer attention — easier to hybridize</li>
+          <li>Recurrent form enables O(1) inference memory</li>
+          <li>GLA's gating catches up to Mamba on most benchmarks</li>
+        </ul>
+      </div>
+      <div class="arch-con">
+        <p class="arch-con-label">Weaknesses</p>
+        <ul>
+          <li>Kernel approximation \( \phi \) introduces approximation error — no longer exact</li>
+          <li>Still weaker than softmax attention on retrieval and in-context learning tasks</li>
+          <li>Quadratic \( O(d^2) \) state dimension can be expensive at large head dims</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>RWKV: Receptance Weighted Key Value</h3>
+  <div class="arch-card">
+    <div class="arch-card-header">
+      <span class="arch-name">RWKV (v4/v5/v6)</span>
+      <span class="arch-complexity">O(N)</span>
+      <span class="arch-year">2023</span>
+    </div>
+    <p style="font-size:13.5px;">RWKV (Peng et al., 2023) is a 100% RNN at inference but is parallelizable during training via a custom <strong>WKV operator</strong> computed in log-space for numerical stability. It replaces QKV projection with receptance (R), weight (W, a time-decay vector), key (K), and value (V) interactions — achieving pure linear-time inference with no KV cache at all. RWKV-6 introduced data-dependent recurrence, closing much of the performance gap to Transformers. It is fully open-source (RWKV-5-World trained on 100+ languages).</p>
+    <div class="arch-grid">
+      <div class="arch-pro">
+        <p class="arch-pro-label">Strengths</p>
+        <ul>
+          <li>Zero KV cache — constant memory per token regardless of context</li>
+          <li>Proven at large scale (14B parameter models exist and perform competitively)</li>
+          <li>Architecturally simple — no complex kernel tricks</li>
+        </ul>
+      </div>
+      <div class="arch-con">
+        <p class="arch-con-label">Weaknesses</p>
+        <ul>
+          <li>Time-decay limits long-range recall (exponential forgetting baked in)</li>
+          <li>In-context learning (few-shot prompting) significantly weaker than Transformers</li>
+          <li>Parallel scan efficiency lower than SSMs with dedicated GPU kernels</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>xLSTM: Extended Long Short-Term Memory</h3>
+  <div class="arch-card">
+    <div class="arch-card-header">
+      <span class="arch-name">xLSTM (mLSTM / sLSTM)</span>
+      <span class="arch-complexity">O(N) · O(d²) state</span>
+      <span class="arch-year">2024</span>
+    </div>
+    <p style="font-size:13.5px;">Beck et al. (2024) revisited LSTM with two critical innovations: <strong>sLSTM</strong> adds exponential gating (replacing sigmoid gates with exp functions) for better stability, and <strong>mLSTM</strong> replaces the scalar memory cell with a <em>matrix memory</em> \( C_t \in \mathbb{R}^{d_h \times d_h} \), giving it \( O(d^2) \) storage capacity vs the O(d) of standard LSTMs. This matrix memory enables significantly better retrieval. Competitive with Mamba on language modeling while bringing LSTM-style interpretability.</p>
+    <div class="arch-grid">
+      <div class="arch-pro">
+        <p class="arch-pro-label">Strengths</p>
+        <ul>
+          <li>Matrix memory improves associative recall dramatically</li>
+          <li>Exponential gating allows much longer gradient highways</li>
+          <li>Better in-context learning than pure SSMs</li>
+        </ul>
+      </div>
+      <div class="arch-con">
+        <p class="arch-con-label">Weaknesses</p>
+        <ul>
+          <li>Matrix memory \( O(d^2) \) is expensive at large dims</li>
+          <li>Still nascent ecosystem — no large-scale (70B+) validated models yet</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>Titans: Neural Long-Term Memory</h3>
+  <div class="arch-card">
+    <div class="arch-card-header">
+      <span class="arch-name">Titans (Google DeepMind, 2024)</span>
+      <span class="arch-complexity">O(N) persistent + O(N²) local window</span>
+      <span class="arch-year">2024</span>
+    </div>
+    <p style="font-size:13.5px;">Titans (Ali et al., 2024) introduces a neural memory module with <em>three memory systems</em> mimicking human cognition: (1) a <strong>persistent memory</strong> (learned parameters as long-term knowledge), (2) a <strong>long-term memory</strong> (neural network that updates weights at test-time via gradient descent on individual sequences), and (3) a <strong>short-term memory</strong> (sliding window attention for immediate context). The long-term memory module performs surprise-driven updates — tokens that <em>violate</em> the current model's prediction update the memory more aggressively. This is the most structurally ambitious architecture of 2024–2025 and shows state-of-the-art needle-in-a-haystack performance.</p>
+    <div class="arch-grid">
+      <div class="arch-pro">
+        <p class="arch-pro-label">Strengths</p>
+        <ul>
+          <li>Best retrieval at long range of any linear-complexity architecture</li>
+          <li>Test-time learning — adapts to the specific input sequence</li>
+          <li>Architecturally inspired by human memory systems</li>
+        </ul>
+      </div>
+      <div class="arch-con">
+        <p class="arch-con-label">Weaknesses</p>
+        <ul>
+          <li>Test-time gradient steps add latency overhead</li>
+          <li>Most complex to implement of all alternatives</li>
+          <li>Not yet validated at frontier scale (100B+)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-purple">
+    <p class="callout-label">The Hybrid Consensus</p>
+    <p>The current research consensus (2025–2026) is converging on <strong>hybrid architectures</strong>: interleave SSM/linear-RNN layers for long-range efficiency and a sparse set of full-attention layers for precision retrieval. Models like <strong>Jamba</strong> (Mamba + Transformer), <strong>Zamba-2</strong>, and <strong>Hymba</strong> achieve near-Transformer quality at 3–5× lower inference cost. Designing a better hybrid — with a principled theory of when to use which primitive — is the most tractable research direction.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SECTION 4: PAPER SYLLABUS                                      -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <p class="section-label">Section 04 · Mandatory Reading List</p>
+  <h2>Curated Research Syllabus</h2>
+  <p class="section-lead">80 papers distilled to the ~40 that are genuinely essential. Read them in order. Each entry states the exact architectural insight it introduces and why skipping it will leave a specific gap in your capability.</p>
+
+  <h3>Tier 1 — Absolute Foundations (Read First)</h3>
+
+  <div class="paper tier-1">
+    <span class="paper-tag tag-foundation">Foundation</span>
+    <p class="paper-title">Attention Is All You Need</p>
+    <p class="paper-meta">Vaswani et al., 2017 · Google Brain · arXiv:1706.03762</p>
+    <p class="paper-why">The original Transformer. Read the full paper, not a blog post. Understand encoder-decoder structure, multi-head attention, positional encodings, and why "all you need" was deliberate hyperbole. Every subsequent paper modifies something from this one.</p>
+  </div>
+
+  <div class="paper tier-1">
+    <span class="paper-tag tag-foundation">Foundation</span>
+    <p class="paper-title">BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding</p>
+    <p class="paper-meta">Devlin et al., 2018 · Google · arXiv:1810.04805</p>
+    <p class="paper-why">Introduces masked language modeling (MLM) and the distinction between encoder-only and decoder-only pre-training paradigms. Establishes that pre-training + fine-tuning is the dominant training strategy.</p>
+  </div>
+
+  <div class="paper tier-1">
+    <span class="paper-tag tag-foundation">Foundation</span>
+    <p class="paper-title">Language Models are Few-Shot Learners (GPT-3)</p>
+    <p class="paper-meta">Brown et al., 2020 · OpenAI · arXiv:2005.14165</p>
+    <p class="paper-why">Establishes in-context learning as an emergent property of scale. The paper that demonstrated that massive decoder-only models, without any fine-tuning, can perform tasks via prompt engineering. Defines the modern LLM paradigm.</p>
+  </div>
+
+  <div class="paper tier-1">
+    <span class="paper-tag tag-foundation">Foundation</span><span class="paper-tag tag-reasoning">Scaling</span>
+    <p class="paper-title">Scaling Laws for Neural Language Models</p>
+    <p class="paper-meta">Kaplan et al., 2020 · OpenAI · arXiv:2001.08361</p>
+    <p class="paper-why">Establishes the power-law relationship between loss, parameters, data, and compute. Every resource allocation decision during architecture development is governed by these laws. Cannot be skipped.</p>
+  </div>
+
+  <div class="paper tier-1">
+    <span class="paper-tag tag-foundation">Foundation</span><span class="paper-tag tag-reasoning">Scaling</span>
+    <p class="paper-title">Training Compute-Optimal Large Language Models (Chinchilla)</p>
+    <p class="paper-meta">Hoffmann et al., 2022 · DeepMind · arXiv:2203.15556</p>
+    <p class="paper-why">Revised Kaplan's scaling laws and showed GPT-3 was massively undertrained. The Chinchilla optimal formula \( N \propto C^{0.5},\, D \propto C^{0.5} \) governs how to allocate compute between model size and tokens. Essential before designing any training run.</p>
+  </div>
+
+  <div class="paper tier-1">
+    <span class="paper-tag tag-efficiency">Efficiency</span>
+    <p class="paper-title">FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</p>
+    <p class="paper-meta">Dao et al., 2022 · Stanford · arXiv:2205.14135</p>
+    <p class="paper-why">Arguably the most practically impactful paper of the decade. Read the actual algorithm — the tiling approach, the online softmax, the fused backward pass. Any novel attention variant must implement equivalent IO-awareness or it will be 10× slower in practice. Understand the roofline model before reading.</p>
+  </div>
+
+  <div class="paper tier-1">
+    <span class="paper-tag tag-efficiency">Efficiency</span>
+    <p class="paper-title">FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning</p>
+    <p class="paper-meta">Dao, 2023 · Princeton · arXiv:2307.08691</p>
+    <p class="paper-why">Rewrites the tiling strategy for better warp-level parallelism. Introduces the critical insight about thread block scheduling that achieves ~2× speedup over FA-1. Needed for understanding modern GPU kernel design.</p>
+  </div>
+
+  <h3>Tier 2 — Architecture Deep Dives (Core Research Knowledge)</h3>
+
+  <div class="paper tier-2">
+    <span class="paper-tag tag-foundation">Architecture</span>
+    <p class="paper-title">Efficiently Modeling Long Sequences with Structured State Spaces (S4)</p>
+    <p class="paper-meta">Gu et al., 2021 · Stanford · arXiv:2111.00396</p>
+    <p class="paper-why">The mathematical foundation of all SSMs. Introduces HiPPO theory — the principled method of initializing the state matrix \( A \) for optimal long-range memory. The convolution equivalence proof is the key technical insight. Mamba is incomprehensible without reading this first.</p>
+  </div>
+
+  <div class="paper tier-2">
+    <span class="paper-tag tag-alternative">SSM</span>
+    <p class="paper-title">Mamba: Linear-Time Sequence Modeling with Selective State Spaces</p>
+    <p class="paper-meta">Gu &amp; Dao, 2023 · Carnegie Mellon/Princeton · arXiv:2312.00752</p>
+    <p class="paper-why">The primary SSM paper. Master the selective scan algorithm, the data-dependent parameterization, and the hardware-aware parallel scan. This is the "Attention Is All You Need" of the recurrent approach.</p>
+  </div>
+
+  <div class="paper tier-2">
+    <span class="paper-tag tag-alternative">SSM</span>
+    <p class="paper-title">Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality (Mamba-2)</p>
+    <p class="paper-meta">Dao &amp; Gu, 2024 · arXiv:2405.21060</p>
+    <p class="paper-why">Establishes that Mamba and linear attention are two instances of the same mathematical framework (structured matrix multiplication). Opens the design space for principled hybrid construction. Critical for original research.</p>
+  </div>
+
+  <div class="paper tier-2">
+    <span class="paper-tag tag-alternative">RWKV</span>
+    <p class="paper-title">RWKV: Reinventing RNNs for the Transformer Era</p>
+    <p class="paper-meta">Peng et al., 2023 · EleutherAI · arXiv:2305.13048</p>
+    <p class="paper-why">Shows how to design a linear RNN that is parallelizable during training but runs as a pure RNN at inference. The WKV operator and time-mixing / channel-mixing decomposition are important design patterns.</p>
+  </div>
+
+  <div class="paper tier-2">
+    <span class="paper-tag tag-alternative">Retention</span>
+    <p class="paper-title">Retentive Network: A Successor to Transformer for Large Language Models (RetNet)</p>
+    <p class="paper-meta">Sun et al., 2023 · Microsoft Research · arXiv:2307.08621</p>
+    <p class="paper-why">Introduces the "retention" mechanism — a generalization of attention with an explicit exponential time-decay, enabling parallel, recurrent, and chunked computation modes. Important for understanding the design space between SSMs and full attention.</p>
+  </div>
+
+  <div class="paper tier-2">
+    <span class="paper-tag tag-alternative">Linear Attn</span>
+    <p class="paper-title">Gated Linear Attention Transformers with Hardware-Efficient Training</p>
+    <p class="paper-meta">Yang et al., 2023 · MIT / Stanford · arXiv:2312.06635</p>
+    <p class="paper-why">The most competitive linear attention formulation. Shows that adding scalar data-dependent gates to linear attention closes most of the gap with softmax attention on language tasks. Essential for understanding the linear attention sub-field.</p>
+  </div>
+
+  <div class="paper tier-2">
+    <span class="paper-tag tag-alternative">Convolution</span>
+    <p class="paper-title">Hyena Hierarchy: Towards Larger Convolutional Language Models</p>
+    <p class="paper-meta">Poli et al., 2023 · Stanford · arXiv:2302.10866</p>
+    <p class="paper-why">Replaces attention entirely with long implicit convolutions. Demonstrates attention-free sequence modeling at language scale. Important for the subquadratic design vocabulary.</p>
+  </div>
+
+  <div class="paper tier-2">
+    <span class="paper-tag tag-alternative">Hybrid</span>
+    <p class="paper-title">Jamba: A Hybrid Transformer-Mamba Language Model</p>
+    <p class="paper-meta">Lieber et al., 2024 · AI21 Labs · arXiv:2403.19887</p>
+    <p class="paper-why">First major validated hybrid architecture. Shows the specific Mamba/Attention interleaving ratios that achieve near-Transformer quality at significantly reduced KV cache. Provides the experimental blueprint for hybrid architecture research.</p>
+  </div>
+
+  <div class="paper tier-2">
+    <span class="paper-tag tag-alternative">Neural Memory</span>
+    <p class="paper-title">Titans: Learning to Memorize at Test Time</p>
+    <p class="paper-meta">Ali et al., 2024 · Google · arXiv:2501.00663</p>
+    <p class="paper-why">The most architecturally novel paper of 2024–2025. Introduces a neural long-term memory module that updates at test time via surprise-driven gradient steps. Read for the design philosophy — this is the direction toward continual learning.</p>
+  </div>
+
+  <div class="paper tier-2">
+    <span class="paper-tag tag-alternative">xLSTM</span>
+    <p class="paper-title">xLSTM: Extended Long Short-Term Memory</p>
+    <p class="paper-meta">Beck et al., 2024 · JKU Linz · arXiv:2405.04517</p>
+    <p class="paper-why">Brings LSTMs into the modern era with matrix memory cells and exponential gating. The mathematical proof that matrix memory enables exact key-value retrieval (unlike compressed state vectors) is architecturally important.</p>
+  </div>
+
+  <div class="paper tier-2">
+    <span class="paper-tag tag-novel">KAN</span>
+    <p class="paper-title">KAN: Kolmogorov-Arnold Networks</p>
+    <p class="paper-meta">Liu et al., 2024 · MIT/Caltech · arXiv:2404.19756</p>
+    <p class="paper-why">Proposes replacing MLP weights with learnable splines on edges. Critical for understanding the design space beyond matrix multiplication. The interpretability and anti-catastrophic-forgetting properties are practically interesting for novel architectures.</p>
+  </div>
+
+  <h3>Tier 3 — Efficiency &amp; Training</h3>
+
+  <div class="paper tier-3">
+    <span class="paper-tag tag-efficiency">GQA</span>
+    <p class="paper-title">GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints</p>
+    <p class="paper-meta">Ainslie et al., 2023 · Google · arXiv:2305.13245</p>
+    <p class="paper-why">Introduces Grouped-Query Attention — the KV cache reduction trick now used in every major open-source model (Llama-3, Mistral, Qwen). Understand the trade-off between KV cache size and model expressivity.</p>
+  </div>
+
+  <div class="paper tier-3">
+    <span class="paper-tag tag-efficiency">MLA</span>
+    <p class="paper-title">DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model</p>
+    <p class="paper-meta">DeepSeek Team, 2024 · arXiv:2405.04434</p>
+    <p class="paper-why">Introduces Multi-Head Latent Attention (MLA) — compressing the KV cache 93% via low-rank projection. Also introduces DeepSeekMoE with fine-grained expert segmentation. Arguably the most engineering-rich open paper of 2024.</p>
+  </div>
+
+  <div class="paper tier-3">
+    <span class="paper-tag tag-efficiency">Speculative</span>
+    <p class="paper-title">Fast Inference from Transformers via Speculative Decoding</p>
+    <p class="paper-meta">Leviathan et al., 2023 · Google · arXiv:2211.17192</p>
+    <p class="paper-why">The accepted proof that speculative decoding produces samples from the exact target distribution. Essential for understanding inference-time acceleration.</p>
+  </div>
+
+  <div class="paper tier-3">
+    <span class="paper-tag tag-efficiency">Quantization</span>
+    <p class="paper-title">GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers</p>
+    <p class="paper-meta">Frantar et al., 2022 · IST Austria · arXiv:2210.17323</p>
+    <p class="paper-why">The dominant weight quantization method for LLMs. Any new architecture needs a quantization story. Understand the second-order gradient approximation used for weight compression.</p>
+  </div>
+
+  <div class="paper tier-3">
+    <span class="paper-tag tag-efficiency">Positional Enc</span>
+    <p class="paper-title">RoFormer: Enhanced Transformer with Rotary Position Embedding (RoPE)</p>
+    <p class="paper-meta">Su et al., 2021 · arXiv:2104.09864</p>
+    <p class="paper-why">RoPE is now the default positional encoding in virtually every modern model. It encodes positions by rotating Q/K vectors in complex number space, enabling elegant context extension via NTK-aware scaling. Must-know.</p>
+  </div>
+
+  <div class="paper tier-3">
+    <span class="paper-tag tag-efficiency">Distributed</span>
+    <p class="paper-title">Ring Attention with Blockwise Transformers for Near-Infinite Context</p>
+    <p class="paper-meta">Liu et al., 2023 · UC Berkeley · arXiv:2310.01889</p>
+    <p class="paper-why">Shows how to distribute a 1M+ token context across multiple GPUs by passing K,V blocks in a ring topology with overlapping compute and communication. Essential for understanding multi-GPU long-context training.</p>
+  </div>
+
+  <div class="paper tier-3">
+    <span class="paper-tag tag-efficiency">MoE</span>
+    <p class="paper-title">Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer</p>
+    <p class="paper-meta">Shazeer et al., 2017 · Google Brain · arXiv:1701.06538</p>
+    <p class="paper-why">The original MoE paper in the deep learning era. Defines the Top-K gating, load balancing loss, and the engineering constraints. All subsequent MoE papers (Switch Transformer, Mixtral, DeepSeek-V3) reference this.</p>
+  </div>
+
+  <div class="paper tier-3">
+    <span class="paper-tag tag-efficiency">Token-free</span>
+    <p class="paper-title">Byte Latent Transformer: Patches Scale Better Than Tokens</p>
+    <p class="paper-meta">Pagnoni et al., 2024 · Meta AI · arXiv:2412.09871</p>
+    <p class="paper-why">Eliminates tokenization entirely. Operates on raw bytes grouped into dynamic patches. Demonstrates that the standard BPE tokenization bottleneck is not fundamental — a major architectural insight for next-gen models.</p>
+  </div>
+
+  <h3>Tier 4 — Alignment, Reasoning &amp; Training Methods</h3>
+
+  <div class="paper tier-4">
+    <span class="paper-tag tag-alignment">RLHF</span>
+    <p class="paper-title">Training Language Models to Follow Instructions with Human Feedback (InstructGPT)</p>
+    <p class="paper-meta">Ouyang et al., 2022 · OpenAI · arXiv:2203.02155</p>
+    <p class="paper-why">Establishes the SFT → Reward Model → PPO training pipeline. The RLHF recipe that made ChatGPT possible. Understanding PPO (Proximal Policy Optimization) mathematically is required.</p>
+  </div>
+
+  <div class="paper tier-4">
+    <span class="paper-tag tag-alignment">DPO</span>
+    <p class="paper-title">Direct Preference Optimization: Your Language Model is Secretly a Reward Model</p>
+    <p class="paper-meta">Rafailov et al., 2023 · Stanford · arXiv:2305.18290</p>
+    <p class="paper-why">Shows that RLHF's reward model and RL loop can be collapsed into a single supervised fine-tuning objective. DPO is now the dominant alignment method. The derivation from the RLHF objective is mathematically elegant.</p>
+  </div>
+
+  <div class="paper tier-4">
+    <span class="paper-tag tag-reasoning">Chain-of-Thought</span>
+    <p class="paper-title">Chain-of-Thought Prompting Elicits Reasoning in Large Language Models</p>
+    <p class="paper-meta">Wei et al., 2022 · Google Brain · arXiv:2201.11903</p>
+    <p class="paper-why">Demonstrates that eliciting intermediate reasoning steps (CoT) dramatically improves performance on math and logic tasks. The paper that triggered the "reasoning model" era. Understand why CoT works from a computational complexity perspective.</p>
+  </div>
+
+  <div class="paper tier-4">
+    <span class="paper-tag tag-reasoning">Test-Time Compute</span>
+    <p class="paper-title">Scaling LLM Test-Time Compute Optimally Improves Performance (DeepMind)</p>
+    <p class="paper-meta">Snell et al., 2024 · UC Berkeley · arXiv:2408.03314</p>
+    <p class="paper-why">Proves that there exists an optimal allocation of test-time compute (more for hard questions, less for easy ones). The mathematical framework for adaptive compute in inference — the backbone of o1/R1-class models.</p>
+  </div>
+
+  <div class="paper tier-4">
+    <span class="paper-tag tag-reasoning">RL Reasoning</span>
+    <p class="paper-title">DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning</p>
+    <p class="paper-meta">DeepSeek Team, 2025 · arXiv:2501.12948</p>
+    <p class="paper-why">Shows that pure RL (GRPO, without SFT warmup) can elicit sophisticated mathematical reasoning. The "aha moment" training dynamic and the emergent chain-of-thought are phenomena that any future reasoning architecture must account for.</p>
+  </div>
+
+  <div class="paper tier-4">
+    <span class="paper-tag tag-alignment">Interpretability</span>
+    <p class="paper-title">Scaling Monosemanticity: Extracting Interpretable Features from Claude 3 Sonnet</p>
+    <p class="paper-meta">Templeton et al., 2024 · Anthropic</p>
+    <p class="paper-why">Demonstrates that Sparse Autoencoders (SAEs) can decompose Transformer MLP activations into interpretable, human-understandable features at scale. Mechanistic interpretability is becoming a design constraint, not just an analysis tool.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SECTION 5: ENGINEERING ROADMAP                                 -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <p class="section-label">Section 05 · Technical Research Framework</p>
+  <h2>Engineering Roadmap for a Novel Paradigm</h2>
+  <p class="section-lead">This is the step-by-step process a well-funded AI research lab uses to move from "I have a new idea" to "this paper is published and the model is running." It applies equally to a solo researcher working at smaller scale.</p>
+
+  <h3>Phase 0 — Prerequisite Knowledge Stack</h3>
+  <div class="roadmap-step">
+    <div class="step-num">0A</div>
+    <div class="step-body">
+      <p class="step-title">Mathematics: Fill Your Gaps First</p>
+      <p>Before writing a single line of novel architecture code, address the mathematical prerequisites identified in Section 1. The sequence is non-negotiable:</p>
+      <ul>
+        <li><strong>Linear Algebra:</strong> Strang's MIT OCW lectures or "Introduction to Linear Algebra" (Strang, 5th ed.). Focus on SVD, eigenvectors, and the four fundamental subspaces.</li>
+        <li><strong>Multivariable Calculus + Optimization:</strong> Boyd's "Convex Optimization" (free at stanford.edu). Understand gradient descent convergence proofs, saddle points, and loss landscape structure.</li>
+        <li><strong>Probability &amp; Bayesian Inference:</strong> Bishop's "Pattern Recognition and Machine Learning" Ch. 1–3, 8–9. Learn the variational inference derivation from scratch.</li>
+        <li><strong>Information Theory:</strong> Cover &amp; Thomas "Elements of Information Theory" — Shannon entropy, KL divergence, mutual information. Read Ch. 1–4.</li>
+        <li><strong>Fourier Analysis:</strong> Oppenheim's "Signals &amp; Systems" — understand the convolution theorem and why FFT is O(N log N). Needed for SSMs.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="roadmap-step">
+    <div class="step-num">0B</div>
+    <div class="step-body">
+      <p class="step-title">Systems: Learn to Write GPU Kernels</p>
+      <p>Architecture research without kernel programming is decoration. Two paths:</p>
+      <ul>
+        <li><strong>Triton (Recommended):</strong> Read the <a href="https://triton-lang.org/main/getting-started/tutorials/index.html">official Triton tutorials</a>. Implement a fused softmax, then a basic attention kernel. Triton compiles to PTX/SASS automatically. Target: 2–3 weeks to write a working FlashAttention-equivalent.</li>
+        <li><strong>CUDA (For deeper control):</strong> Nvidia's "CUDA C++ Programming Guide." Understand thread hierarchy (thread → warp → block → grid), shared memory banks, memory coalescing. Use <code>ncu</code> (Nsight Compute) to profile every kernel you write.</li>
+        <li>Study the FlashAttention CUDA source on GitHub — specifically the backward pass — to understand fused gradient computation.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Phase 1 — Identify Your Research Hypothesis</h3>
+  <div class="roadmap-step">
+    <div class="step-num">01</div>
+    <div class="step-body">
+      <p class="step-title">Formalize the Bottleneck You Are Solving</p>
+      <p>A novel architecture paper must make a falsifiable claim of the form: <em>"Current architecture X fails to solve property Y because of mechanism Z. My architecture replaces Z with W, which provably/empirically achieves Y."</em></p>
+      <p>Map your hypothesis to one of the axes below:</p>
+      <ul>
+        <li><strong>Computational efficiency axis:</strong> Sub-quadratic complexity that matches Transformer quality on standard benchmarks</li>
+        <li><strong>Memory efficiency axis:</strong> Constant or sub-linear inference memory without retrieval degradation</li>
+        <li><strong>Reasoning depth axis:</strong> Adaptive compute budget per problem complexity without sacrificing speed on simple tasks</li>
+        <li><strong>Continual learning axis:</strong> Weight updates that incorporate new information without catastrophic forgetting</li>
+        <li><strong>Sample efficiency axis:</strong> Better performance per training token — requires better inductive biases or world model integration</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Phase 2 — Hardware-Aware Design Principles</h3>
+  <div class="roadmap-step">
+    <div class="step-num">02</div>
+    <div class="step-body">
+      <p class="step-title">Design Around the Memory Hierarchy First</p>
+      <p>Before designing your operation mathematically, understand the GPU memory hierarchy. On an H100 SXM:</p>
+      <div class="code-block">H100 Memory Hierarchy:
+  ├── SRAM (L1/Shared Memory): ~256 KB per SM · ~19 TB/s bandwidth
+  ├── L2 Cache:                 50 MB shared   · ~3.35 TB/s
+  └── HBM3 (Global Memory):     80 GB          · ~3.35 TB/s
+
+The compute-to-memory-bandwidth ratio (roofline):
+  H100 FP16 peak:    ~1979 TFLOP/s
+  H100 HBM bandwidth: 3.35 TB/s
+  → Operations with arithmetic intensity > 590 are compute-bound.
+  → Most attention operations during decoding are memory-bound.</div>
+      <p>The rule: <strong>any operation you design must maximize SRAM reuse and minimize HBM round-trips.</strong> This is the FlashAttention principle, and it applies to every new primitive. Ask: "How many bytes do I move per FLOP?" If &lt; 590 bytes/FLOP on H100, you are memory-bound and must fuse operations.</p>
+    </div>
+  </div>
+
+  <div class="roadmap-step">
+    <div class="step-num">03</div>
+    <div class="step-body">
+      <p class="step-title">Design the Mathematical Primitive</p>
+      <p>Your novel architecture's core contribution must be a new computational primitive that:</p>
+      <ul>
+        <li><strong>Has a recurrent form</strong> for efficient inference (O(1) memory per step if possible)</li>
+        <li><strong>Has a parallel form</strong> for training (via parallel scan, FFT convolution, or chunked computation)</li>
+        <li><strong>Is IO-aware</strong> — the parallel training form maps to a SRAM-tiled kernel, not a naive O(N²) HBM read</li>
+        <li><strong>Has expressive data-dependent parameters</strong> — purely time-invariant models (classic SSMs) fail on selective tasks</li>
+      </ul>
+      <p>The most productive design space right now: <strong>generalize the structured matrix product</strong>. Mamba-2 showed that both linear attention and SSMs are instances of Semi-Separable Matrix products. New models can be designed by varying the structure of this matrix (block-diagonal, Toeplitz, causal convolutional) to achieve different expressivity/efficiency trade-offs.</p>
+    </div>
+  </div>
+
+  <h3>Phase 3 — Implementation Protocol</h3>
+  <div class="roadmap-step">
+    <div class="step-num">04</div>
+    <div class="step-body">
+      <p class="step-title">Prototype at Scale 1: Tiny Models on Toy Tasks</p>
+      <p>Before running GPU clusters, validate your mathematical primitive on toy sequence memorization tasks. Critical test suite:</p>
+      <ul>
+        <li><strong>Selective Copy Task:</strong> Given a sequence with marked elements, copy only the marked ones. SSMs with non-selective parameters fail this. Validates data-dependency.</li>
+        <li><strong>Associative Recall:</strong> "Key A → Value B" pairs presented, then query "What is A?" Tests key-value storage in state.</li>
+        <li><strong>Needle in a Haystack:</strong> A synthetic "retrieve fact X from position P in 100K tokens" benchmark. Differentiates pure SSMs from hybrid/attention models.</li>
+        <li><strong>Induction Heads:</strong> "(A)(B)...(A)?" — model must predict B. Standard test for in-context learning capability.</li>
+      </ul>
+      <p>Run these at model sizes of ~10M–100M parameters. If your primitive fails selective copy, it will fail everything.</p>
+    </div>
+  </div>
+
+  <div class="roadmap-step">
+    <div class="step-num">05</div>
+    <div class="step-body">
+      <p class="step-title">Write the Custom Triton Kernel</p>
+      <p>Once the mathematical primitive is validated, write the hardware kernel. The workflow:</p>
+      <ul>
+        <li>Start with a naive PyTorch reference implementation (correct but slow)</li>
+        <li>Profile with <code>torch.profiler</code> to identify memory-bound vs compute-bound regions</li>
+        <li>Write the Triton kernel: implement tiled computation so the hot inner loop fits in SRAM</li>
+        <li>Verify correctness with gradient checking: <code>torch.autograd.gradcheck</code></li>
+        <li>Benchmark with <code>triton.testing.do_bench</code> and compare to the naive baseline and FlashAttention</li>
+        <li>Target: your kernel should reach ≥70% of the theoretical memory bandwidth on H100</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="roadmap-step">
+    <div class="step-num">06</div>
+    <div class="step-body">
+      <p class="step-title">Scale 2: 1B Parameter Ablation Study</p>
+      <p>The standard evaluation protocol for sequence model papers:</p>
+      <ul>
+        <li><strong>Language modeling perplexity</strong> on The Pile or RedPajama at equivalent training FLOPs to a Transformer baseline</li>
+        <li><strong>Common benchmarks:</strong> HellaSwag, PIQA, ARC-Easy/Challenge, WinoGrande, LAMBADA — standard zero-shot tasks</li>
+        <li><strong>Long-context tasks:</strong> RULER (which specifically includes needle-in-haystack at various depths), LongBench</li>
+        <li><strong>Throughput benchmarks:</strong> Tokens/second at various sequence lengths vs Transformer and Mamba baselines</li>
+        <li><strong>Memory footprint:</strong> Peak GPU memory during training and inference at N = 4K, 16K, 64K, 256K tokens</li>
+      </ul>
+      <p>If you cannot beat or match Mamba at equivalent compute at 1B scale, revisit the primitive before scaling further.</p>
+    </div>
+  </div>
+
+  <h3>Phase 4 — Structural Mechanisms for Superior Performance</h3>
+  <div class="roadmap-step">
+    <div class="step-num">07</div>
+    <div class="step-body">
+      <p class="step-title">The Five Design Levers You Must Address</p>
+      <p>Every novel architecture research paper must make deliberate choices on these axes:</p>
+      <ol>
+        <li><strong>State Expansion:</strong> How does the hidden state \( h_t \) scale with model size? Linear (RWKV) vs matrix (xLSTM) vs structured (SSM) — each trades parameter count for expressivity differently.</li>
+        <li><strong>Gating Mechanism:</strong> Data-dependent gates (as in Mamba's \( \Delta, B, C \)) are critical for selectivity. Without them, the model cannot filter irrelevant tokens. Design your gate to be input-dependent but computation-light.</li>
+        <li><strong>Positional Bias:</strong> How does your model encode position? Learned recurrence (implicit in SSMs), explicit RoPE injection, or alibi-style biases? Models without any position bias extrapolate better but lose ordering signals.</li>
+        <li><strong>Hybridization Strategy:</strong> At what layer frequency do you insert full attention "checkpoints"? Research suggests every 4–8 linear layers benefits from one attention layer for precision retrieval, with diminishing returns after that.</li>
+        <li><strong>Normalization Placement:</strong> Pre-norm (RMSNorm before the sublayer, as in modern models) vs post-norm vs sandwich norm. Pre-norm with RMSNorm is currently the most stable configuration — do not deviate without strong experimental justification.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="roadmap-step">
+    <div class="step-num">08</div>
+    <div class="step-body">
+      <p class="step-title">Achieving Infinite Context Without Retrieval Degradation</p>
+      <p>This is the unsolved problem — the single most important research target. The current best approaches:</p>
+      <ul>
+        <li><strong>Sparse Attention Windows + Global Memory:</strong> Full attention over a local window (e.g., 4K tokens) + a compressed representation of the full history. Titans-style neural memory achieves this but with test-time gradient steps.</li>
+        <li><strong>Hierarchical State Compression:</strong> Multi-scale SSM layers where lower layers compress raw tokens and higher layers operate on the compressed representations. Similar to human memory's episodic-to-semantic consolidation.</li>
+        <li><strong>Differentiable Key-Value Memory Banks:</strong> External memory with learned read/write heads (differentiable neural computers). The challenge is making the routing efficient enough to not bottleneck throughput.</li>
+        <li><strong>The open question:</strong> Is there a mathematical operation that achieves O(1) inference memory AND exact retrieval? Current theory suggests this requires at least O(N) state in the worst case. A counterexample would be a significant theoretical contribution.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Phase 5 — Distributed Training Setup</h3>
+  <div class="roadmap-step">
+    <div class="step-num">09</div>
+    <div class="step-body">
+      <p class="step-title">Multi-GPU Training for Models &gt;7B Parameters</p>
+      <p>Beyond 7B parameters, single-GPU training is impossible. Master these parallelism strategies before your first large run:</p>
+      <ul>
+        <li><strong>Data Parallelism (DP/DDP):</strong> Each GPU holds a full model copy, processes different batches, and synchronizes gradients via all-reduce. Scales easily but requires all weights to fit on one GPU.</li>
+        <li><strong>Tensor Parallelism (TP):</strong> Shard individual weight matrices across GPUs. Each GPU holds 1/N of each layer. Used within a node (NVLink bandwidth critical). Megatron-LM is the standard implementation.</li>
+        <li><strong>Pipeline Parallelism (PP):</strong> Different layers on different GPUs (or machines). GPUs pass activations between stages via point-to-point communication. GPipe and 1F1B scheduling avoid the "pipeline bubble" problem.</li>
+        <li><strong>ZeRO Optimizer (DeepSpeed):</strong> Shards optimizer states (Stage 1), gradients (Stage 2), and parameters (Stage 3) across GPUs. ZeRO-3 allows training a 70B model on 8× H100 with no model parallelism complexity.</li>
+        <li><strong>Sequence Parallelism (SP) / Ring Attention:</strong> Required for context lengths &gt;128K. Shard the sequence dimension across GPUs. All-gather K,V in a ring during attention computation.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Phase 6 — The Publication &amp; Open Source Path</h3>
+  <div class="roadmap-step">
+    <div class="step-num">10</div>
+    <div class="step-body">
+      <p class="step-title">From Experiment to Paper</p>
+      <p>A publishable novel architecture paper needs:</p>
+      <ul>
+        <li>A clean theoretical contribution: a new primitive with mathematical analysis of its complexity and expressivity</li>
+        <li>A hardware-aware implementation: a Triton/CUDA kernel that matches or beats FlashAttention in throughput</li>
+        <li>Rigorous ablations at small scale (125M–1B) showing that each design choice matters</li>
+        <li>Scaling experiments: show that the quality gap to Transformers narrows or closes as compute increases</li>
+        <li>Long-context benchmarks: RULER, LongBench, or a new benchmark that specifically tests your architecture's claimed advantage</li>
+        <li>Open-source code on GitHub with a detailed README and reproducible training scripts</li>
+      </ul>
+      <p>Target venues: NeurIPS, ICML, ICLR (architecture track), or arXiv preprint. The fastest path to credibility is an arXiv preprint with open-source code before conference submission.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-success">
+    <p class="callout-label">Recommended Starting Point for Blant Specifically</p>
+    <p>Given your existing strong conceptual knowledge: <strong>start with the Mamba-2 paper</strong> and re-implement it from scratch in Triton (not copying the official code). Once you can match their benchmarks, you will have mastered the entire subquadratic design space. The next step is designing a hybrid architecture with a novel hybridization strategy — for example, using surprise-based gating (from Titans) to decide dynamically when to invoke full attention vs your linear primitive. This is an under-explored research angle that combines your existing JEPA/Active Inference knowledge with the practical architecture frontier.</p>
+  </div>
+</section>
+
+</main>
+
+<div class="footer">
+  AI Architecture Research Breakdown · Claude Sonnet 4.6 · Senior Research Scientist Analysis · June 2026
+  <br>
+  Folder: 1781520219245_Transformer.zip · 64 files · ~600 KB · 21 architecture families audited
+</div>
+
+</body>
+</html>

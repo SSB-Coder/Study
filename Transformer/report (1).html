@@ -1,0 +1,2251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Inside the Machine — Weights, Neurons &amp; the Math of Transformers</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(', '\\)']],
+    displayMath: [['\\[', '\\]']],
+    macros: { argmax: "\\operatorname{argmax}" }
+  },
+  options: { renderActions: { addMenu: [] } }
+};
+</script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+
+<style>
+  :root{
+    --paper:#FAF7F1;
+    --paper-deep:#F2EDE3;
+    --ink:#1B2A4A;
+    --ink-soft:#46506B;
+    --ink-faint:#8089A2;
+    --teal:#1C7C7C;
+    --teal-soft:#E6F2F1;
+    --teal-line:#BFE0DE;
+    --amber:#D9622B;
+    --amber-soft:#FBEAE0;
+    --amber-line:#F2C8AE;
+    --line:#DED7C8;
+    --card:#FFFFFF;
+    --mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --serif:'Fraunces', Georgia, serif;
+    --sans:'Source Sans 3', system-ui, -apple-system, sans-serif;
+    --maxw:760px;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+
+  body{
+    margin:0;
+    font-family:var(--sans);
+    color:var(--ink-soft);
+    background:
+      radial-gradient(circle at 1px 1px, rgba(27,42,74,0.07) 1px, transparent 1.6px) 0 0/26px 26px,
+      var(--paper);
+    line-height:1.7;
+    font-size:17px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  ::selection{ background:var(--amber-soft); color:var(--ink); }
+
+  a{ color:var(--teal); text-decoration-thickness:1.5px; text-underline-offset:3px; }
+  a:hover{ color:var(--amber); }
+
+  h1,h2,h3,h4{ font-family:var(--serif); color:var(--ink); line-height:1.18; font-weight:600; letter-spacing:-0.01em; }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    max-width:1040px;
+    margin:0 auto;
+    padding:54px 24px 18px;
+    text-align:left;
+  }
+  .hero .kicker{
+    font-family:var(--mono);
+    font-size:12.5px;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--teal);
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .hero .kicker::after{ content:""; flex:1; height:1px; background:var(--line); }
+  .hero h1{
+    font-size:clamp(2.2rem, 5.4vw, 3.6rem);
+    margin:18px 0 14px;
+    max-width:14ch;
+  }
+  .hero h1 em{ font-style:italic; color:var(--teal); }
+  .hero p.lead{
+    font-size:1.12rem;
+    max-width:62ch;
+    color:var(--ink-soft);
+  }
+  .hero .meta-row{
+    display:flex; flex-wrap:wrap; gap:10px 28px;
+    margin-top:26px;
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--ink-faint);
+  }
+  .hero .meta-row span b{ color:var(--ink); font-weight:600; }
+
+  .hero-figure{
+    max-width:1040px;
+    margin:30px auto 10px;
+    padding:0 24px;
+  }
+  .hero-figure .panel{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:22px clamp(8px,3vw,34px) 10px;
+    box-shadow:0 1px 0 rgba(27,42,74,0.03);
+  }
+  .hero-figure svg{ display:block; width:100%; height:auto; }
+  .hero-figure figcaption{
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--ink-faint);
+    text-align:center;
+    padding:10px 6px 16px;
+  }
+
+  /* ---------- Layout ---------- */
+  .layout{
+    max-width:1040px;
+    margin:34px auto 0;
+    padding:0 24px 80px;
+    display:grid;
+    grid-template-columns:230px minmax(0,1fr);
+    gap:46px;
+    align-items:start;
+  }
+  nav.toc{
+    position:sticky;
+    top:22px;
+    align-self:start;
+    border-right:1px solid var(--line);
+    padding-right:24px;
+  }
+  nav.toc h2{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    margin:0 0 12px;
+    font-weight:600;
+  }
+  nav.toc ol{ list-style:none; margin:0; padding:0; counter-reset:toc; }
+  nav.toc li{ counter-increment:toc; margin-bottom:3px; }
+  nav.toc a{
+    display:flex; gap:9px;
+    font-size:13.5px;
+    color:var(--ink-soft);
+    text-decoration:none;
+    padding:5px 6px;
+    border-radius:6px;
+    line-height:1.35;
+  }
+  nav.toc a::before{
+    content:counter(toc, decimal-leading-zero);
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--teal);
+    flex-shrink:0;
+    padding-top:1px;
+  }
+  nav.toc a:hover{ background:var(--teal-soft); color:var(--ink); }
+  nav.toc .toc-sub{ margin:14px 0 0; padding-left:21px; border-left:1px dashed var(--line); }
+  nav.toc .toc-sub a{ font-size:12px; color:var(--ink-faint); padding:3px 6px; }
+  nav.toc .toc-sub a::before{ content:"–"; color:var(--ink-faint); }
+  nav.toc .toc-sub a:hover{ color:var(--ink); background:transparent; }
+
+  main{ min-width:0; }
+
+  /* ---------- Sections ---------- */
+  section.chapter{
+    padding-top:8px;
+    margin-bottom:62px;
+    scroll-margin-top:20px;
+  }
+  section.chapter + section.chapter{
+    border-top:1px solid var(--line);
+    padding-top:54px;
+  }
+  .chapter .num{
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--amber);
+    letter-spacing:0.18em;
+    font-weight:600;
+    display:block;
+    margin-bottom:8px;
+  }
+  .chapter h2{
+    font-size:clamp(1.55rem, 3.6vw, 2.15rem);
+    margin:0 0 6px;
+  }
+  .chapter .dek{
+    font-style:italic;
+    color:var(--ink-faint);
+    font-size:0.98rem;
+    margin:0 0 26px;
+    max-width:58ch;
+  }
+  .chapter h3{
+    font-size:1.22rem;
+    margin:36px 0 12px;
+  }
+  .chapter h4{
+    font-family:var(--sans);
+    font-weight:700;
+    font-size:1rem;
+    color:var(--ink);
+    margin:24px 0 8px;
+  }
+  .chapter p{ margin:0 0 16px; }
+  .chapter p.tight{ margin-bottom:8px; }
+
+  code, .v{
+    font-family:var(--mono);
+    font-size:0.91em;
+    background:var(--paper-deep);
+    padding:0.05em 0.35em;
+    border-radius:4px;
+    color:var(--ink);
+    white-space:nowrap;
+  }
+
+  /* ---------- Equation cards ---------- */
+  .eq{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-left:4px solid var(--teal);
+    border-radius:10px;
+    padding:18px 22px;
+    margin:18px 0 22px;
+    overflow-x:auto;
+  }
+  .eq.amber{ border-left-color:var(--amber); }
+  .eq .eq-label{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--teal);
+    margin-bottom:6px;
+    font-weight:600;
+  }
+  .eq.amber .eq-label{ color:var(--amber); }
+  .eq mjx-container{ font-size:108% !important; }
+
+  .where{
+    margin:14px 0 22px;
+    padding:14px 18px;
+    background:var(--paper-deep);
+    border-radius:10px;
+    font-size:0.93rem;
+  }
+  .where .where-title{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    margin-bottom:8px;
+    font-weight:600;
+  }
+  .where dl{ margin:0; display:grid; grid-template-columns:max-content 1fr; gap:6px 16px; }
+  .where dt{ font-family:var(--mono); color:var(--ink); font-weight:600; white-space:nowrap; }
+  .where dd{ margin:0; color:var(--ink-soft); }
+
+  /* ---------- Callouts ---------- */
+  .note{
+    border:1px solid var(--teal-line);
+    background:var(--teal-soft);
+    border-radius:10px;
+    padding:14px 18px;
+    margin:18px 0;
+    font-size:0.95rem;
+  }
+  .note .note-title{
+    font-family:var(--mono); font-size:11px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--teal); font-weight:700; margin-bottom:6px;
+  }
+  .note.warn{ border-color:var(--amber-line); background:var(--amber-soft); }
+  .note.warn .note-title{ color:var(--amber); }
+  .note p:last-child{ margin-bottom:0; }
+
+  /* ---------- Figures / diagrams ---------- */
+  figure.diagram{
+    margin:24px 0;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px clamp(6px,2.6vw,28px) 6px;
+  }
+  figure.diagram svg{ display:block; width:100%; height:auto; }
+  figure.diagram figcaption{
+    font-family:var(--mono); font-size:12px; color:var(--ink-faint);
+    text-align:center; padding:10px 4px 14px;
+  }
+
+  /* ---------- Tables ---------- */
+  .tablewrap{ overflow-x:auto; margin:18px 0 24px; border:1px solid var(--line); border-radius:10px; }
+  table{ border-collapse:collapse; width:100%; font-size:0.86rem; background:var(--card); min-width:560px; }
+  th, td{ padding:9px 12px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+  thead th{
+    font-family:var(--mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--ink-faint); background:var(--paper-deep); font-weight:600; white-space:nowrap;
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background:var(--teal-soft); }
+  td.num, th.num{ font-family:var(--mono); white-space:nowrap; }
+  .pill{
+    display:inline-block; font-family:var(--mono); font-size:10.5px; letter-spacing:0.06em;
+    padding:1px 7px; border-radius:99px; font-weight:600; vertical-align:middle;
+  }
+  .pill.open{ background:var(--teal-soft); color:var(--teal); border:1px solid var(--teal-line); }
+  .pill.closed{ background:var(--amber-soft); color:var(--amber); border:1px solid var(--amber-line); }
+
+  /* ---------- Model cards ---------- */
+  .modelcard{
+    border:1px solid var(--line); border-radius:12px; background:var(--card);
+    padding:18px 22px; margin:20px 0;
+  }
+  .modelcard .mc-head{
+    display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:8px 16px;
+    border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:12px;
+  }
+  .modelcard h4{ margin:0; font-size:1.06rem; }
+  .modelcard .org{ font-family:var(--mono); font-size:11.5px; color:var(--ink-faint); letter-spacing:0.05em;}
+  .modelcard p{ margin-bottom:10px; }
+  .modelcard p:last-child{ margin-bottom:0; }
+  .specgrid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px 18px;
+    margin:12px 0; padding:12px 14px; background:var(--paper-deep); border-radius:8px;
+  }
+  .specgrid .k, .specgrid .val{ display:block; }
+  .specgrid .k{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:3px;}
+  .specgrid .val{ font-family:var(--mono); font-size:0.95rem; color:var(--ink); font-weight:600; }
+
+  /* ---------- Glossary ---------- */
+  .glossary dt{
+    font-family:var(--mono); font-weight:600; color:var(--ink); margin-top:14px; font-size:0.95rem;
+  }
+  .glossary dd{ margin:4px 0 0; }
+
+  /* ---------- Footer ---------- */
+  footer{
+    max-width:1040px; margin:0 auto; padding:34px 24px 60px;
+    border-top:1px solid var(--line);
+  }
+  footer h2{ font-size:1.1rem; }
+  footer ol{ padding-left:20px; font-size:0.9rem; color:var(--ink-faint); }
+  footer li{ margin-bottom:8px; }
+  footer .colophon{
+    margin-top:30px; font-family:var(--mono); font-size:11.5px; color:var(--ink-faint);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  }
+
+  @media (max-width: 880px){
+    .layout{ grid-template-columns:1fr; }
+    nav.toc{
+      position:static; border-right:none; border-bottom:1px solid var(--line);
+      padding-right:0; padding-bottom:18px; margin-bottom:8px;
+    }
+    nav.toc ol{ columns:2; column-gap:20px; }
+    nav.toc .toc-sub{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="kicker">A beginner-to-frontier reference · June 2026</div>
+  <h1>Inside the Machine: <em>Weights</em>, Neurons &amp; the Mathematics of Transformers</h1>
+  <p class="lead">
+    Every chatbot — from a five‑line classroom example to Claude 3.5 Sonnet, GPT-4o, and Gemini 1.5/2.0 —
+    is built from the same handful of ideas: numbers called <strong>weights</strong>, simple units called
+    <strong>neurons</strong>, and <strong>connections</strong> between them. This report builds those ideas
+    up from absolute scratch, gives the complete equations behind the modern <strong>Transformer</strong>
+    architecture that powers every major AI model today, and then maps those equations onto the real,
+    published numbers behind DeepSeek, Llama, Qwen, NVIDIA Nemotron — and explains what is and isn't publicly
+    known about Anthropic, OpenAI, and Google's flagship systems.
+  </p>
+  <div class="meta-row">
+    <span>Reading level: <b>extreme beginner → intermediate</b></span>
+    <span>Equations: <b>fully defined, symbol&#8209;by&#8209;symbol</b></span>
+    <span>Models covered: <b>11+</b></span>
+    <span>Format: <b>single‑page HTML report</b></span>
+  </div>
+</div>
+
+<figure class="hero-figure">
+  <div class="panel">
+    <svg viewBox="0 0 920 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="heroTitle">
+      <title id="heroTitle">A single artificial neuron: three weighted inputs and a bias are summed, then passed through an activation function to produce an output.</title>
+      <defs>
+        <marker id="arrowTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#1C7C7C"/>
+        </marker>
+        <marker id="arrowAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#D9622B"/>
+        </marker>
+        <marker id="arrowInk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#1B2A4A"/>
+        </marker>
+      </defs>
+
+      <!-- connection lines (weights) -->
+      <line x1="118" y1="60"  x2="430" y2="170" stroke="#1C7C7C" stroke-width="2.5" marker-end="url(#arrowTeal)"/>
+      <line x1="118" y1="180" x2="430" y2="180" stroke="#1C7C7C" stroke-width="5"   marker-end="url(#arrowTeal)"/>
+      <line x1="118" y1="300" x2="430" y2="195" stroke="#1C7C7C" stroke-width="1.4" marker-end="url(#arrowTeal)"/>
+      <!-- bias -->
+      <line x1="430" y1="290" x2="460" y2="220" stroke="#8089A2" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#arrowInk)"/>
+
+      <!-- input nodes -->
+      <circle cx="100" cy="60"  r="18" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2"/>
+      <text x="100" y="65" text-anchor="middle" font-family="IBM Plex Mono" font-size="16" fill="#1B2A4A">x₁</text>
+
+      <circle cx="100" cy="180" r="18" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2"/>
+      <text x="100" y="185" text-anchor="middle" font-family="IBM Plex Mono" font-size="16" fill="#1B2A4A">x₂</text>
+
+      <circle cx="100" cy="300" r="18" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2"/>
+      <text x="100" y="305" text-anchor="middle" font-family="IBM Plex Mono" font-size="16" fill="#1B2A4A">x₃</text>
+
+      <text x="92" y="358" font-family="IBM Plex Mono" font-size="12" fill="#8089A2">inputs</text>
+
+      <!-- bias node -->
+      <circle cx="478" cy="232" r="15" fill="#FFFFFF" stroke="#8089A2" stroke-width="2"/>
+      <text x="478" y="237" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" fill="#8089A2">b</text>
+
+      <!-- weight labels -->
+      <rect x="248" y="78"  width="40" height="22" rx="5" fill="#E6F2F1"/>
+      <text x="268" y="94" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" fill="#1C7C7C">w₁</text>
+
+      <rect x="248" y="166" width="40" height="22" rx="5" fill="#E6F2F1"/>
+      <text x="268" y="182" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" fill="#1C7C7C">w₂</text>
+
+      <rect x="248" y="238" width="40" height="22" rx="5" fill="#E6F2F1"/>
+      <text x="268" y="254" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" fill="#1C7C7C">w₃</text>
+
+      <!-- summation node -->
+      <circle cx="470" cy="180" r="42" fill="#FBEAE0" stroke="#D9622B" stroke-width="2.5"/>
+      <text x="470" y="195" text-anchor="middle" font-family="Fraunces" font-size="36" fill="#D9622B">&#8721;</text>
+
+      <!-- arrow to activation -->
+      <line x1="512" y1="180" x2="600" y2="180" stroke="#1B2A4A" stroke-width="2.5" marker-end="url(#arrowInk)"/>
+      <text x="556" y="166" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" fill="#46506B">z</text>
+
+      <!-- activation box -->
+      <rect x="606" y="138" width="120" height="84" rx="10" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2.5"/>
+      <text x="666" y="172" text-anchor="middle" font-family="Fraunces" font-size="22" fill="#1B2A4A">f( z )</text>
+      <text x="666" y="196" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#8089A2">activation</text>
+
+      <!-- arrow to output -->
+      <line x1="730" y1="180" x2="800" y2="180" stroke="#1B2A4A" stroke-width="2.5" marker-end="url(#arrowInk)"/>
+
+      <!-- output node -->
+      <circle cx="838" cy="180" r="20" fill="#1B2A4A"/>
+      <text x="838" y="186" text-anchor="middle" font-family="IBM Plex Mono" font-size="16" fill="#FAF7F1">a</text>
+      <text x="800" y="232" font-family="IBM Plex Mono" font-size="12" fill="#8089A2">output</text>
+
+    </svg>
+  </div>
+  <figcaption>
+    Figure 0 — The entire idea, in one picture. Inputs (x) are multiplied by weights (w), summed with a bias (b)
+    to give a value z, and squeezed through an activation function f to produce the neuron's output a.
+    Every model in this report — including Claude 3.5 Sonnet and GPT-4o — is, at heart, billions of these
+    units wired together.
+  </figcaption>
+</figure>
+
+<div class="layout">
+
+<nav class="toc" aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#ch00">How to read this report</a></li>
+    <li><a href="#ch01">The atom of intelligence: one neuron</a></li>
+    <li><a href="#ch02">Stacking neurons into networks</a></li>
+    <li><a href="#ch03">How networks learn: loss &amp; gradient descent</a></li>
+    <li><a href="#ch04">Why Transformers? From RNNs to attention</a></li>
+    <li><a href="#ch05">Tokens, embeddings &amp; position</a></li>
+    <li><a href="#ch06">Self&#8209;attention: the heart of the Transformer</a></li>
+    <li><a href="#ch07">Normalization, residuals &amp; the feed&#8209;forward block</a></li>
+    <li><a href="#ch08">The full Transformer block &amp; how weights are trained</a></li>
+    <li><a href="#ch09">Scaling tricks behind today's giants</a></li>
+    <li><a href="#ch10">The model atlas: real weights, real Transformers</a></li>
+    <li><a href="#ch11">Glossary</a></li>
+  </ol>
+</nav>
+
+<main>
+<section class="chapter" id="ch00">
+  <span class="num">Chapter 00</span>
+  <h2>How to Read This Report</h2>
+  <p class="dek">Notation, conventions, and the two honesty rules this report follows.</p>
+
+  <p>
+    This report is built like a staircase. Chapters 01–03 cover the basic neural network ideas
+    that have existed since the 1950s–80s: a single neuron, a network of neurons, and how a
+    network "learns" by adjusting numbers. Chapters 04–09 build the <strong>Transformer</strong>,
+    the specific architecture behind every major chatbot today, piece by piece, with the complete
+    equation for each piece. Chapter 10 then takes those exact equations and shows you the real,
+    published numbers that DeepSeek, Meta, Alibaba, and NVIDIA plug into them — and explains
+    honestly what is and isn't public for Anthropic's Claude family, OpenAI's GPT family, and
+    Google's Gemini family.
+  </p>
+
+  <h3>Notation used throughout</h3>
+  <p>
+    Plain italic letters like \(x\) or \(w\) are single numbers (<em>scalars</em>). Bold
+    lowercase letters like \(\mathbf{x}\) are lists of numbers (<em>vectors</em>). Bold uppercase
+    letters like \(\mathbf{W}\) are grids of numbers (<em>matrices</em>) — a matrix is just a
+    rectangular table of weights. A superscript in parentheses, like \(\mathbf{W}^{(l)}\), means
+    "this belongs to layer \(l\)" — it is a label, not an exponent. Every equation in this report
+    is followed by a small "What does each symbol mean?" box, so you never have to guess.
+  </p>
+
+  <div class="note">
+    <div class="note-title">Two honesty rules this report follows</div>
+    <p>
+      <strong>Rule 1 — Show your work.</strong> Every equation is the real, published equation
+      from the original research (cited in the footer), not a simplification that secretly
+      changes the meaning.
+    </p>
+    <p>
+      <strong>Rule 2 — Don't invent numbers.</strong> Companies like Anthropic, OpenAI, and Google
+      do not publish the exact size or weight values of their flagship models. Where a number is
+      a company's own published figure, it is marked
+      <span class="pill open">published</span>. Where a number is industry speculation or a
+      rough estimate rather than a confirmed fact, it is marked
+      <span class="pill closed">unconfirmed</span> and labelled as such in the text — this report
+      will never present a guess as if it were a fact.
+    </p>
+  </div>
+</section>
+
+<section class="chapter" id="ch01">
+  <span class="num">Chapter 01</span>
+  <h2>The Atom of Intelligence: One Neuron</h2>
+  <p class="dek">Weights, biases, and the tiny calculation that everything else is built from.</p>
+
+  <p>
+    Picture a tiny machine. It has a few "dials," one for every number you feed into it. Each dial
+    decides how much that particular input matters. The machine multiplies each input by its
+    dial setting, adds everything up along with one extra "starting offset" number, and then
+    squeezes the result through a simple shaping function to decide how strongly to respond.
+    That's it. That tiny machine is an <strong>artificial neuron</strong>, and almost the entire
+    rest of this report is just "what happens when you connect millions or billions of these
+    together, and arrange them cleverly."
+  </p>
+
+  <p>
+    In that description: the <strong>dial settings are the weights</strong>, the
+    <strong>starting offset is the bias</strong>, the <strong>machine itself is the neuron</strong>,
+    and the <strong>wires carrying numbers into the machine are the connections</strong>. A weight
+    is nothing more than a single number that says "how much should I listen to this particular
+    input?" A large positive weight means "listen closely and respond in the same direction";
+    a weight near zero means "mostly ignore this"; a large negative weight means "listen closely,
+    but respond in the opposite direction."
+  </p>
+
+  <div class="eq">
+    <div class="eq-label">Equation 1.1 — The neuron's weighted sum (the "pre-activation")</div>
+    \[ z = w_1 x_1 + w_2 x_2 + \dots + w_n x_n + b \;=\; \sum_{i=1}^{n} w_i x_i + b \;=\; \mathbf{w}^{\top}\mathbf{x} + b \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(x_1,\dots,x_n\)</dt><dd>The \(n\) input numbers arriving at this neuron — these could be raw data (like pixel brightness) or the outputs of other neurons.</dd>
+      <dt>\(w_1,\dots,w_n\)</dt><dd>The <strong>weights</strong> — one learnable number per input, controlling how much that input influences this neuron.</dd>
+      <dt>\(b\)</dt><dd>The <strong>bias</strong> — one extra learnable number that shifts the result up or down, independent of any input. Think of it as the neuron's default "mood" before it has seen anything.</dd>
+      <dt>\(\mathbf{w}^{\top}\mathbf{x}\)</dt><dd>The same sum written compactly as a <em>dot product</em> of the weight vector \(\mathbf{w}=(w_1,\dots,w_n)\) and the input vector \(\mathbf{x}=(x_1,\dots,x_n)\).</dd>
+      <dt>\(z\)</dt><dd>The result — often called the <strong>pre-activation</strong> or <strong>logit</strong>. It is just a single number, which can be anything from very negative to very positive.</dd>
+    </dl>
+  </div>
+
+  <p>
+    On its own, \(z\) is just a weighted sum — useful, but limited to drawing a single straight
+    line through the data. To let the neuron make more interesting, non-linear decisions, \(z\)
+    is passed through an <strong>activation function</strong>:
+  </p>
+
+  <div class="eq amber">
+    <div class="eq-label">Equation 1.2 — The neuron's output (the "activation")</div>
+    \[ a = f(z) \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(f\)</dt><dd>The <strong>activation function</strong> — a fixed, non-linear shaping function (examples below). It is chosen by the designer and does <em>not</em> change during training.</dd>
+      <dt>\(a\)</dt><dd>The neuron's final output, sometimes also written \(h\) for "hidden activation." This is the number that gets sent onward to the next neurons it is connected to.</dd>
+    </dl>
+  </div>
+
+  <h3>A worked example: "Should I go for a run today?"</h3>
+  <p>
+    Suppose a neuron looks at three inputs, each scaled to a number between 0 and 1: how
+    comfortable the temperature is (\(x_1=0.9\)), how much free time you have (\(x_2=0.4\)), and
+    your current energy level (\(x_3=0.7\)). Imagine training has set the weights to
+    \(w_1=1.2,\ w_2=0.3,\ w_3=0.8\) and the bias to \(b=-0.9\). Plugging into Equation&nbsp;1.1:
+  </p>
+  <div class="eq">
+    <div class="eq-label">Worked calculation</div>
+    \[ z = (1.2)(0.9) + (0.3)(0.4) + (0.8)(0.7) + (-0.9) = 1.08 + 0.12 + 0.56 - 0.9 = 0.86 \]
+  </div>
+  <p>
+    Notice that temperature has the largest weight (1.2), so it dominates the decision — exactly
+    what "weight" means in everyday English too. Passing \(z=0.86\) through the sigmoid activation
+    (defined next) gives \(a = \sigma(0.86) \approx 0.70\), which we might read as
+    "70% likely to go for a run." Every number in this calculation — \(w_1, w_2, w_3, b\) — started
+    out random and was nudged into these values by the training process described in
+    <a href="#ch03">Chapter 03</a>.
+  </p>
+
+  <h3>Activation functions: how a neuron "fires"</h3>
+  <p>
+    The activation function is what makes a network capable of learning curves, edges, and
+    complex patterns instead of just straight lines. Below are the functions referenced later in
+    this report, from the historical original to the ones used inside modern Transformers.
+  </p>
+
+  <div class="eq">
+    <div class="eq-label">Equation 1.3 — Step function (the original 1958 Perceptron)</div>
+    \[ f(z) = \begin{cases} 1 & \text{if } z \ge 0 \\ 0 & \text{if } z < 0 \end{cases} \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(z\)</dt><dd>The weighted sum from Equation&nbsp;1.1.</dd>
+      <dt>output</dt><dd>A hard "yes" (1) or "no" (0) — the neuron either fires or it doesn't, with nothing in between. This makes the function impossible to fine-tune smoothly, which is why it was replaced for training larger networks.</dd>
+    </dl>
+  </div>
+
+  <div class="eq">
+    <div class="eq-label">Equation 1.4 — Sigmoid (logistic) function</div>
+    \[ \sigma(z) = \frac{1}{1+e^{-z}} \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(e\)</dt><dd>Euler's number, \(\approx 2.71828\) — the base of the natural exponential, a fixed mathematical constant.</dd>
+      <dt>\(\sigma(z)\)</dt><dd>A smooth "S-shaped" curve that squeezes any real number into the open range \((0,1)\) — useful for representing probabilities. Very negative \(z\) gives a value near 0; very positive \(z\) gives a value near 1; \(z=0\) gives exactly 0.5.</dd>
+    </dl>
+  </div>
+
+  <div class="eq">
+    <div class="eq-label">Equation 1.5 — ReLU (Rectified Linear Unit)</div>
+    \[ \text{ReLU}(z) = \max(0, z) \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\max(0,z)\)</dt><dd>"Whichever is larger, 0 or \(z\)." In practice: if \(z\) is negative, output 0; if \(z\) is positive, pass it through unchanged. This was the activation used in the original 2017 Transformer's feed-forward layers, and is still the easiest to compute.</dd>
+    </dl>
+  </div>
+
+  <div class="eq amber">
+    <div class="eq-label">Equation 1.6 — SiLU / Swish (the basis of every modern LLM's activation)</div>
+    \[ \text{SiLU}(z) = z \cdot \sigma(z) = \frac{z}{1+e^{-z}} \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\sigma(z)\)</dt><dd>The sigmoid function from Equation&nbsp;1.4.</dd>
+      <dt>\(\text{SiLU}(z)\)</dt><dd>Also written \(\text{Swish}(z)\) — a smooth curve that behaves like ReLU for large positive \(z\) (passes the value through) but, unlike ReLU, dips slightly negative for small negative \(z\) instead of flattening to exactly zero. This small change has been found to noticeably improve training, and is the building block of the <strong>SwiGLU</strong> function used by Llama, DeepSeek, Qwen, and most other modern models — see Chapter&nbsp;7.</dd>
+    </dl>
+  </div>
+
+  <div class="note">
+    <div class="note-title">Why bother with a shaping function at all?</div>
+    <p>
+      If every neuron only ever computed \(z = \mathbf{w}^\top\mathbf{x}+b\) with no activation
+      function, then stacking layers would be mathematically pointless — a chain of weighted
+      sums is still just one big weighted sum, no matter how many layers you stack. The
+      non-linear activation function is what lets each additional layer learn something
+      genuinely new, which is what makes "deep" learning <em>deep</em>.
+    </p>
+  </div>
+</section>
+
+<section class="chapter" id="ch02">
+  <span class="num">Chapter 02</span>
+  <h2>Stacking Neurons Into Networks</h2>
+  <p class="dek">Layers, fully-connected weight matrices, and where the word "parameters" comes from.</p>
+
+  <p>
+    A single neuron can only separate data with one straight line — useful for very simple
+    yes/no problems, but not enough to recognise a face or write a sentence. The fix, discovered
+    in the 1980s, is simple: connect many neurons together in <strong>layers</strong>. The
+    outputs of one layer become the inputs to the next. A network built this way — where every
+    neuron in a layer connects to <em>every</em> neuron in the previous layer — is called a
+    <strong>fully connected network</strong> or <strong>Multi-Layer Perceptron (MLP)</strong>.
+  </p>
+
+  <figure class="diagram">
+    <svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mlpTitle">
+      <title id="mlpTitle">A 2-3-1 fully connected network: two input neurons, three hidden neurons, and one output neuron, with every neuron in one layer connected to every neuron in the next.</title>
+      <defs>
+        <marker id="arrowInk2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#1B2A4A"/>
+        </marker>
+      </defs>
+      <!-- W(1) connections: inputs (x=120) to hidden (x=380) -->
+      <g stroke="#1C7C7C" stroke-linecap="round">
+        <line x1="120" y1="110" x2="380" y2="60"  stroke-width="3"/>
+        <line x1="120" y1="110" x2="380" y2="180" stroke-width="1.5" stroke-opacity="0.5"/>
+        <line x1="120" y1="110" x2="380" y2="300" stroke-width="2.2"/>
+        <line x1="120" y1="250" x2="380" y2="60"  stroke-width="1.5" stroke-opacity="0.5"/>
+        <line x1="120" y1="250" x2="380" y2="180" stroke-width="3"/>
+        <line x1="120" y1="250" x2="380" y2="300" stroke-width="1.5" stroke-opacity="0.5"/>
+      </g>
+      <!-- W(2) connections: hidden (x=380) to output (x=640) -->
+      <g stroke="#D9622B" stroke-linecap="round">
+        <line x1="380" y1="60"  x2="640" y2="180" stroke-width="2.6"/>
+        <line x1="380" y1="180" x2="640" y2="180" stroke-width="3.4"/>
+        <line x1="380" y1="300" x2="640" y2="180" stroke-width="1.4" stroke-opacity="0.55"/>
+      </g>
+      <!-- input nodes -->
+      <circle cx="120" cy="110" r="22" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2.5"/>
+      <text x="120" y="116" text-anchor="middle" font-family="IBM Plex Mono" font-size="16" fill="#1B2A4A">x₁</text>
+      <circle cx="120" cy="250" r="22" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2.5"/>
+      <text x="120" y="256" text-anchor="middle" font-family="IBM Plex Mono" font-size="16" fill="#1B2A4A">x₂</text>
+      <text x="120" y="40" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#8089A2">input layer</text>
+
+      <!-- hidden nodes -->
+      <circle cx="380" cy="60"  r="22" fill="#E6F2F1" stroke="#1C7C7C" stroke-width="2.5"/>
+      <text x="380" y="66" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" fill="#1C7C7C">a₁</text>
+      <circle cx="380" cy="180" r="22" fill="#E6F2F1" stroke="#1C7C7C" stroke-width="2.5"/>
+      <text x="380" y="186" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" fill="#1C7C7C">a₂</text>
+      <circle cx="380" cy="300" r="22" fill="#E6F2F1" stroke="#1C7C7C" stroke-width="2.5"/>
+      <text x="380" y="306" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" fill="#1C7C7C">a₃</text>
+      <text x="380" y="345" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#8089A2">hidden layer  ·  a⁽¹⁾</text>
+
+      <!-- output node -->
+      <circle cx="640" cy="180" r="24" fill="#1B2A4A"/>
+      <text x="640" y="187" text-anchor="middle" font-family="IBM Plex Mono" font-size="16" fill="#FAF7F1">ŷ</text>
+      <text x="640" y="230" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#8089A2">output  ·  a⁽²⁾</text>
+
+      <!-- labels for weight matrices -->
+      <rect x="218" y="158" width="62" height="26" rx="6" fill="#E6F2F1"/>
+      <text x="249" y="176" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" fill="#1C7C7C">W⁽¹⁾</text>
+      <rect x="478" y="158" width="62" height="26" rx="6" fill="#FBEAE0"/>
+      <text x="509" y="176" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" fill="#D9622B">W⁽²⁾</text>
+    </svg>
+    <figcaption>
+      Figure 2.1 — A 2→3→1 fully connected network. Every connection (line) carries its own weight.
+      The teal lines form the weight matrix \(\mathbf{W}^{(1)}\) (shape \(3\times2\): 3 hidden neurons,
+      each receiving 2 inputs). The amber lines form \(\mathbf{W}^{(2)}\) (shape \(1\times3\)).
+    </figcaption>
+  </figure>
+
+  <div class="eq">
+    <div class="eq-label">Equation 2.1 — One layer of a fully connected network</div>
+    \[ \mathbf{a}^{(l)} = f\!\left(\mathbf{W}^{(l)}\mathbf{a}^{(l-1)} + \mathbf{b}^{(l)}\right), \qquad \mathbf{a}^{(0)} = \mathbf{x} \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(l\)</dt><dd>The layer number, counting from the input (\(l=0\)) toward the output.</dd>
+      <dt>\(\mathbf{a}^{(l-1)}\)</dt><dd>The vector of activations (outputs) from the <em>previous</em> layer — a list of \(n_{l-1}\) numbers. For the very first layer, this is just the raw input \(\mathbf{x}\).</dd>
+      <dt>\(\mathbf{W}^{(l)}\)</dt><dd>The <strong>weight matrix</strong> for layer \(l\) — a grid of numbers with \(n_l\) rows (one per neuron in this layer) and \(n_{l-1}\) columns (one per input coming from the previous layer). The entry \(W^{(l)}_{ij}\) is the single weight on the connection from neuron \(j\) in layer \(l\!-\!1\) to neuron \(i\) in layer \(l\) — exactly one teal or amber line in Figure&nbsp;2.1.</dd>
+      <dt>\(\mathbf{b}^{(l)}\)</dt><dd>The bias vector for layer \(l\) — one bias number per neuron in this layer.</dd>
+      <dt>\(f(\cdot)\)</dt><dd>The activation function from Chapter&nbsp;1, applied to every entry of the vector independently (so each neuron in the layer fires on its own).</dd>
+      <dt>\(\mathbf{a}^{(l)}\)</dt><dd>The output of this layer — \(n_l\) numbers, which become the input to layer \(l\!+\!1\), and so on until the final layer produces the network's prediction, often written \(\hat{\mathbf{y}}\).</dd>
+    </dl>
+  </div>
+
+  <h3>Where "parameters" comes from</h3>
+  <p>
+    Every entry of every \(\mathbf{W}^{(l)}\) and every \(\mathbf{b}^{(l)}\) — across every layer
+    — is one adjustable number. Collectively, all of these numbers are called the
+    <strong>parameters</strong> of the network, and "weights" is often used loosely to mean
+    "all the parameters," even though strictly the biases are a separate (much smaller) group.
+    A single fully connected layer going from \(n_{l-1}\) neurons to \(n_l\) neurons contains
+    \(n_l \times n_{l-1}\) weights plus \(n_l\) biases. When people say a model "has 70 billion
+    parameters," they mean: if you printed out every single one of these numbers from every
+    \(\mathbf{W}\) and \(\mathbf{b}\) in the entire network and counted them, you would count
+    70 billion. That is genuinely all the phrase means — there is no extra hidden complexity.
+  </p>
+
+  <h3>Worked example: a full forward pass through Figure 2.1</h3>
+  <p>
+    Let the input be \(\mathbf{x}=(1,\ 0.5)\). Suppose training has produced these values
+    (small, arbitrary numbers for illustration):
+  </p>
+  <div class="eq">
+    <div class="eq-label">Numbers for this example</div>
+    \[
+    \mathbf{W}^{(1)} = \begin{pmatrix} 0.4 & -0.2 \\ 0.1 & 0.3 \\ -0.5 & 0.6 \end{pmatrix},\quad
+    \mathbf{b}^{(1)} = \begin{pmatrix} 0.1 \\ 0 \\ -0.1 \end{pmatrix},\quad
+    \mathbf{W}^{(2)} = \begin{pmatrix} 0.5 & -1.0 & 0.2 \end{pmatrix},\quad
+    b^{(2)} = 0.05
+    \]
+  </div>
+  <p class="tight">Step 1 — apply Equation&nbsp;2.1 for the hidden layer, using ReLU (Equation&nbsp;1.5):</p>
+  <div class="eq">
+    \[
+    \mathbf{z}^{(1)} = \mathbf{W}^{(1)}\mathbf{x}+\mathbf{b}^{(1)} =
+    \begin{pmatrix} (0.4)(1)+(-0.2)(0.5)+0.1 \\ (0.1)(1)+(0.3)(0.5)+0 \\ (-0.5)(1)+(0.6)(0.5)-0.1 \end{pmatrix}
+    = \begin{pmatrix} 0.4 \\ 0.25 \\ -0.3 \end{pmatrix}
+    \;\;\Rightarrow\;\;
+    \mathbf{a}^{(1)} = \text{ReLU}(\mathbf{z}^{(1)}) = \begin{pmatrix} 0.4 \\ 0.25 \\ 0 \end{pmatrix}
+    \]
+  </div>
+  <p class="tight">Step 2 — apply Equation&nbsp;2.1 again for the output layer, using sigmoid (Equation&nbsp;1.4):</p>
+  <div class="eq">
+    \[
+    z^{(2)} = \mathbf{W}^{(2)}\mathbf{a}^{(1)}+b^{(2)} = (0.5)(0.4)+(-1.0)(0.25)+(0.2)(0)+0.05 = 0.0
+    \;\;\Rightarrow\;\;
+    \hat{y} = \sigma(0) = 0.5
+    \]
+  </div>
+  <p>
+    Every step here was a direct application of Equations&nbsp;1.1, 1.2/1.5, and 2.1 — there is
+    no missing step. Note the third hidden neuron (\(a_3\)) computed a negative pre-activation
+    (\(-0.3\)) and ReLU zeroed it out entirely; that neuron simply didn't "fire" for this
+    particular input, which is exactly the kind of conditional, non-linear behaviour a single
+    weighted sum could never produce on its own.
+  </p>
+</section>
+
+<section class="chapter" id="ch03">
+  <span class="num">Chapter 03</span>
+  <h2>How Networks Learn: Loss &amp; Gradient Descent</h2>
+  <p class="dek">Where the numbers in every weight matrix actually come from.</p>
+
+  <p>
+    When a network is first created, every weight and bias is set to a small random number.
+    Fed an input, it produces a more or less random output. <strong>Training</strong> is the
+    repeated process of measuring how wrong that output is, and nudging every single weight and
+    bias — sometimes billions of them — very slightly in the direction that makes it a little
+    less wrong. Do this enough times, on enough examples, and the random numbers slowly settle
+    into the values that let the network do something useful. This chapter covers the three
+    ingredients of that process: the <strong>loss function</strong> (how wrong?), the
+    <strong>gradient</strong> (which direction is "less wrong"?), and the
+    <strong>optimizer</strong> (how big a step to take?).
+  </p>
+
+  <h3>The loss function: turning "wrong" into a number</h3>
+  <p>
+    A loss function compares the network's prediction \(\hat{\mathbf{y}}\) to the true answer
+    \(\mathbf{y}\) and outputs a single number: 0 if the prediction was perfect, and larger the
+    more wrong it was. The specific loss function used to train essentially every modern
+    language model — including every model discussed in Chapter&nbsp;10 — is
+    <strong>cross-entropy loss</strong>, because the task is always the same underlying problem:
+    "given the text so far, predict a probability for every possible next word (or word-piece)."
+  </p>
+
+  <div class="eq">
+    <div class="eq-label">Equation 3.1 — Cross-entropy loss (the loss behind every LLM)</div>
+    \[ L = -\sum_{i=1}^{V} y_i \log(\hat{y}_i) \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(V\)</dt><dd>The size of the vocabulary — the total number of possible tokens (word-pieces) the model can output. For modern LLMs this is commonly in the range of 100,000–250,000.</dd>
+      <dt>\(\hat{y}_i\)</dt><dd>The probability the model assigned to token \(i\) being the correct next token (a number between 0 and 1, and all \(\hat{y}_i\) values sum to 1 — this comes from the softmax function, Equation&nbsp;6.2).</dd>
+      <dt>\(y_i\)</dt><dd>The "ground truth" — 1 for the token that actually came next in the real training text, and 0 for every other token in the vocabulary.</dd>
+      <dt>Why \(\log\)?</dt><dd>Because \(y_i\) is 1 for exactly one token and 0 for all others, the sum collapses to just \(-\log(\hat{y}_{\text{correct}})\). If the model assigned the correct token a probability near 1, \(\log\) is near 0 → tiny loss. If it assigned the correct token a probability near 0, \(\log\) shoots toward \(-\infty\) → huge loss. This is exactly the "punish confident wrong answers much more than uncertain ones" behaviour you want.</dd>
+    </dl>
+  </div>
+
+  <h3>The gradient: which way is downhill?</h3>
+  <p>
+    Imagine the loss as a vast, hilly landscape, where the "location" is the entire set of
+    weights and the "altitude" is the loss \(L\). Training a model is hiking down this landscape
+    in fog, trying to reach the lowest point. The <strong>gradient</strong> of the loss with
+    respect to a weight, written \(\frac{\partial L}{\partial w}\), tells you the slope of the
+    ground right under that one weight's "dial" — if you turn the dial up slightly, does the
+    loss go up or down, and how fast?
+  </p>
+
+  <figure class="diagram">
+    <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="gdTitle">
+      <title id="gdTitle">A loss curve shaped like a valley, with a ball rolling down the slope toward the minimum, following the negative gradient direction.</title>
+      <!-- axes -->
+      <line x1="60" y1="240" x2="720" y2="240" stroke="#8089A2" stroke-width="1.5"/>
+      <line x1="60" y1="240" x2="60" y2="30" stroke="#8089A2" stroke-width="1.5"/>
+      <text x="730" y="245" font-family="IBM Plex Mono" font-size="13" fill="#8089A2">weight  w</text>
+      <text x="20" y="35" font-family="IBM Plex Mono" font-size="13" fill="#8089A2">loss  L</text>
+      <!-- valley curve -->
+      <path d="M 90 60 C 240 230, 360 250, 430 250 C 500 250, 620 220, 700 70" fill="none" stroke="#1C7C7C" stroke-width="3.5"/>
+      <!-- tangent line at ball -->
+      <line x1="190" y1="80" x2="380" y2="205" stroke="#D9622B" stroke-width="2" stroke-dasharray="5 5"/>
+      <!-- ball -->
+      <circle cx="240" cy="140" r="14" fill="#1B2A4A"/>
+      <!-- arrow showing step direction -->
+      <path d="M 240 140 L 300 178" stroke="#D9622B" stroke-width="3" fill="none" marker-end="url(#arrowAmber)"/>
+      <text x="300" y="170" font-family="IBM Plex Mono" font-size="12" fill="#D9622B">−η·∂L/∂w</text>
+      <!-- minimum marker -->
+      <circle cx="430" cy="250" r="5" fill="#1C7C7C"/>
+      <text x="400" y="272" font-family="IBM Plex Mono" font-size="12" fill="#1C7C7C">minimum loss</text>
+      <text x="170" y="60" font-family="IBM Plex Mono" font-size="12" fill="#46506B">current weight value</text>
+    </svg>
+    <figcaption>
+      Figure 3.1 — Gradient descent. The dashed line shows the slope (gradient) at the current
+      weight. The weight is updated by stepping a small distance in the <em>opposite</em>
+      direction of that slope — downhill — so the loss decreases.
+    </figcaption>
+  </figure>
+
+  <div class="eq">
+    <div class="eq-label">Equation 3.2 — Gradient descent update rule</div>
+    \[ w \;\leftarrow\; w - \eta \,\frac{\partial L}{\partial w} \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(w\)</dt><dd>Any single weight (or bias) in the network — this update is applied to <em>every</em> parameter, separately, after every training step.</dd>
+      <dt>\(\leftarrow\)</dt><dd>"Gets replaced by" — the new value of \(w\) is the old value, minus a small adjustment.</dd>
+      <dt>\(\eta\)</dt><dd>The <strong>learning rate</strong> (eta) — a small positive number (e.g. 0.0001) chosen before training that controls the step size. Too large, and training overshoots and becomes unstable; too small, and training takes forever.</dd>
+      <dt>\(\frac{\partial L}{\partial w}\)</dt><dd>The <strong>gradient</strong> — how much the loss \(L\) would change for a tiny increase in \(w\). A positive gradient means increasing \(w\) increases the loss, so we subtract it (move \(w\) down); a negative gradient means the opposite, so subtracting a negative number increases \(w\).</dd>
+    </dl>
+  </div>
+
+  <h3>Backpropagation: computing every gradient efficiently</h3>
+  <p>
+    A modern LLM has billions of weights spread across hundreds of layers. Computing
+    \(\frac{\partial L}{\partial w}\) for every single one might sound impossibly slow — but
+    there's an elegant shortcut called <strong>backpropagation</strong>, which is just a careful,
+    systematic application of the <em>chain rule</em> from calculus: the gradient for a weight
+    deep inside the network can be computed from the gradient of the layer just after it,
+    multiplied by a local factor. This means gradients can be computed for an entire network in
+    a single backward sweep, layer by layer, from the output back to the input.
+  </p>
+
+  <div class="eq">
+    <div class="eq-label">Equation 3.3 — Backpropagation: the error signal at each layer</div>
+    \[ \boldsymbol{\delta}^{(l)} = \left(\left(\mathbf{W}^{(l+1)}\right)^{\top}\boldsymbol{\delta}^{(l+1)}\right) \odot f'\!\left(\mathbf{z}^{(l)}\right) \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\boldsymbol{\delta}^{(l)}\)</dt><dd>The "error signal" for layer \(l\) — one number per neuron in that layer, representing how much that neuron's pre-activation \(z\) contributed to the final loss.</dd>
+      <dt>\(\left(\mathbf{W}^{(l+1)}\right)^{\top}\)</dt><dd>The transpose (rows and columns swapped) of the <em>next</em> layer's weight matrix — this routes the error signal backward along the same connections it travelled forward on.</dd>
+      <dt>\(\boldsymbol{\delta}^{(l+1)}\)</dt><dd>The error signal already computed for the next layer — this is why the computation proceeds <em>backward</em>, from the output layer toward the input layer.</dd>
+      <dt>\(f'(\mathbf{z}^{(l)})\)</dt><dd>The derivative (instantaneous slope) of the activation function, evaluated at this layer's pre-activation values — it scales the error by how sensitive this neuron's output was to its input.</dd>
+      <dt>\(\odot\)</dt><dd>Element-by-element multiplication (Hadamard product): multiply each entry of the left vector by the corresponding entry of the right vector.</dd>
+    </dl>
+  </div>
+
+  <div class="eq">
+    <div class="eq-label">Equation 3.4 — Backpropagation: the gradient for each weight and bias</div>
+    \[ \frac{\partial L}{\partial \mathbf{W}^{(l)}} = \boldsymbol{\delta}^{(l)} \left(\mathbf{a}^{(l-1)}\right)^{\top}, \qquad \frac{\partial L}{\partial \mathbf{b}^{(l)}} = \boldsymbol{\delta}^{(l)} \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\boldsymbol{\delta}^{(l)}\left(\mathbf{a}^{(l-1)}\right)^{\top}\)</dt><dd>The <em>outer product</em> of this layer's error signal with the previous layer's activations — the result is a matrix the same shape as \(\mathbf{W}^{(l)}\), giving exactly one gradient value per weight, ready to be plugged into Equation&nbsp;3.2.</dd>
+      <dt>\(\frac{\partial L}{\partial \mathbf{b}^{(l)}}\)</dt><dd>The bias gradients are simply the error signal itself — no multiplication needed, since a bias doesn't depend on the previous layer's activations.</dd>
+    </dl>
+  </div>
+
+  <h3>Adam: the optimizer that actually trains every LLM in this report</h3>
+  <p>
+    In practice, no large model is trained with plain gradient descent (Equation&nbsp;3.2). They
+    use <strong>Adam</strong> (or its common variant <strong>AdamW</strong>) — an optimizer that
+    keeps a running memory of recent gradients (<em>momentum</em>) and automatically adapts the
+    step size for each individual weight. Every model named in Chapter&nbsp;10 — DeepSeek, Llama,
+    Qwen, Nemotron, and (based on their published research practices) GPT, Gemini, and Claude —
+    is trained with this family of optimizer.
+  </p>
+
+  <div class="eq">
+    <div class="eq-label">Equation 3.5 — Adam optimizer update (applied to every parameter, every step)</div>
+    \[
+    \begin{aligned}
+    \mathbf{m}_t &= \beta_1 \mathbf{m}_{t-1} + (1-\beta_1)\,\mathbf{g}_t \\
+    \mathbf{v}_t &= \beta_2 \mathbf{v}_{t-1} + (1-\beta_2)\,\mathbf{g}_t^2 \\
+    \hat{\mathbf{m}}_t &= \mathbf{m}_t / (1-\beta_1^t), \qquad \hat{\mathbf{v}}_t = \mathbf{v}_t / (1-\beta_2^t) \\
+    \boldsymbol{\theta}_t &= \boldsymbol{\theta}_{t-1} - \eta \cdot \frac{\hat{\mathbf{m}}_t}{\sqrt{\hat{\mathbf{v}}_t}+\epsilon}
+    \end{aligned}
+    \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\boldsymbol{\theta}_t\)</dt><dd>The full set of parameters (every weight and bias, all stacked together) after training step \(t\) — this generalises the single weight \(w\) from Equation&nbsp;3.2 to the whole model at once.</dd>
+      <dt>\(\mathbf{g}_t\)</dt><dd>The gradient of the loss with respect to \(\boldsymbol{\theta}\) at step \(t\), computed by backpropagation (Equations&nbsp;3.3–3.4).</dd>
+      <dt>\(\mathbf{m}_t\)</dt><dd>The running average of past gradients ("momentum") — smooths out noisy, jittery gradients so training moves more steadily.</dd>
+      <dt>\(\mathbf{v}_t\)</dt><dd>The running average of past <em>squared</em> gradients — tracks how large recent gradients have typically been, so each parameter gets its own adaptive step size.</dd>
+      <dt>\(\beta_1,\beta_2\)</dt><dd>Decay rates controlling how much weight is given to the past vs. the present (commonly \(\beta_1=0.9\), \(\beta_2=0.999\)).</dd>
+      <dt>\(\hat{\mathbf{m}}_t, \hat{\mathbf{v}}_t\)</dt><dd>"Bias-corrected" versions of \(\mathbf{m}_t, \mathbf{v}_t\) — a small correction so the early training steps (when the running averages start at zero) aren't artificially too small.</dd>
+      <dt>\(\epsilon\)</dt><dd>A tiny constant (e.g. \(10^{-8}\)) to prevent division by zero.</dd>
+      <dt>\(\eta\)</dt><dd>The learning rate, same role as in Equation&nbsp;3.2.</dd>
+    </dl>
+  </div>
+
+  <div class="note">
+    <div class="note-title">The training loop, end to end</div>
+    <p>
+      Take a batch of text → run it forward through every equation in Chapters&nbsp;1–2 (or, for
+      a Transformer, Chapters&nbsp;5–8) to get predictions → compute the loss with
+      Equation&nbsp;3.1 → run backpropagation (Equations&nbsp;3.3–3.4) to get a gradient for
+      every parameter → update every parameter with Adam (Equation&nbsp;3.5) → repeat, often
+      <strong>trillions</strong> of times, on <strong>trillions</strong> of words of text. The
+      final values left in every \(\mathbf{W}\) and \(\mathbf{b}\) after this process finishes
+      are "the weights" that get published (for open models) or kept private (for closed models)
+      and used to answer your questions.
+    </p>
+  </div>
+</section>
+
+<section class="chapter" id="ch04">
+  <span class="num">Chapter 04</span>
+  <h2>Why Transformers? From RNNs to Attention</h2>
+  <p class="dek">The architectural leap that made today's LLMs possible — and the map for the rest of this report.</p>
+
+  <p>
+    The MLP from Chapter&nbsp;2 takes a fixed-size input and produces a fixed-size output. But
+    language is a <em>sequence</em> of variable length, where every word's meaning depends on
+    words that came both before and after it. Before 2017, the standard approach was the
+    <strong>Recurrent Neural Network (RNN)</strong> and its variant the
+    <strong>LSTM</strong> — these read a sentence one word at a time, carrying a "memory" vector
+    forward from each step to the next. This worked, but had two serious problems: it was
+    inherently <em>sequential</em> (word 50 couldn't be processed until word 49 was done,
+    making it slow on modern parallel hardware), and the memory vector tended to "forget"
+    information from far earlier in long sequences.
+  </p>
+
+  <p>
+    In 2017, a paper titled <em>"Attention Is All You Need"</em> introduced the
+    <strong>Transformer</strong>, which solved both problems with one idea: instead of passing
+    information step-by-step through a memory vector, let <em>every</em> word look directly at
+    <em>every other</em> word in the sequence, all at once, weighting how much attention to pay
+    to each one. This mechanism — <strong>self-attention</strong> — is the single most important
+    equation in this entire report, and Chapter&nbsp;6 is dedicated to it.
+  </p>
+
+  <p>
+    Almost every model in Chapter&nbsp;10 — GPT, Claude, Gemini, Llama, DeepSeek, Qwen, Nemotron —
+    uses a <strong>decoder-only</strong> Transformer: a single stack of identical blocks that
+    reads tokens from left to right and, at each position, predicts a probability distribution
+    over what the <em>next</em> token should be (using the cross-entropy loss from
+    Equation&nbsp;3.1). Generating text means repeatedly: predict the next token, append it,
+    feed the longer sequence back in, and predict again — this is called
+    <strong>autoregressive generation</strong>. The maximum number of tokens the model can look
+    at simultaneously is its <strong>context window</strong> — a number you'll see quoted for
+    every model in Chapter&nbsp;10 (e.g. "1 million tokens").
+  </p>
+
+  <figure class="diagram">
+    <svg viewBox="0 0 760 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="overviewTitle">
+      <title id="overviewTitle">The overall pipeline of a decoder-only Transformer: tokens become embeddings plus positional information, pass through N stacked Transformer blocks each containing multi-head attention and a feed-forward network with residual connections and normalization, then a final normalization and linear layer produce probabilities over the vocabulary via softmax.</title>
+      <defs>
+        <marker id="arrowDown" viewBox="0 0 10 10" refX="5" refY="9" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,0 L5,10 z" fill="#1B2A4A"/>
+        </marker>
+      </defs>
+      <!-- tokens -->
+      <g font-family="IBM Plex Mono" font-size="14" fill="#1B2A4A">
+        <rect x="230" y="14" width="60" height="32" rx="6" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2"/>
+        <text x="260" y="35" text-anchor="middle">The</text>
+        <rect x="300" y="14" width="60" height="32" rx="6" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2"/>
+        <text x="330" y="35" text-anchor="middle">cat</text>
+        <rect x="370" y="14" width="60" height="32" rx="6" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2"/>
+        <text x="400" y="35" text-anchor="middle">sat</text>
+        <rect x="440" y="14" width="60" height="32" rx="6" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2"/>
+        <text x="470" y="35" text-anchor="middle">...</text>
+      </g>
+      <line x1="380" y1="50" x2="380" y2="72" stroke="#1B2A4A" stroke-width="2.5" marker-end="url(#arrowDown)"/>
+
+      <!-- embedding box -->
+      <rect x="180" y="78" width="400" height="44" rx="8" fill="#E6F2F1" stroke="#1C7C7C" stroke-width="2"/>
+      <text x="380" y="105" text-anchor="middle" font-family="Fraunces" font-size="17" fill="#1C7C7C">Token + Positional Embeddings</text>
+      <text x="600" y="105" font-family="IBM Plex Mono" font-size="12" fill="#1C7C7C">Ch.05</text>
+      <line x1="380" y1="122" x2="380" y2="148" stroke="#1B2A4A" stroke-width="2.5" marker-end="url(#arrowDown)"/>
+
+      <!-- transformer block container -->
+      <rect x="120" y="154" width="520" height="200" rx="12" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2.5" stroke-dasharray="0"/>
+      <text x="380" y="178" text-anchor="middle" font-family="Fraunces" font-size="16" fill="#1B2A4A">Transformer Block  ×N layers</text>
+
+      <!-- attention sub box -->
+      <rect x="150" y="194" width="460" height="58" rx="8" fill="#FBEAE0" stroke="#D9622B" stroke-width="2"/>
+      <text x="380" y="217" text-anchor="middle" font-family="Fraunces" font-size="15" fill="#D9622B">Multi-Head Self-Attention</text>
+      <text x="380" y="237" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="#8089A2">+ residual connection · Add &amp; Norm  —  Ch.06 / Ch.07</text>
+      <line x1="380" y1="252" x2="380" y2="270" stroke="#1B2A4A" stroke-width="2.5" marker-end="url(#arrowDown)"/>
+
+      <!-- ffn sub box -->
+      <rect x="150" y="278" width="460" height="58" rx="8" fill="#E6F2F1" stroke="#1C7C7C" stroke-width="2"/>
+      <text x="380" y="301" text-anchor="middle" font-family="Fraunces" font-size="15" fill="#1C7C7C">Feed-Forward Network (SwiGLU)</text>
+      <text x="380" y="321" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="#8089A2">+ residual connection · Add &amp; Norm  —  Ch.07</text>
+
+      <line x1="380" y1="354" x2="380" y2="378" stroke="#1B2A4A" stroke-width="2.5" marker-end="url(#arrowDown)"/>
+
+      <!-- output -->
+      <rect x="180" y="384" width="400" height="44" rx="8" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2.5"/>
+      <text x="380" y="411" text-anchor="middle" font-family="Fraunces" font-size="16" fill="#1B2A4A">Final Norm → Linear → Softmax</text>
+      <text x="380" y="450" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#8089A2">probability over every possible next token  —  Ch.08</text>
+    </svg>
+    <figcaption>
+      Figure 4.1 — The map for the rest of this report. Every box here gets its own complete
+      equation in the chapter noted. By the end of Chapter&nbsp;08, you will be able to trace a
+      sentence through this entire diagram by hand.
+    </figcaption>
+  </figure>
+</section>
+
+<section class="chapter" id="ch05">
+  <span class="num">Chapter 05</span>
+  <h2>Tokens, Embeddings &amp; Position</h2>
+  <p class="dek">Turning words into numbers — and giving those numbers a sense of order.</p>
+
+  <p>
+    A neural network only understands numbers, so the first job of any Transformer is to turn
+    text into numbers. This happens in two steps: <strong>tokenization</strong> chops the text
+    into small pieces (often sub-words — "Transformers" might become "Transform" + "ers"), and
+    each unique piece is assigned a fixed integer ID from a fixed-size <strong>vocabulary</strong>
+    (the \(V\) from Equation&nbsp;3.1). The model never sees the letters "c", "a", "t" — it sees
+    a number, say, "4271".
+  </p>
+
+  <h3>The embedding matrix: the model's first weight table</h3>
+  <p>
+    A raw integer ID carries no useful information about meaning. So the very first learned
+    component of every Transformer is an <strong>embedding matrix</strong> — a giant lookup
+    table where row \(i\) is a vector of \(d_{\text{model}}\) numbers representing token \(i\).
+    These numbers are <em>weights</em>, exactly like the weights in Chapter&nbsp;2 — they start
+    random and are trained by backpropagation, and by the end of training, tokens with similar
+    meanings end up with similar vectors.
+  </p>
+
+  <div class="eq">
+    <div class="eq-label">Equation 5.1 — The embedding lookup</div>
+    \[ \mathbf{x} = \mathbf{E}[\text{id}, :] \in \mathbb{R}^{d_{\text{model}}} \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\mathbf{E}\)</dt><dd>The embedding matrix, shape \(V \times d_{\text{model}}\) — \(V\) rows (one per vocabulary token) by \(d_{\text{model}}\) columns.</dd>
+      <dt>\(d_{\text{model}}\)</dt><dd>The "width" of the model — the size of the vector used to represent every token everywhere in the network. Common values range from a few hundred (tiny models) to over 7,000 (DeepSeek-V3, Chapter&nbsp;10).</dd>
+      <dt>\(\text{id}\)</dt><dd>The integer index of the current token in the vocabulary.</dd>
+      <dt>\(\mathbf{E}[\text{id}, :]\)</dt><dd>"Row \(\text{id}\) of matrix \(\mathbf{E}\)" — simply selecting one entire row, which becomes the vector \(\mathbf{x}\) that flows into Figure&nbsp;4.1.</dd>
+    </dl>
+  </div>
+
+  <figure class="diagram">
+    <svg viewBox="0 0 760 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="embedTitle">
+      <title id="embedTitle">A token ID selects one row of the embedding matrix, which becomes that token's vector representation.</title>
+      <!-- matrix grid -->
+      <g>
+        <rect x="60" y="20" width="240" height="190" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2"/>
+        <!-- highlighted row -->
+        <rect x="60" y="104" width="240" height="20" fill="#FBEAE0"/>
+        <!-- gridlines -->
+        <g stroke="#DED7C8" stroke-width="1">
+          <line x1="60" y1="44" x2="300" y2="44"/>
+          <line x1="60" y1="64" x2="300" y2="64"/>
+          <line x1="60" y1="84" x2="300" y2="84"/>
+          <line x1="60" y1="104" x2="300" y2="104"/>
+          <line x1="60" y1="124" x2="300" y2="124"/>
+          <line x1="60" y1="144" x2="300" y2="144"/>
+          <line x1="60" y1="164" x2="300" y2="164"/>
+          <line x1="60" y1="184" x2="300" y2="184"/>
+          <line x1="120" y1="20" x2="120" y2="210"/>
+          <line x1="180" y1="20" x2="180" y2="210"/>
+          <line x1="240" y1="20" x2="240" y2="210"/>
+        </g>
+        <text x="180" y="226" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#8089A2">Embedding matrix  E  ·  V rows × d_model cols</text>
+        <text x="40" y="118" text-anchor="end" font-family="IBM Plex Mono" font-size="12" fill="#D9622B">id=4271 →</text>
+      </g>
+      <!-- arrow -->
+      <line x1="300" y1="114" x2="420" y2="114" stroke="#D9622B" stroke-width="2.5" marker-end="url(#arrowAmber)"/>
+      <!-- result vector -->
+      <g>
+        <rect x="430" y="94" width="280" height="40" fill="#FBEAE0" stroke="#D9622B" stroke-width="2" rx="6"/>
+        <g stroke="#F2C8AE" stroke-width="1">
+          <line x1="500" y1="94" x2="500" y2="134"/>
+          <line x1="570" y1="94" x2="570" y2="134"/>
+          <line x1="640" y1="94" x2="640" y2="134"/>
+        </g>
+        <text x="570" y="158" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#8089A2">token vector  x  ·  d_model numbers</text>
+      </g>
+    </svg>
+    <figcaption>
+      Figure 5.1 — Embedding lookup. The token's ID picks out one row of the learned embedding
+      matrix \(\mathbf{E}\); that row's \(d_{\text{model}}\) numbers <em>are</em> the token's
+      starting representation, and they are weights tuned by training just like everything
+      else in this report.
+    </figcaption>
+  </figure>
+
+  <h3>Why position needs its own equation</h3>
+  <p>
+    Equation&nbsp;6.1 (next chapter) treats the input as a <em>set</em> of vectors — without
+    extra information, "the cat sat on the mat" and "the mat sat on the cat" would look
+    identical to the attention mechanism, because it has no built-in notion of order. Every
+    Transformer therefore adds a <strong>positional encoding</strong> that injects "this is
+    token number 0 / 1 / 2 / …" into the calculation. Two schemes matter for this report.
+  </p>
+
+  <div class="eq">
+    <div class="eq-label">Equation 5.2 — Sinusoidal positional encoding (the original 2017 scheme)</div>
+    \[
+    PE_{(pos,\,2i)} = \sin\!\left(\frac{pos}{10000^{\,2i/d_{\text{model}}}}\right), \qquad
+    PE_{(pos,\,2i+1)} = \cos\!\left(\frac{pos}{10000^{\,2i/d_{\text{model}}}}\right)
+    \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(pos\)</dt><dd>The position of the token in the sequence: 0 for the first token, 1 for the second, and so on.</dd>
+      <dt>\(i\)</dt><dd>An index over pairs of dimensions in the embedding (so \(2i\) and \(2i{+}1\) are an even/odd pair of coordinates).</dd>
+      <dt>\(10000\)</dt><dd>A fixed constant ("base") chosen so that different dimensions oscillate at very different frequencies — some change quickly from token to token, others change very slowly across the whole sequence.</dd>
+      <dt>Result</dt><dd>A vector \(\mathbf{PE}_{pos}\) of the same size as the token embedding, which is simply <em>added</em> to it: \(\mathbf{x}' = \mathbf{x} + \mathbf{PE}_{pos}\), before the result enters the first Transformer block.</dd>
+    </dl>
+  </div>
+
+  <div class="eq amber">
+    <div class="eq-label">Equation 5.3 — RoPE: Rotary Position Embedding (used by virtually every model in Chapter 10)</div>
+    \[
+    R(m\theta_j) = \begin{pmatrix} \cos(m\theta_j) & -\sin(m\theta_j) \\ \sin(m\theta_j) & \cos(m\theta_j) \end{pmatrix},
+    \qquad \theta_j = \text{base}^{-2j/d}
+    \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(m\)</dt><dd>The position of the token (same role as \(pos\) above).</dd>
+      <dt>\(j\)</dt><dd>Which 2-dimensional pair of coordinates within the query/key vector this rotation applies to (the full vector is split into \(d/2\) such pairs, each with its own \(\theta_j\)).</dd>
+      <dt>\(\theta_j\)</dt><dd>The rotation "speed" for pair \(j\) — \(\text{base}\) is a large constant (commonly 10,000, just like Equation&nbsp;5.2). Low-\(j\) pairs rotate quickly per position; high-\(j\) pairs rotate very slowly.</dd>
+      <dt>\(R(m\theta_j)\)</dt><dd>A standard 2D rotation matrix — multiplying a 2D vector by this matrix simply spins it by the angle \(m\theta_j\), without changing its length.</dd>
+      <dt>How it's used</dt><dd>Unlike Equation&nbsp;5.2, RoPE is <em>not</em> added to the embedding. Instead, right before the attention calculation in Chapter&nbsp;6, every Query and Key vector is <em>rotated</em> by an angle proportional to its position. Two tokens 5 positions apart end up with a relative rotation of exactly \(5\theta_j\) between their Query and Key — so the attention score in Equation&nbsp;6.1 naturally depends on <em>how far apart</em> two tokens are, not just their raw content.</dd>
+    </dl>
+  </div>
+
+  <figure class="diagram">
+    <svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ropeTitle">
+      <title id="ropeTitle">RoPE rotates a 2D query or key vector by an angle proportional to the token's position in the sequence.</title>
+      <g transform="translate(190,140)">
+        <line x1="-150" y1="0" x2="150" y2="0" stroke="#DED7C8" stroke-width="1.5"/>
+        <line x1="0" y1="120" x2="0" y2="-120" stroke="#DED7C8" stroke-width="1.5"/>
+        <line x1="0" y1="0" x2="120" y2="0" stroke="#1B2A4A" stroke-width="3" marker-end="url(#arrowInk)"/>
+        <text x="100" y="-12" font-family="IBM Plex Mono" font-size="13" fill="#1B2A4A">vector at position m=0</text>
+        <text x="-40" y="150" text-anchor="middle" font-family="Fraunces" font-size="15" fill="#46506B">Token at position 0</text>
+      </g>
+      <g transform="translate(570,140)">
+        <line x1="-150" y1="0" x2="150" y2="0" stroke="#DED7C8" stroke-width="1.5"/>
+        <line x1="0" y1="120" x2="0" y2="-120" stroke="#DED7C8" stroke-width="1.5"/>
+        <line x1="0" y1="0" x2="98" y2="-70" stroke="#D9622B" stroke-width="3" marker-end="url(#arrowAmber)"/>
+        <path d="M 40 0 A 40 40 0 0 0 28 -28" fill="none" stroke="#1C7C7C" stroke-width="2"/>
+        <text x="56" y="-16" font-family="IBM Plex Mono" font-size="13" fill="#1C7C7C">mθⱼ</text>
+        <text x="40" y="-80" font-family="IBM Plex Mono" font-size="13" fill="#D9622B">same vector, rotated by 5θⱼ</text>
+        <text x="-40" y="150" text-anchor="middle" font-family="Fraunces" font-size="15" fill="#46506B">Same content, position 5</text>
+      </g>
+    </svg>
+    <figcaption>
+      Figure 5.2 — RoPE in one picture. The same Query/Key vector, for the same word, is rotated
+      by a position-dependent angle before the attention dot product — so attention scores
+      automatically encode relative distance.
+    </figcaption>
+  </figure>
+</section>
+
+<section class="chapter" id="ch06">
+  <span class="num">Chapter 06</span>
+  <h2>Self-Attention: the Heart of the Transformer</h2>
+  <p class="dek">The equation that lets every word look directly at every other word.</p>
+
+  <h3>Queries, Keys, and Values</h3>
+  <p>
+    For every token, the Transformer computes three different vectors from its current
+    representation \(\mathbf{x}\), using three more learned weight matrices:
+  </p>
+  <div class="eq">
+    <div class="eq-label">Equation 6.0 — Query, Key, and Value projections</div>
+    \[ \mathbf{Q} = \mathbf{X}\mathbf{W}_Q, \qquad \mathbf{K} = \mathbf{X}\mathbf{W}_K, \qquad \mathbf{V} = \mathbf{X}\mathbf{W}_V \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\mathbf{X}\)</dt><dd>A matrix stacking the (position-aware) vectors for every token in the sequence — one row per token.</dd>
+      <dt>\(\mathbf{W}_Q,\mathbf{W}_K,\mathbf{W}_V\)</dt><dd>Three separate learned weight matrices — exactly like \(\mathbf{W}^{(l)}\) from Chapter&nbsp;2, just with new names. These are the parameters that get trained so that "Query," "Key," and "Value" each capture something useful.</dd>
+      <dt>\(\mathbf{Q}\) (Query)</dt><dd>"What is this token looking for?" — think of it as the question each token asks of the rest of the sequence.</dd>
+      <dt>\(\mathbf{K}\) (Key)</dt><dd>"What does this token have to offer?" — a label that other tokens' queries are compared against.</dd>
+      <dt>\(\mathbf{V}\) (Value)</dt><dd>"What information does this token actually contain?" — the content that gets passed along <em>if</em> it's deemed relevant.</dd>
+    </dl>
+  </div>
+
+  <h3>Scaled dot-product attention</h3>
+  <p>
+    Attention works by comparing every token's Query against every token's Key. A high
+    similarity (a large dot product) means "this token is relevant to me" — and the more
+    relevant a token is, the more of its Value gets mixed into the output.
+  </p>
+
+  <div class="eq amber">
+    <div class="eq-label">Equation 6.1 — Scaled dot-product (self-)attention</div>
+    \[ \text{Attention}(\mathbf{Q},\mathbf{K},\mathbf{V}) = \text{softmax}\!\left(\frac{\mathbf{Q}\mathbf{K}^{\top}}{\sqrt{d_k}}\right)\mathbf{V} \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\mathbf{Q}\mathbf{K}^{\top}\)</dt><dd>A matrix of raw similarity scores — entry \((i,j)\) is the dot product of token \(i\)'s Query with token \(j\)'s Key: "how much does token \(i\) care about token \(j\)?"</dd>
+      <dt>\(d_k\)</dt><dd>The dimensionality of each Query/Key vector. Dividing by \(\sqrt{d_k}\) keeps the scores from growing too large as \(d_k\) increases, which keeps training stable (this is the entire reason for the word "scaled" in the name).</dd>
+      <dt>\(\text{softmax}\)</dt><dd>Defined in Equation&nbsp;6.2 below — turns each row of raw scores into a set of positive numbers that sum to 1, i.e. a probability distribution over "which other tokens to pay attention to."</dd>
+      <dt>\(\mathbf{V}\)</dt><dd>The Value matrix from Equation&nbsp;6.0.</dd>
+      <dt>Result</dt><dd>For each token, a new vector that is a <em>weighted average</em> of every token's Value vector — weighted by how much attention that token decided to pay to each other token.</dd>
+    </dl>
+  </div>
+
+  <div class="eq">
+    <div class="eq-label">Equation 6.2 — Softmax</div>
+    \[ \text{softmax}(\mathbf{z})_i = \frac{e^{z_i}}{\sum_{j} e^{z_j}} \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\mathbf{z}\)</dt><dd>Any vector of raw numbers (here, one row of attention scores; in Equation&nbsp;3.1, the model's final output scores over the vocabulary).</dd>
+      <dt>\(e^{z_i}\)</dt><dd>Exponentiating makes every value positive, and amplifies differences — a slightly larger score becomes a <em>much</em> larger exponentiated value.</dd>
+      <dt>\(\sum_j e^{z_j}\)</dt><dd>The sum of all exponentiated values — dividing by this total ensures every output is between 0 and 1 and the whole row sums to exactly 1, i.e. a valid probability distribution.</dd>
+    </dl>
+  </div>
+
+  <h3>A tiny worked example: attention with two tokens</h3>
+  <p>
+    Suppose, after Equation&nbsp;6.0, token&nbsp;1 has produced the query
+    \(\mathbf{q}_1=(1,0)\), and the two tokens have keys \(\mathbf{k}_1=(1,0)\),
+    \(\mathbf{k}_2=(0,1)\) and values \(\mathbf{v}_1=(1,2)\), \(\mathbf{v}_2=(3,4)\), with
+    \(d_k=2\) so \(\sqrt{d_k}\approx1.414\). Let's compute token 1's new representation:
+  </p>
+  <p class="tight">Step 1 — raw scores (\(\mathbf{q}_1\cdot\mathbf{k}_j\)), then scale by \(\sqrt{d_k}\):</p>
+  <div class="eq">
+    \[ \frac{\mathbf{q}_1\cdot\mathbf{k}_1}{\sqrt{d_k}} = \frac{(1)(1)+(0)(0)}{1.414} \approx 0.707, \qquad \frac{\mathbf{q}_1\cdot\mathbf{k}_2}{\sqrt{d_k}} = \frac{(1)(0)+(0)(1)}{1.414} = 0 \]
+  </div>
+  <p class="tight">Step 2 — apply softmax (Equation&nbsp;6.2) to \((0.707,\ 0)\):</p>
+  <div class="eq">
+    \[ \text{softmax}(0.707,\ 0) = \left(\frac{e^{0.707}}{e^{0.707}+e^{0}},\ \frac{e^{0}}{e^{0.707}+e^{0}}\right) \approx (0.670,\ 0.330) \]
+  </div>
+  <p class="tight">Step 3 — use these as weights to blend the Value vectors:</p>
+  <div class="eq">
+    \[ \text{output}_1 = 0.670\,\mathbf{v}_1 + 0.330\,\mathbf{v}_2 = 0.670(1,2)+0.330(3,4) \approx (1.66,\ 2.66) \]
+  </div>
+  <p>
+    Token&nbsp;1 ended up paying about <strong>67% attention to itself</strong> and
+    <strong>33% to token&nbsp;2</strong>, and its new vector is exactly that weighted blend of
+    their Value vectors. Scale this same calculation up to thousands of tokens and hundreds of
+    dimensions, and you have the core operation that every Transformer in this report performs,
+    over and over, at every layer.
+  </p>
+
+  <h3>Multi-head attention: running this several times in parallel</h3>
+  <p>
+    A single attention calculation can only learn one "kind" of relationship at a time. So
+    every Transformer layer instead runs several smaller attention calculations side-by-side —
+    called <strong>heads</strong> — each with its <em>own</em> \(\mathbf{W}_Q,\mathbf{W}_K,\mathbf{W}_V\),
+    free to specialise (one head might learn to track grammatical subjects, another might track
+    "which pronoun refers to which noun"). Their outputs are then stitched back together.
+  </p>
+
+  <div class="eq">
+    <div class="eq-label">Equation 6.3 — Multi-head attention</div>
+    \[
+    \text{MultiHead}(\mathbf{Q},\mathbf{K},\mathbf{V}) = \text{Concat}(\text{head}_1,\dots,\text{head}_h)\,\mathbf{W}^{O}, \qquad
+    \text{head}_i = \text{Attention}(\mathbf{Q}\mathbf{W}_i^{Q},\,\mathbf{K}\mathbf{W}_i^{K},\,\mathbf{V}\mathbf{W}_i^{V})
+    \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(h\)</dt><dd>The number of attention heads — a fixed design choice (Chapter&nbsp;10 lists the actual value for each model, e.g. 128 for DeepSeek-V3).</dd>
+      <dt>\(\mathbf{W}_i^{Q},\mathbf{W}_i^{K},\mathbf{W}_i^{V}\)</dt><dd>Each head's own, smaller projection matrices — applied to the shared \(\mathbf{Q},\mathbf{K},\mathbf{V}\) from Equation&nbsp;6.0 to give that head its own "view." Typically each head works in a smaller dimension \(d_k = d_{\text{model}}/h\), so the total compute stays roughly the same as one big head.</dd>
+      <dt>\(\text{head}_i\)</dt><dd>The output of Equation&nbsp;6.1, computed independently for head \(i\).</dd>
+      <dt>\(\text{Concat}(\cdot)\)</dt><dd>Stick all \(h\) heads' output vectors side-by-side into one long vector, back to size \(d_{\text{model}}\).</dd>
+      <dt>\(\mathbf{W}^{O}\)</dt><dd>One final learned weight matrix that mixes the concatenated heads back into a single combined output — the result that flows into the "Add &amp; Norm" step of Figure&nbsp;4.1.</dd>
+    </dl>
+  </div>
+
+  <div class="note warn">
+    <div class="note-title">One more detail: causal masking</div>
+    <p>
+      Because decoder-only models (Chapter&nbsp;4) predict the <em>next</em> token, a token must
+      never be allowed to "peek" at tokens that come after it — that would be cheating. Before
+      the softmax in Equation&nbsp;6.1, every score \((\mathbf{Q}\mathbf{K}^{\top})_{ij}\) where
+      \(j>i\) (a future token) is set to \(-\infty\). Since \(e^{-\infty}=0\), softmax assigns
+      these positions exactly zero attention — token \(i\) can only attend to itself and tokens
+      before it. This is called a <strong>causal mask</strong>.
+    </p>
+  </div>
+</section>
+
+<section class="chapter" id="ch07">
+  <span class="num">Chapter 07</span>
+  <h2>Normalization, Residuals &amp; the Feed-Forward Block</h2>
+  <p class="dek">The "plumbing" that lets a Transformer be hundreds of layers deep without breaking.</p>
+
+  <h3>Residual connections: a shortcut around every sub-layer</h3>
+  <p>
+    Stacking dozens or hundreds of layers (Figure&nbsp;4.1's "×N") creates a practical problem:
+    during backpropagation (Equation&nbsp;3.3), the error signal has to travel back through
+    every single layer, and it can shrink to almost nothing by the time it reaches the early
+    layers — a problem known as <em>vanishing gradients</em>. The fix is strikingly simple: add
+    the input of a sub-layer directly to its output, creating a "shortcut" that gradients can
+    flow through unimpeded.
+  </p>
+
+  <div class="eq">
+    <div class="eq-label">Equation 7.1 — Residual (skip) connection</div>
+    \[ \mathbf{h}' = \mathbf{h} + \text{Sublayer}(\mathbf{h}) \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\mathbf{h}\)</dt><dd>The vector(s) entering a sub-layer (either the Multi-Head Attention block or the Feed-Forward block from Figure&nbsp;4.1).</dd>
+      <dt>\(\text{Sublayer}(\cdot)\)</dt><dd>Whatever that block computes — Equation&nbsp;6.3 for attention, or Equation&nbsp;7.4 below for the feed-forward network.</dd>
+      <dt>\(\mathbf{h}'\)</dt><dd>The output — the <em>original</em> input, plus whatever the sub-layer "decided to change." Early in training, when the sub-layer's output is near zero, \(\mathbf{h}'\approx\mathbf{h}\) — information passes through unchanged by default, and the network only has to learn useful <em>modifications</em>.</dd>
+    </dl>
+  </div>
+
+  <h3>Normalization: keeping numbers in a healthy range</h3>
+  <p>
+    As vectors flow through dozens of layers, their values can drift to extreme magnitudes,
+    destabilising training. <strong>Normalization</strong> rescales a vector back to a
+    consistent range before it's used. The original 2017 Transformer used
+    <strong>LayerNorm</strong>; almost every model in Chapter&nbsp;10 (Llama, DeepSeek, Qwen,
+    Nemotron, and — per their public architecture descriptions — Gemini) instead uses the
+    simpler, cheaper <strong>RMSNorm</strong>.
+  </p>
+
+  <div class="eq">
+    <div class="eq-label">Equation 7.2 — Layer Normalization (LayerNorm)</div>
+    \[ \text{LayerNorm}(\mathbf{x}) = \frac{\mathbf{x}-\mu}{\sqrt{\sigma^2+\epsilon}} \odot \boldsymbol{\gamma} + \boldsymbol{\beta} \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\mu, \sigma^2\)</dt><dd>The mean and variance of all the numbers <em>within</em> a single vector \(\mathbf{x}\) (e.g., across all \(d_{\text{model}}\) entries for one token) — computed fresh for every token, every layer.</dd>
+      <dt>\(\frac{\mathbf{x}-\mu}{\sqrt{\sigma^2+\epsilon}}\)</dt><dd>Subtract the mean and divide by the standard deviation — the classic "standardisation" formula, giving a vector with mean 0 and variance 1.</dd>
+      <dt>\(\boldsymbol{\gamma}, \boldsymbol{\beta}\)</dt><dd>Two more learned weight vectors (a rescale and a shift) — these let the network "undo" the standardisation if that turns out to be useful, while still keeping training stable.</dd>
+      <dt>\(\epsilon\)</dt><dd>A tiny constant preventing division by zero, same role as in Equation&nbsp;3.5.</dd>
+    </dl>
+  </div>
+
+  <div class="eq amber">
+    <div class="eq-label">Equation 7.3 — RMSNorm (Root Mean Square Normalization)</div>
+    \[ \text{RMSNorm}(\mathbf{x}) = \frac{\mathbf{x}}{\sqrt{\dfrac{1}{d}\sum_{i=1}^{d} x_i^2 + \epsilon}} \odot \boldsymbol{\gamma} \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\sqrt{\dfrac{1}{d}\sum_i x_i^2}\)</dt><dd>The <em>root mean square</em> of the vector's entries — a measure of its overall size, without first centring it (no mean-subtraction step).</dd>
+      <dt>\(d\)</dt><dd>The number of entries in \(\mathbf{x}\) (e.g. \(d_{\text{model}}\)).</dd>
+      <dt>\(\boldsymbol{\gamma}\)</dt><dd>A learned rescaling vector (RMSNorm drops LayerNorm's \(\boldsymbol{\beta}\) shift entirely).</dd>
+      <dt>Why bother changing it?</dt><dd>RMSNorm removes the mean-and-variance computation, needing fewer operations per token. Across a model with hundreds of layers and trillions of training tokens, this adds up to a meaningful reduction in training cost with little to no quality loss — which is why it became the default.</dd>
+    </dl>
+  </div>
+
+  <h3>Pre-norm: where exactly does normalization go?</h3>
+  <p>
+    The original Transformer normalized <em>after</em> adding the residual ("post-norm"):
+    \(\text{LayerNorm}(\mathbf{h}+\text{Sublayer}(\mathbf{h}))\). Virtually every model in
+    Chapter&nbsp;10 instead uses <strong>pre-norm</strong> — normalizing the input to the
+    sub-layer, while keeping the residual connection itself completely "clean":
+  </p>
+  <div class="eq">
+    <div class="eq-label">Equation 7.4 — Pre-norm residual block (the modern standard)</div>
+    \[ \mathbf{h}' = \mathbf{h} + \text{Sublayer}\big(\text{RMSNorm}(\mathbf{h})\big) \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>Why this ordering?</dt><dd>The residual "shortcut" (Equation&nbsp;7.1) carries \(\mathbf{h}\) forward completely untouched — normalization only affects the <em>copy</em> that goes into the sub-layer. This keeps the gradient shortcut as direct as possible, which in practice makes very deep stacks (Figure&nbsp;4.1's "×N", where N can exceed 60) much easier to train without the loss spiking or diverging.</dd>
+    </dl>
+  </div>
+
+  <figure class="diagram">
+    <svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="resTitle">
+      <title id="resTitle">A pre-norm residual block: the input splits into a residual path that bypasses the sub-layer entirely, and a normalized path that goes through RMSNorm and the sub-layer, before the two are added back together.</title>
+      <!-- input -->
+      <circle cx="380" cy="26" r="6" fill="#1B2A4A"/>
+      <text x="400" y="32" font-family="IBM Plex Mono" font-size="13" fill="#1B2A4A">h</text>
+      <!-- split lines -->
+      <line x1="380" y1="26" x2="160" y2="26" stroke="#1B2A4A" stroke-width="2.5"/>
+      <line x1="380" y1="26" x2="600" y2="26" stroke="#1B2A4A" stroke-width="2.5"/>
+      <!-- residual (left) path straight down -->
+      <line x1="160" y1="26" x2="160" y2="240" stroke="#8089A2" stroke-width="2.5" stroke-dasharray="6 5"/>
+      <text x="100" y="140" font-family="IBM Plex Mono" font-size="12" fill="#8089A2" text-anchor="middle" transform="rotate(-90 100 140)">residual path</text>
+      <!-- right path through RMSNorm + Sublayer -->
+      <line x1="600" y1="26" x2="600" y2="70" stroke="#1C7C7C" stroke-width="2.5" marker-end="url(#arrowTeal)"/>
+      <rect x="510" y="76" width="180" height="48" rx="8" fill="#E6F2F1" stroke="#1C7C7C" stroke-width="2"/>
+      <text x="600" y="106" text-anchor="middle" font-family="IBM Plex Mono" font-size="14" fill="#1C7C7C">RMSNorm</text>
+      <line x1="600" y1="124" x2="600" y2="150" stroke="#D9622B" stroke-width="2.5" marker-end="url(#arrowAmber)"/>
+      <rect x="490" y="156" width="220" height="48" rx="8" fill="#FBEAE0" stroke="#D9622B" stroke-width="2"/>
+      <text x="600" y="186" text-anchor="middle" font-family="IBM Plex Mono" font-size="14" fill="#D9622B">Sublayer(·)</text>
+      <line x1="600" y1="204" x2="600" y2="222" stroke="#1B2A4A" stroke-width="2.5" marker-end="url(#arrowInk)"/>
+      <!-- sum -->
+      <circle cx="380" cy="240" r="20" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2.5"/>
+      <text x="380" y="247" text-anchor="middle" font-family="Fraunces" font-size="20" fill="#1B2A4A">+</text>
+      <line x1="600" y1="222" x2="400" y2="240" stroke="#1B2A4A" stroke-width="2.5"/>
+      <line x1="160" y1="240" x2="360" y2="240" stroke="#1B2A4A" stroke-width="2.5"/>
+      <!-- output -->
+      <line x1="380" y1="260" x2="380" y2="284" stroke="#1B2A4A" stroke-width="2.5" marker-end="url(#arrowInk)"/>
+      <text x="400" y="294" font-family="IBM Plex Mono" font-size="13" fill="#1B2A4A">h′</text>
+    </svg>
+    <figcaption>
+      Figure 7.1 — A pre-norm residual block (Equation&nbsp;7.4). The dashed line is the
+      uninterrupted residual path; the solid path normalizes, runs the sub-layer, then the two
+      are added back together.
+    </figcaption>
+  </figure>
+
+  <h3>The feed-forward network: where most of a model's "memory" lives</h3>
+  <p>
+    After attention lets tokens exchange information, each token is processed
+    <em>independently</em> by a small two-layer MLP (exactly the structure from
+    Chapter&nbsp;2!) that expands its vector to a larger size, applies a non-linearity, and
+    projects it back down. The original Transformer used a plain ReLU MLP:
+  </p>
+  <div class="eq">
+    <div class="eq-label">Equation 7.5 — Original feed-forward network (ReLU)</div>
+    \[ \text{FFN}(\mathbf{x}) = \max(0,\ \mathbf{x}\mathbf{W}_1+\mathbf{b}_1)\,\mathbf{W}_2+\mathbf{b}_2 \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\mathbf{W}_1\)</dt><dd>Expands \(\mathbf{x}\) from \(d_{\text{model}}\) up to a larger "inner" dimension \(d_{ff}\) (commonly \(d_{ff}=4\times d_{\text{model}}\)).</dd>
+      <dt>\(\max(0,\cdot)\)</dt><dd>ReLU (Equation&nbsp;1.5), applied element-wise.</dd>
+      <dt>\(\mathbf{W}_2\)</dt><dd>Projects back down from \(d_{ff}\) to \(d_{\text{model}}\), so the result can be added back via Equation&nbsp;7.1.</dd>
+    </dl>
+  </div>
+
+  <p>
+    Every modern model in Chapter&nbsp;10 instead uses a <strong>gated</strong> variant built
+    from SiLU (Equation&nbsp;1.6), called <strong>SwiGLU</strong>:
+  </p>
+  <div class="eq amber">
+    <div class="eq-label">Equation 7.6 — SwiGLU feed-forward network (Llama, DeepSeek, Qwen, Nemotron, and more)</div>
+    \[ \text{FFN}_{\text{SwiGLU}}(\mathbf{x}) = \Big(\text{SiLU}(\mathbf{x}\mathbf{W}_1) \odot (\mathbf{x}\mathbf{W}_3)\Big)\mathbf{W}_2 \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\mathbf{W}_1, \mathbf{W}_3\)</dt><dd>Two <em>separate</em> learned matrices, each projecting \(\mathbf{x}\) from \(d_{\text{model}}\) up to \(d_{ff}\) — twice as many "expansion" weights as Equation&nbsp;7.5.</dd>
+      <dt>\(\text{SiLU}(\mathbf{x}\mathbf{W}_1)\)</dt><dd>The "gate" — for every one of the \(d_{ff}\) values, this produces a number that controls how much of the corresponding value from \(\mathbf{x}\mathbf{W}_3\) is allowed through.</dd>
+      <dt>\(\odot\)</dt><dd>Element-wise multiplication (as in Equation&nbsp;3.3) — the gate and the value streams are combined position-by-position.</dd>
+      <dt>\(\mathbf{W}_2\)</dt><dd>Projects the gated result back down from \(d_{ff}\) to \(d_{\text{model}}\), same role as in Equation&nbsp;7.5.</dd>
+      <dt>Intuition</dt><dd>Think of \(\mathbf{x}\mathbf{W}_3\) as "candidate information" and \(\text{SiLU}(\mathbf{x}\mathbf{W}_1)\) as a learned "volume knob" deciding, value-by-value, how much of that candidate information should actually pass through — a more expressive, smoothly-trainable version of ReLU's all-or-nothing cutoff.</dd>
+    </dl>
+  </div>
+</section>
+
+<section class="chapter" id="ch08">
+  <span class="num">Chapter 08</span>
+  <h2>The Full Transformer Block &amp; How Weights Are Trained</h2>
+  <p class="dek">Assembling every equation so far into one model — and the three-stage process that fills in every number.</p>
+
+  <h3>The complete Transformer block, in two equations</h3>
+  <p>
+    Combine Equation&nbsp;7.4 (pre-norm residual) with Equation&nbsp;6.3 (attention) and
+    Equation&nbsp;7.6 (feed-forward), and one full "layer" of every model in Chapter&nbsp;10 is
+    exactly these two lines:
+  </p>
+  <div class="eq amber">
+    <div class="eq-label">Equation 8.1 — One complete Transformer block</div>
+    \[
+    \begin{aligned}
+    \mathbf{h}' &= \mathbf{h} + \text{MultiHead}\big(\text{RMSNorm}(\mathbf{h})\big) \\
+    \mathbf{h}'' &= \mathbf{h}' + \text{FFN}_{\text{SwiGLU}}\big(\text{RMSNorm}(\mathbf{h}')\big)
+    \end{aligned}
+    \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\mathbf{h}\)</dt><dd>The input to this layer — for the very first layer, this is the token embeddings plus positional information from Chapter&nbsp;5; for every later layer, it's \(\mathbf{h}''\) from the layer before.</dd>
+      <dt>Line 1</dt><dd>The attention sub-block from Figure&nbsp;4.1: normalize, run multi-head self-attention (Equation&nbsp;6.3, with RoPE applied inside it per Equation&nbsp;5.3, and the causal mask applied), add back the residual.</dd>
+      <dt>Line 2</dt><dd>The feed-forward sub-block from Figure&nbsp;4.1: normalize the result of line 1, run it through the SwiGLU MLP (Equation&nbsp;7.6), add back the residual.</dd>
+      <dt>\(\mathbf{h}''\)</dt><dd>The output of this layer, which becomes \(\mathbf{h}\) for the next layer. Repeat this block \(N\) times (Figure&nbsp;4.1's "×N") — \(N\) is the model's <strong>number of layers</strong>, a number you'll see for every model in Chapter&nbsp;10.</dd>
+    </dl>
+  </div>
+
+  <h3>From the last layer to a prediction</h3>
+  <p>
+    After the final (\(N\)-th) block, one more normalization is applied, and the resulting
+    vector for each token is multiplied by an <strong>unembedding matrix</strong> to produce one
+    raw score per vocabulary word — which softmax (Equation&nbsp;6.2) turns into the probability
+    distribution that Equation&nbsp;3.1's loss compares against the true next word during
+    training.
+  </p>
+  <div class="eq">
+    <div class="eq-label">Equation 8.2 — Final prediction (next-token probabilities)</div>
+    \[ P(\text{token} = i \mid \text{context}) = \text{softmax}\big(\text{RMSNorm}(\mathbf{h}^{(N)})\,\mathbf{W}_U\big)_i \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\mathbf{h}^{(N)}\)</dt><dd>The output of the final (\(N\)-th) Transformer block (Equation&nbsp;8.1) for the current token position.</dd>
+      <dt>\(\mathbf{W}_U\)</dt><dd>The <strong>unembedding matrix</strong>, shape \(d_{\text{model}}\times V\) — projects from model-width back to one score per vocabulary token. Many models save parameters by reusing ("tying") this with the embedding matrix \(\mathbf{E}\) from Equation&nbsp;5.1, i.e. \(\mathbf{W}_U = \mathbf{E}^{\top}\).</dd>
+      <dt>\(P(\text{token}=i\mid\text{context})\)</dt><dd>The final output: a probability, between 0 and 1, that vocabulary token \(i\) is the correct next token — exactly the \(\hat{y}_i\) from Equation&nbsp;3.1.</dd>
+    </dl>
+  </div>
+
+  <div class="note">
+    <div class="note-title">Putting it all together: one sentence through the whole model</div>
+    <p>
+      Text → tokens → Equation&nbsp;5.1 (embedding lookup) → Equations&nbsp;5.2/5.3 (add
+      position) → Equation&nbsp;8.1, repeated \(N\) times (each repeat: attention lets tokens
+      exchange information, then the feed-forward network processes each token individually,
+      both wrapped in residual+norm) → Equation&nbsp;8.2 (final probability over the next
+      token). Every arrow in Figure&nbsp;4.1 is now backed by a numbered equation.
+    </p>
+  </div>
+
+  <h3>How every number gets filled in: the three-stage training pipeline</h3>
+  <p>
+    Chapter&nbsp;03 explained the <em>mechanism</em> (gradient descent + backpropagation + Adam)
+    that adjusts weights. In practice, training a model like the ones in Chapter&nbsp;10 happens
+    in three distinct stages, each using that same mechanism on different data:
+  </p>
+
+  <figure class="diagram">
+    <svg viewBox="0 0 760 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="pipeTitle">
+      <title id="pipeTitle">The three-stage training pipeline: pretraining on trillions of tokens of general text, then supervised fine-tuning on curated examples, then reinforcement learning from human or AI feedback, producing the final model weights.</title>
+      <g font-family="Fraunces" font-size="16" fill="#1B2A4A">
+        <rect x="20"  y="50" width="210" height="100" rx="10" fill="#E6F2F1" stroke="#1C7C7C" stroke-width="2.5"/>
+        <text x="125" y="90" text-anchor="middle">Pretraining</text>
+        <text x="125" y="116" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="#46506B">trillions of tokens</text>
+        <text x="125" y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="#46506B">next-token prediction</text>
+
+        <rect x="275" y="50" width="210" height="100" rx="10" fill="#FBEAE0" stroke="#D9622B" stroke-width="2.5"/>
+        <text x="380" y="90" text-anchor="middle">Supervised</text>
+        <text x="380" y="110" text-anchor="middle">Fine-Tuning</text>
+        <text x="380" y="134" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="#46506B">curated Q&amp;A / instructions</text>
+
+        <rect x="530" y="50" width="210" height="100" rx="10" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2.5"/>
+        <text x="635" y="90" text-anchor="middle">RLHF / RLAIF</text>
+        <text x="635" y="116" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="#46506B">reward model +</text>
+        <text x="635" y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="#46506B">preference optimization</text>
+      </g>
+      <line x1="230" y1="100" x2="270" y2="100" stroke="#1B2A4A" stroke-width="2.5" marker-end="url(#arrowInk)"/>
+      <line x1="485" y1="100" x2="525" y2="100" stroke="#1B2A4A" stroke-width="2.5" marker-end="url(#arrowInk)"/>
+      <text x="125" y="185" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#8089A2">→ raw "predicts text" model</text>
+      <text x="380" y="185" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#8089A2">→ follows instructions</text>
+      <text x="635" y="185" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#8089A2">→ helpful, aligned assistant</text>
+      <line x1="20" y1="215" x2="740" y2="215" stroke="#DED7C8" stroke-width="2"/>
+      <text x="380" y="232" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="#8089A2">all three stages use Equation 3.1 (loss) + Equation 3.5 (Adam) on every weight</text>
+    </svg>
+    <figcaption>
+      Figure 8.1 — From random numbers to "Claude," "GPT," or "Llama": the same gradient-descent
+      mechanism from Chapter&nbsp;03, applied across three stages of increasingly targeted data.
+      For Claude specifically, Stage&nbsp;3 uses <strong>Constitutional AI (CAI)</strong> — an
+      AI-driven RLAIF approach where responses are critiqued against a written constitution
+      before human feedback is incorporated.
+    </figcaption>
+  </figure>
+
+  <p>
+    <strong>Stage 1 — Pretraining</strong> is by far the most expensive stage, and is where the
+    overwhelming majority of a model's factual knowledge and language ability comes from: the
+    raw Equation&nbsp;8.1/8.2 pipeline is run on a huge, broad corpus of text (web pages, books,
+    code, and more — for the open models in Chapter&nbsp;10, this is measured in the tens of
+    trillions of tokens), minimizing Equation&nbsp;3.1's cross-entropy loss at every position in
+    every document simultaneously. <strong>Stage 2 — Supervised Fine-Tuning (SFT)</strong>
+    continues training, but now on a smaller, carefully curated set of example
+    conversations/instructions and ideal responses — this is what turns a model that merely
+    "continues text" into one that recognisably answers questions and follows instructions.
+    <strong>Stage 3 — RLHF / RLAIF</strong> (Reinforcement Learning from Human, or AI, Feedback)
+    further adjusts the weights using a <em>reward signal</em> — a separate model trained to
+    score how good a response is — to push the model's outputs toward being more helpful,
+    honest, and safe. Anthropic's Claude family uses a specific published variant called
+    <strong>Constitutional AI (CAI)</strong>: before human raters score responses, an AI critic
+    iteratively critiques and revises the model's own outputs against a written "constitution"
+    of principles (harmlessness, honesty, and so on). This AI-feedback loop is what makes it
+    RLAIF specifically — reducing the human annotation burden while encoding explicit values
+    into the reward signal itself. The PPO or DPO update then fine-tunes the weights toward
+    responses the reward model prefers. The numbers left in every \(\mathbf{W}\) after all three
+    stages are "the weights" referred to throughout Chapter&nbsp;10.
+  </p>
+</section>
+
+<section class="chapter" id="ch09">
+  <span class="num">Chapter 09</span>
+  <h2>Scaling Tricks Behind Today's Giants</h2>
+  <p class="dek">Five modifications to Chapters 06–08 that let models grow to hundreds of billions of weights without becoming impossibly slow.</p>
+
+  <p>
+    Everything so far describes a "vanilla" Transformer. To reach the scale of the models in
+    Chapter&nbsp;10, every one of them modifies at least one of Equations&nbsp;6.3, 7.6, or 8.1
+    in one of the following five ways. Each is a genuine equation in active use today — not a
+    simplification.
+  </p>
+
+  <h3>1. Mixture of Experts (MoE): many small FFNs instead of one giant one</h3>
+  <p>
+    Equation&nbsp;7.6's feed-forward network is, by parameter count, the largest part of a
+    Transformer block. <strong>Mixture of Experts</strong> replaces the single FFN with
+    \(N_e\) separate "expert" FFNs (each its own complete SwiGLU from Equation&nbsp;7.6, with
+    its own \(\mathbf{W}_1,\mathbf{W}_2,\mathbf{W}_3\)), plus a small <strong>router</strong>
+    network that looks at each token and decides which <em>few</em> experts should process it.
+  </p>
+  <div class="eq amber">
+    <div class="eq-label">Equation 9.1 — Mixture-of-Experts layer</div>
+    \[ \mathbf{y} = \sum_{i \,\in\, \text{TopK}(\mathbf{g}(\mathbf{x}))} g_i(\mathbf{x}) \cdot E_i(\mathbf{x}), \qquad \mathbf{g}(\mathbf{x}) = \text{softmax}(\mathbf{x}\mathbf{W}_{\text{router}}) \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(E_i(\mathbf{x})\)</dt><dd>The \(i\)-th expert — a complete FFN (Equation&nbsp;7.6) with its own weights, applied to token \(\mathbf{x}\).</dd>
+      <dt>\(\mathbf{W}_{\text{router}}\)</dt><dd>A small learned weight matrix, shape \(d_{\text{model}}\times N_e\), producing one score per expert.</dd>
+      <dt>\(\mathbf{g}(\mathbf{x})\)</dt><dd>Softmax (Equation&nbsp;6.2) over the router's scores — a probability-like weight for every expert.</dd>
+      <dt>\(\text{TopK}(\cdot)\)</dt><dd>Keep only the \(k\) experts with the highest \(g_i(\mathbf{x})\) (commonly \(k\) is somewhere between 1 and 10) — every other expert does <em>zero</em> work for this token.</dd>
+      <dt>\(\mathbf{y}\)</dt><dd>A weighted sum of just those \(k\) experts' outputs — this is what flows into Equation&nbsp;8.1's second line.</dd>
+    </dl>
+  </div>
+  <p>
+    This is the single most important idea behind the "total vs. active parameters" numbers
+    you'll see throughout Chapter&nbsp;10. <strong>Total parameters</strong> = every weight in
+    every expert, added up (this is the number that determines file size on disk).
+    <strong>Active parameters</strong> = only the weights actually used to process one token —
+    the \(k\) selected experts (plus any "shared experts" that are always active for every
+    token, used by several models in Chapter&nbsp;10) and the rest of the model (attention,
+    embeddings, etc.). A model can be enormous on disk while being relatively cheap to run,
+    because most of it sits idle for any given token.
+  </p>
+
+  <figure class="diagram">
+    <svg viewBox="0 0 760 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="moeTitle">
+      <title id="moeTitle">A token enters a router, which activates only 2 of 8 expert feed-forward networks; their outputs are combined into the final result, while the unselected experts do no work.</title>
+      <circle cx="80" cy="140" r="22" fill="#1B2A4A"/>
+      <text x="80" y="146" text-anchor="middle" font-family="IBM Plex Mono" font-size="14" fill="#FAF7F1">x</text>
+      <line x1="102" y1="140" x2="170" y2="140" stroke="#1B2A4A" stroke-width="2.5" marker-end="url(#arrowInk)"/>
+      <rect x="176" y="108" width="110" height="64" rx="8" fill="#FFFFFF" stroke="#1B2A4A" stroke-width="2.5"/>
+      <text x="231" y="135" text-anchor="middle" font-family="Fraunces" font-size="15" fill="#1B2A4A">Router</text>
+      <text x="231" y="155" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#8089A2">softmax + Top-k</text>
+
+      <!-- 8 experts in a row -->
+      <g font-family="IBM Plex Mono" font-size="12">
+        <!-- inactive experts -->
+        <rect x="370" y="20"  width="76" height="46" rx="6" fill="#FFFFFF" stroke="#DED7C8" stroke-width="2"/>
+        <text x="408" y="48" text-anchor="middle" fill="#8089A2">E1</text>
+        <rect x="370" y="74"  width="76" height="46" rx="6" fill="#FFFFFF" stroke="#DED7C8" stroke-width="2"/>
+        <text x="408" y="102" text-anchor="middle" fill="#8089A2">E2</text>
+        <!-- active expert -->
+        <rect x="370" y="128" width="76" height="46" rx="6" fill="#FBEAE0" stroke="#D9622B" stroke-width="2.5"/>
+        <text x="408" y="156" text-anchor="middle" fill="#D9622B">E3 ✓</text>
+        <rect x="370" y="182" width="76" height="46" rx="6" fill="#FFFFFF" stroke="#DED7C8" stroke-width="2"/>
+        <text x="408" y="210" text-anchor="middle" fill="#8089A2">E4</text>
+        <rect x="370" y="236" width="76" height="34" rx="6" fill="#FFFFFF" stroke="#DED7C8" stroke-width="2"/>
+        <text x="408" y="258" text-anchor="middle" fill="#8089A2">… E_Ne</text>
+
+        <rect x="466" y="20"  width="76" height="46" rx="6" fill="#FFFFFF" stroke="#DED7C8" stroke-width="2"/>
+        <text x="504" y="48" text-anchor="middle" fill="#8089A2">E5</text>
+        <rect x="466" y="74" width="76" height="46" rx="6" fill="#FBEAE0" stroke="#D9622B" stroke-width="2.5"/>
+        <text x="504" y="102" text-anchor="middle" fill="#D9622B">E6 ✓</text>
+        <rect x="466" y="128" width="76" height="46" rx="6" fill="#FFFFFF" stroke="#DED7C8" stroke-width="2"/>
+        <text x="504" y="156" text-anchor="middle" fill="#8089A2">E7</text>
+        <rect x="466" y="182" width="76" height="46" rx="6" fill="#FFFFFF" stroke="#DED7C8" stroke-width="2"/>
+        <text x="504" y="210" text-anchor="middle" fill="#8089A2">E8</text>
+      </g>
+      <text x="455" y="0" font-family="Fraunces" font-size="0"></text>
+      <text x="455" y="-2" font-family="Fraunces" font-size="0"></text>
+      <text x="455" y="295" text-anchor="middle" font-family="Fraunces" font-size="15" fill="#1B2A4A" transform="translate(0,-15)">8 experts, e.g. k=2 active per token</text>
+
+      <line x1="287" y1="140" x2="360" y2="151" stroke="#1B2A4A" stroke-width="2" marker-end="url(#arrowInk)"/>
+      <line x1="287" y1="140" x2="360" y2="97" stroke="#1B2A4A" stroke-width="2" marker-end="url(#arrowInk)"/>
+
+      <!-- outputs to sum -->
+      <line x1="446" y1="151" x2="660" y2="155" stroke="#D9622B" stroke-width="2.5" marker-end="url(#arrowAmber)"/>
+      <line x1="542" y1="97"  x2="660" y2="135" stroke="#D9622B" stroke-width="2.5" marker-end="url(#arrowAmber)"/>
+      <circle cx="690" cy="145" r="22" fill="#FBEAE0" stroke="#D9622B" stroke-width="2.5"/>
+      <text x="690" y="153" text-anchor="middle" font-family="Fraunces" font-size="22" fill="#D9622B">&#8721;</text>
+      <text x="690" y="200" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#8089A2">y</text>
+    </svg>
+    <figcaption>
+      Figure 9.1 — A Mixture-of-Experts layer (Equation&nbsp;9.1). Only the experts chosen by the
+      router do any work for this token; everything else is skipped entirely.
+    </figcaption>
+  </figure>
+
+  <h3>2. Grouped-Query Attention (GQA): cheaper memory during generation</h3>
+  <p>
+    During autoregressive generation (Chapter&nbsp;04), a model must keep every previous
+    token's Key and Value vectors (Equation&nbsp;6.0) in memory — the <strong>KV cache</strong>
+    — so it doesn't have to recompute them. With \(h\) attention heads, that's \(h\) separate
+    K and V vectors per token, which becomes enormous for long contexts. <strong>Grouped-Query
+    Attention</strong> keeps all \(h\) Query heads, but has groups of Query heads
+    <em>share</em> a single Key/Value head.
+  </p>
+  <div class="eq">
+    <div class="eq-label">Equation 9.2 — Grouped-Query Attention</div>
+    \[ \text{head}_i = \text{Attention}\big(\mathbf{Q}\mathbf{W}_i^{Q},\ \mathbf{K}\mathbf{W}^{K}_{g(i)},\ \mathbf{V}\mathbf{W}^{V}_{g(i)}\big), \qquad g(i) = \left\lceil \frac{i \cdot G}{h} \right\rceil \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(h\)</dt><dd>The total number of Query heads (same as in Equation&nbsp;6.3).</dd>
+      <dt>\(G\)</dt><dd>The number of <em>Key/Value</em> groups, where \(G \le h\). If \(G=h\), this is standard Multi-Head Attention (each head has its own K,V). If \(G=1\), every head shares one K,V (called Multi-Query Attention). GQA picks a value in between.</dd>
+      <dt>\(g(i)\)</dt><dd>A function mapping Query head \(i\) to one of the \(G\) shared K/V groups — every Query head in the same group reuses the exact same \(\mathbf{K}\mathbf{W}^K_{g(i)}\) and \(\mathbf{V}\mathbf{W}^V_{g(i)}\).</dd>
+      <dt>Effect</dt><dd>The KV cache shrinks by a factor of \(h/G\) compared to standard Multi-Head Attention, with a much smaller quality cost than going all the way to \(G=1\).</dd>
+    </dl>
+  </div>
+
+  <h3>3. Multi-head Latent Attention (MLA): DeepSeek's KV cache compression</h3>
+  <p>
+    DeepSeek's models (Chapter&nbsp;10) go further than GQA: instead of caching full-size K and
+    V vectors for any heads at all, they compress the information needed to <em>reconstruct</em>
+    K and V into one small shared vector per token — a <strong>latent</strong> — and cache only
+    that.
+  </p>
+  <div class="eq amber">
+    <div class="eq-label">Equation 9.3 — MLA: compress, then reconstruct</div>
+    \[
+    \mathbf{c}_t^{KV} = \mathbf{W}^{DKV}\mathbf{h}_t, \qquad
+    \mathbf{k}_t^{C} = \mathbf{W}^{UK}\mathbf{c}_t^{KV}, \qquad
+    \mathbf{v}_t^{C} = \mathbf{W}^{UV}\mathbf{c}_t^{KV}
+    \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\mathbf{h}_t\)</dt><dd>The model's hidden vector for token \(t\) (size \(d_{\text{model}}\), e.g. 7168 for DeepSeek-V3).</dd>
+      <dt>\(\mathbf{W}^{DKV}\)</dt><dd>A "down-projection" matrix that compresses \(\mathbf{h}_t\) into a much smaller latent vector \(\mathbf{c}_t^{KV}\) (size \(d_c\), e.g. 512 — roughly 14× smaller than \(d_{\text{model}}\)). <strong>Only \(\mathbf{c}_t^{KV}\) is stored in the KV cache</strong>, not the full K/V.</dd>
+      <dt>\(\mathbf{W}^{UK}, \mathbf{W}^{UV}\)</dt><dd>"Up-projection" matrices that, whenever K or V are actually needed for Equation&nbsp;6.1, reconstruct them on-the-fly from the cached latent \(\mathbf{c}_t^{KV}\), expanded back out across all \(h\) attention heads.</dd>
+    </dl>
+  </div>
+  <p>
+    Because RoPE (Equation&nbsp;5.3) depends on absolute position and doesn't play well with
+    this compress/reconstruct trick, DeepSeek's models add one more small piece: a separate,
+    uncompressed, low-dimensional slice of the Query and Key (dimension \(d_h^R\), e.g. 64)
+    that <em>does</em> carry RoPE directly, concatenated onto the reconstructed
+    \(\mathbf{k}_t^C\). This is referred to as "decoupled RoPE" — the bulk of each Key vector is
+    reconstructed from the tiny cached latent, while a small dedicated slice handles position.
+  </p>
+
+  <figure class="diagram">
+    <svg viewBox="0 0 760 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mlaTitle">
+      <title id="mlaTitle">Standard attention caches a large key and value vector per token across all heads; Multi-head Latent Attention instead caches one small compressed latent vector and reconstructs the full keys and values only when needed.</title>
+      <text x="20" y="34" font-family="Fraunces" font-size="15" fill="#1B2A4A">Standard MHA cache</text>
+      <rect x="20" y="46" width="320" height="46" rx="6" fill="#FBEAE0" stroke="#D9622B" stroke-width="2"/>
+      <text x="180" y="74" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" fill="#D9622B">full K, V across all heads — large</text>
+
+      <text x="20" y="130" font-family="Fraunces" font-size="15" fill="#1B2A4A">MLA cache</text>
+      <rect x="20" y="142" width="60" height="46" rx="6" fill="#E6F2F1" stroke="#1C7C7C" stroke-width="2.5"/>
+      <text x="50" y="170" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#1C7C7C">c_t</text>
+      <line x1="84" y1="165" x2="160" y2="165" stroke="#1C7C7C" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#arrowTeal)"/>
+      <text x="120" y="155" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#1C7C7C">up-project</text>
+      <rect x="166" y="142" width="320" height="46" rx="6" fill="#FFFFFF" stroke="#1C7C7C" stroke-width="2" stroke-dasharray="3 3"/>
+      <text x="326" y="170" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" fill="#1C7C7C">K, V reconstructed on demand — not stored</text>
+
+      <text x="560" y="80" font-family="IBM Plex Mono" font-size="12" fill="#46506B" text-anchor="middle">≈ 14× smaller</text>
+      <text x="560" y="100" font-family="IBM Plex Mono" font-size="12" fill="#46506B" text-anchor="middle">cache per token</text>
+      <line x1="350" y1="69" x2="540" y2="69" stroke="#8089A2" stroke-width="1.5" stroke-dasharray="2 4"/>
+      <line x1="80" y1="165" x2="540" y2="69" stroke="#8089A2" stroke-width="1.5" stroke-dasharray="2 4"/>
+    </svg>
+    <figcaption>
+      Figure 9.2 — MLA (Equation&nbsp;9.3) shrinks the per-token memory footprint of long
+      conversations dramatically by caching one small latent vector instead of full-size keys
+      and values.
+    </figcaption>
+  </figure>
+
+  <h3>4. DeepSeek Sparse Attention (DSA): not every token needs to look at every other token</h3>
+  <p>
+    Equation&nbsp;6.1's cost grows with the <em>square</em> of the sequence length — every token
+    compares against every other token. For very long contexts, DeepSeek-V3.2 introduces a
+    lightweight <strong>lightning indexer</strong> that first scores how relevant every earlier
+    token is, then runs full attention only against the most relevant subset.
+  </p>
+  <div class="eq">
+    <div class="eq-label">Equation 9.4 — Lightning indexer relevance score</div>
+    \[ I_{t,s} = \sum_{j=1}^{H^{I}} w_{t,j}^{I} \cdot \text{ReLU}\big(\mathbf{q}_{t,j}^{I} \cdot \mathbf{k}_{s}^{I}\big) \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(I_{t,s}\)</dt><dd>The computed "relevance" of an earlier token \(s\) to the current token \(t\).</dd>
+      <dt>\(H^{I}\)</dt><dd>The number of small, separate "indexer heads" (distinct from the main attention heads).</dd>
+      <dt>\(\mathbf{q}_{t,j}^{I}, \mathbf{k}_{s}^{I}\)</dt><dd>Small query/key vectors produced specifically for the indexer (cheaper to compute than the full Equation&nbsp;6.0 projections).</dd>
+      <dt>\(w_{t,j}^{I}\)</dt><dd>A learned per-head weighting for combining the indexer heads.</dd>
+      <dt>\(\text{ReLU}(\cdot)\)</dt><dd>Equation&nbsp;1.5 — ensures only positively-relevant matches contribute.</dd>
+      <dt>How it's used</dt><dd>For each token \(t\), only the earlier tokens \(s\) with the highest \(I_{t,s}\) (e.g. the top few thousand, regardless of total context length) are passed into the full Equation&nbsp;6.1 attention — letting the model support extremely long contexts without the quadratic blow-up.</dd>
+    </dl>
+  </div>
+
+  <h3>5. Hybrid linear attention: mixing in recurrent-style layers</h3>
+  <p>
+    A final family of techniques — used by linear RNN variants (like <strong>Gated DeltaNet</strong>) and
+    hybrid state-space models (such as those built on the <strong>Mamba-2</strong> architecture) — takes
+    a different approach: instead of every layer using Equation&nbsp;6.1, most layers are
+    replaced with a <strong>linear-cost recurrent layer</strong> that maintains a
+    fixed-size "state" updated one token at a time (much like the RNNs from Chapter&nbsp;04, but
+    redesigned to be trainable in parallel and far more expressive). A smaller number of full
+    attention layers are kept and interleaved throughout the stack to preserve the ability to
+    look arbitrarily far back when needed.
+  </p>
+  <div class="eq">
+    <div class="eq-label">Equation 9.5 — The general recurrence behind this layer family (the "delta rule")</div>
+    \[ \mathbf{S}_t = \alpha_t\,\mathbf{S}_{t-1} + \beta_t\left(\mathbf{v}_t - \mathbf{S}_{t-1}\mathbf{k}_t\right)\mathbf{k}_t^{\top} \]
+  </div>
+  <div class="where">
+    <div class="where-title">What does each symbol mean?</div>
+    <dl>
+      <dt>\(\mathbf{S}_t\)</dt><dd>A matrix-valued "state" — a compact, fixed-size memory carried from token to token (its size does <em>not</em> grow with sequence length, unlike the KV cache in Equation&nbsp;9.2/9.3).</dd>
+      <dt>\(\mathbf{S}_{t-1}\mathbf{k}_t\)</dt><dd>"What the current memory would predict the value to be, given this token's key" — the gap between this prediction and the real value \(\mathbf{v}_t\) is the new information.</dd>
+      <dt>\(\beta_t\)</dt><dd>A learned, input-dependent "write strength" — how much of the new information to blend in.</dd>
+      <dt>\(\alpha_t\)</dt><dd>A learned, input-dependent "forget gate" — how much of the old state to retain (this is the "Gated" in Gated DeltaNet).</dd>
+    </dl>
+  </div>
+  <p>
+    This is presented here as the <em>general family</em> of recurrence that this class of
+    layers is built on, rather than the literal layer-by-layer specification of any single
+    model — the exact configuration (which layers are linear vs. full-attention, exact state
+    sizes, etc.) is part of each model's published architecture, discussed for modern
+    architectures in Chapter&nbsp;10.
+  </p>
+
+  <div class="note">
+    <div class="note-title">Chapter 09 summary: which models use what</div>
+    <p>
+      MoE (Equation&nbsp;9.1) is used by DeepSeek-V3, Mixtral, and Gemini. GQA (Equation&nbsp;9.2) is used by Llama&nbsp;3/3.1/3.3
+      and DeepSeek. MLA (Equation&nbsp;9.3) is DeepSeek-specific. Hybrid linear attention (Equation&nbsp;9.5's family) is
+      used by modern recurrent and state-space architectures like Mamba-2 and hybrid models. Chapter&nbsp;10 maps every one of these
+      onto real, published numbers.
+    </p>
+  </div>
+</section>
+
+<section class="chapter" id="ch10">
+  <span class="num">Chapter 10</span>
+  <h2>The Model Atlas: Real Weights, Real Transformers</h2>
+  <p class="dek">Mapping Chapters 01–09 onto eleven real models — what's published, and what isn't.</p>
+
+  <p>
+    Every model below is, structurally, the pipeline from Figure&nbsp;4.1: an embedding matrix
+    (Eq.&nbsp;5.1), positional encoding (Eq.&nbsp;5.2/5.3), \(N\) stacked Transformer blocks
+    (Eq.&nbsp;8.1) using multi-head attention (Eq.&nbsp;6.3) and a SwiGLU feed-forward network
+    (Eq.&nbsp;7.6), plus some combination of Chapter&nbsp;09's scaling tricks, trained via the
+    pipeline in Figure&nbsp;8.1. The difference between models is entirely in the
+    <em>numbers</em> plugged into those equations — how many layers, how wide, how many
+    experts, and so on — and in the actual trained values of every \(\mathbf{W}\).
+  </p>
+  <p>
+    This chapter is split into two halves. <strong>Closed models</strong> (Claude, GPT, Gemini)
+    are accessed only through an API or app; the companies that built them have not published
+    their parameter counts, layer counts, or any actual weight values — this is a deliberate
+    business and safety decision, not an oversight, and this report will not guess at numbers
+    on their behalf. <strong>Open-weight models</strong> (DeepSeek, Llama, Qwen, Nemotron)
+    publish a configuration file and a set of weight files that <em>anyone</em> can download,
+    inspect, and run — for these, the exact numbers below come directly from that published
+    configuration.
+  </p>
+
+  <h3>The Claude family (Anthropic) — Claude 3.5 Sonnet &amp; Opus</h3>
+  <div class="modelcard">
+    <div class="mc-head">
+      <h4>Claude 3.5 Sonnet &amp; Claude 3.5 Opus</h4>
+      <span class="org">Anthropic · 2024–2025</span>
+    </div>
+    <div class="specgrid">
+      <div><span class="k">Architecture</span><span class="val">Transformer <span class="pill closed">hyperparameters undisclosed</span></span></div>
+      <div><span class="k">Architecture family</span><span class="val">Decoder-only Transformer</span></div>
+      <div><span class="k">Context window</span><span class="val">200,000 tokens</span></div>
+      <div><span class="k">Max output</span><span class="val">8,192 tokens</span></div>
+      <div><span class="k">Capabilities</span><span class="val">Frontier Coding, Computer Use, Prompt Caching</span></div>
+      <div><span class="k">Alignment training</span><span class="val">SFT → Constitutional AI (CAI / RLAIF) → RLHF</span></div>
+      <div><span class="k">Total / active params</span><span class="val"><span class="pill closed">not published</span></span></div>
+      <div><span class="k">API model ID</span><span class="val">claude-3-5-sonnet-latest</span></div>
+    </div>
+    <p>
+      Claude 3.5 Sonnet is Anthropic's flagship model, widely recognized as setting the
+      industry benchmark for coding, multi-step agentic workflows, and reasoning. It introduced
+      native affordances for <strong>Computer Use</strong>, allowing the model to inspect GUI screenshots,
+      calculate mouse movements, and emit keystrokes.
+    </p>
+    <p>
+      As with every Claude model Anthropic has released, the company has not published the
+      number of layers (\(N\) in Eq.&nbsp;8.1), the model width (\(d_{\text{model}}\)), the
+      number of attention heads (\(h\) in Eq.&nbsp;6.3), whether it uses Mixture-of-Experts
+      (Eq.&nbsp;9.1), or any total/active parameter counts. Every equation in Chapters&nbsp;05–09
+      describes the <em>kind</em> of computation Claude performs — it is a
+      decoder-only Transformer, confirmed by Anthropic's published research, trained via the
+      pipeline in Figure&nbsp;8.1 using <strong>Constitutional AI (CAI)</strong> as the
+      RLAIF step — but the specific hyperparameters plugged into those equations are kept confidential.
+    </p>
+  </div>
+
+  <h3>OpenAI Frontier Series: GPT-4o &amp; OpenAI o1 (OpenAI)</h3>
+  <div class="modelcard">
+    <div class="mc-head">
+      <h4>OpenAI o1 &amp; GPT-4o</h4>
+      <span class="org">OpenAI · released 2024–2025</span>
+    </div>
+    <div class="specgrid">
+      <div><span class="k">Architecture</span><span class="val">Transformer <span class="pill closed">undisclosed details</span></span></div>
+      <div><span class="k">Reasoning Paradigm</span><span class="val">RL Test-Time Compute (o1)</span></div>
+      <div><span class="k">Modality</span><span class="val">Natively Omnimodal (GPT-4o)</span></div>
+      <div><span class="k">Context window</span><span class="val">128,000 to 200,000 tokens</span></div>
+      <div><span class="k">Total / active params</span><span class="val pill closed">not published</span></div>
+    </div>
+    <p>
+      OpenAI has bifurcated its flagship architectures into high-throughput omnimodal models (GPT-4o) and
+      deliberative reasoning models (OpenAI o1 and o3). GPT-4o processes text, audio waveforms, and images directly
+      into a single end-to-end tokenization and embedding space, eliminating separate pipeline bottlenecks.
+      OpenAI o1 introduces large-scale reinforcement learning over chain-of-thought trajectories, allocating variable
+      test-time compute to plan, evaluate candidate steps, and self-correct prior to returning the final answer.
+    </p>
+    <p>
+      OpenAI has never published the parameter count, layer count, or internal architecture
+      configuration for any model in the GPT-4 or o1 families. Numbers
+      circulating online are unconfirmed third-party estimates, and this report
+      will not repeat them as fact.
+    </p>
+  </div>
+
+  <h3>Gemini 1.5 &amp; 2.0 (Google DeepMind)</h3>
+  <div class="modelcard">
+    <div class="mc-head">
+      <h4>Gemini 1.5 &amp; 2.0 Pro</h4>
+      <span class="org">Google DeepMind</span>
+    </div>
+    <div class="specgrid">
+      <div><span class="k">Architecture</span><span class="val">Sparse MoE Transformer</span></div>
+      <div><span class="k">Multimodality</span><span class="val">natively multimodal</span></div>
+      <div><span class="k">Context window</span><span class="val">1,000,000 to 2,000,000+ tokens</span></div>
+      <div><span class="k">Total / active params</span><span class="val pill closed">not published</span></div>
+    </div>
+    <p>
+      Google's official technical reports describe the Gemini family as <strong>sparse
+      Mixture-of-Experts Transformer models</strong> — confirming that Equation&nbsp;9.1 is in
+      use — and as <strong>natively multimodal</strong>, meaning text, images, audio, video,
+      and code are processed by the same underlying network rather than bolted-on separate
+      models. Gemini achieves industry-leading context windows (1M to 2M+ tokens) through distributed
+      Ring Attention and efficient speculative decoding.
+    </p>
+  </div>
+</section>
+
+<section class="chapter" id="ch10b">
+  <span class="num">Chapter 10 (continued)</span>
+  <h2>Open-Weight Models: the Numbers, Unredacted</h2>
+  <p class="dek">DeepSeek, Llama, Qwen, and Nemotron publish exactly what plugs into every equation above.</p>
+
+  <h3>DeepSeek-V3 (DeepSeek AI)</h3>
+  <div class="modelcard">
+    <div class="mc-head">
+      <h4>DeepSeek-V3</h4>
+      <span class="org">DeepSeek AI <span class="pill open">weights public</span></span>
+    </div>
+    <div class="specgrid">
+      <div><span class="k">Total params</span><span class="val">671B</span></div>
+      <div><span class="k">Active params</span><span class="val">37B</span></div>
+      <div><span class="k">Layers (N)</span><span class="val">61</span></div>
+      <div><span class="k">d_model</span><span class="val">7,168</span></div>
+      <div><span class="k">Context window</span><span class="val">128,000</span></div>
+      <div><span class="k">Pretraining data</span><span class="val">14.8T tokens</span></div>
+    </div>
+    <p>
+      DeepSeek-V3 is the clearest real-world example of nearly every Chapter&nbsp;09
+      technique combined in one model. Its feed-forward layers use
+      <strong>DeepSeekMoE</strong> (Eq.&nbsp;9.1): <strong>256 routed experts plus 1 always-on
+      shared expert</strong>, with the top-8 routed experts activated per token — so 9 experts
+      (8 routed + 1 shared) actually run for any given token, which is how 671B total
+      parameters becomes 37B active.
+    </p>
+    <p>
+      Its attention layers use <strong>Multi-head Latent Attention</strong> (Eq.&nbsp;9.3) with
+      \(n_h=128\) attention heads, each of dimension \(d_h=128\); the Key/Value information for
+      every token is compressed into a latent vector of dimension \(d_c=512\) (Query is
+      similarly compressed to \(d_c'=1536\) for training efficiency), with a separate decoupled
+      RoPE component of dimension \(d_h^R=64\) handling position. DeepSeek-V3's architectural
+      innovations slash KV cache memory during inference while matching dense frontier model
+      capabilities, trained on 14.8 trillion tokens with open weights.
+    </p>
+  </div>
+
+  <h3>Llama 3 family (Meta)</h3>
+  <div class="modelcard">
+    <div class="mc-head">
+      <h4>Llama 3.1 — 8B, 70B &amp; 405B</h4>
+      <span class="org">Meta AI <span class="pill open">weights public</span></span>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Variant</th><th class="num">Total params</th><th class="num">Active params</th><th class="num">Architecture</th><th class="num">Context window</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Llama 3.1 8B</td><td class="num">8B</td><td class="num">8B</td><td class="num">Dense + GQA</td><td class="num">128,000</td><td>Open weights</td></tr>
+          <tr><td>Llama 3.1 70B</td><td class="num">70B</td><td class="num">70B</td><td class="num">Dense + GQA</td><td class="num">128,000</td><td>Open weights</td></tr>
+          <tr><td>Llama 3.1 405B</td><td class="num">405B</td><td class="num">405B</td><td class="num">Dense + GQA</td><td class="num">128,000</td><td>Open weights</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      The Llama&nbsp;3.1 family represents the state of the art in open-weight dense Transformer scaling.
+      Pretrained on over 15 trillion tokens across 16,000 H100 GPUs, all three models feature
+      <strong>Grouped-Query Attention</strong> (GQA, Eq.&nbsp;9.2) to compress KV cache overhead,
+      Rotary Positional Embeddings (RoPE, Eq.&nbsp;5.3) extended to 128,000 token context windows, and
+      SwiGLU activation functions (Eq.&nbsp;7.6). The flagship 405B parameter dense model achieves
+      competitive performance with closed frontier systems without relying on mixture-of-experts routing.
+    </p>
+  </div>
+
+  <h3>Qwen 2.5 (Alibaba)</h3>
+  <div class="modelcard">
+    <div class="mc-head">
+      <h4>Qwen2.5-72B (flagship)</h4>
+      <span class="org">Alibaba Qwen Team <span class="pill open">weights public</span></span>
+    </div>
+    <div class="specgrid">
+      <div><span class="k">Total params</span><span class="val">72.7B</span></div>
+      <div><span class="k">Active params</span><span class="val">72.7B</span></div>
+      <div><span class="k">Layers (N)</span><span class="val">80</span></div>
+      <div><span class="k">d_model</span><span class="val">8,192</span></div>
+      <div><span class="k">Vocabulary size</span><span class="val">152,064</span></div>
+      <div><span class="k">Context window</span><span class="val">128,000 tokens</span></div>
+    </div>
+    <p>
+      Qwen2.5-72B is Alibaba's flagship open-weight foundation model, pretrained on 18 trillion tokens
+      with dense SwiGLU feed-forward networks, Grouped-Query Attention (GQA, Eq.&nbsp;9.2), and RoPE
+      positional encodings supporting up to 128K context tokens. Alibaba also provides specialized open
+      variants including Qwen2.5-Coder and Qwen2.5-Math, alongside smaller sibling sizes (0.5B, 1.5B, 3B, 7B, 14B, and 32B).
+    </p>
+  </div>
+
+  <h3>Nemotron-4 family (NVIDIA)</h3>
+  <div class="modelcard">
+    <div class="mc-head">
+      <h4>Nemotron-4 — 340B (Base, Instruct &amp; Reward)</h4>
+      <span class="org">NVIDIA <span class="pill open">weights public</span></span>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Variant</th><th class="num">Total params</th><th class="num">Active params</th><th class="num">Context window</th><th>Released</th></tr></thead>
+        <tbody>
+          <tr><td>Nemotron-4 340B Base</td><td class="num">340B</td><td class="num">340B</td><td class="num">4,096</td><td>June 2024</td></tr>
+          <tr><td>Nemotron-4 340B Instruct</td><td class="num">340B</td><td class="num">340B</td><td class="num">4,096</td><td>June 2024</td></tr>
+          <tr><td>Nemotron-4 340B Reward</td><td class="num">340B</td><td class="num">340B</td><td class="num">4,096</td><td>June 2024</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      The Nemotron-4 340B family represents NVIDIA's open foundation model series designed for synthetic
+      data generation and LLM post-training alignment. Pretrained on 9 trillion tokens, Nemotron-4 340B
+      uses a standard decoder-only architecture with 94 layers, a model dimension of 18,432, Grouped-Query Attention
+      (GQA, Eq.&nbsp;9.2), and RoPE positional embeddings, optimized for massive throughput across NVIDIA DGX SuperPOD clusters.
+    </p>
+  </div>
+
+  <h3>The complete atlas, side by side</h3>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Model</th><th>Organization</th><th>Weights</th><th class="num">Total params</th><th class="num">Active params</th><th>Key architecture (Ch.09 equations)</th><th class="num">Context</th></tr>
+      </thead>
+        <tr><td>Claude 3.5 Sonnet / Opus</td><td>Anthropic</td><td><span class="pill closed">closed</span></td><td class="num">—</td><td class="num">—</td><td>Decoder-only Transformer; SFT + CAI/RLAIF + RLHF (hyperparams undisclosed)</td><td class="num">200K</td></tr>
+        <tr><td>OpenAI o1 / GPT-4o</td><td>OpenAI</td><td><span class="pill closed">closed</span></td><td class="num">—</td><td class="num">—</td><td>Decoder-only Transformer; Omnimodal / Test-Time Reasoning</td><td class="num">128K–200K</td></tr>
+        <tr><td>Gemini 1.5 / 2.0 Pro</td><td>Google DeepMind</td><td><span class="pill closed">closed</span></td><td class="num">—</td><td class="num">—</td><td>Sparse MoE Transformer (Eq.9.1)</td><td class="num">1M–2M</td></tr>
+        <tr><td>DeepSeek-V3</td><td>DeepSeek AI</td><td><span class="pill open">open</span></td><td class="num">671B</td><td class="num">37B</td><td>MLA + DeepSeekMoE (Eq.9.1, 9.3)</td><td class="num">128K</td></tr>
+        <tr><td>Llama 3.1 8B</td><td>Meta</td><td><span class="pill open">open</span></td><td class="num">8B</td><td class="num">8B</td><td>Dense Transformer + GQA (Eq.9.2)</td><td class="num">128K</td></tr>
+        <tr><td>Llama 3.1 70B</td><td>Meta</td><td><span class="pill open">open</span></td><td class="num">70B</td><td class="num">70B</td><td>Dense Transformer + GQA (Eq.9.2)</td><td class="num">128K</td></tr>
+        <tr><td>Llama 3.1 405B</td><td>Meta</td><td><span class="pill open">open</span></td><td class="num">405B</td><td class="num">405B</td><td>Dense Transformer + GQA (Eq.9.2)</td><td class="num">128K</td></tr>
+        <tr><td>Qwen2.5-72B</td><td>Alibaba</td><td><span class="pill open">open</span></td><td class="num">72.7B</td><td class="num">72.7B</td><td>Dense Transformer + GQA (Eq.9.2)</td><td class="num">128K</td></tr>
+        <tr><td>Nemotron-4 340B</td><td>NVIDIA</td><td><span class="pill open">open</span></td><td class="num">340B</td><td class="num">340B</td><td>Dense Transformer + GQA (Eq.9.2)</td><td class="num">4K</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="chapter" id="ch11">
+  <span class="num">Chapter 11</span>
+  <h2>Glossary</h2>
+  <p class="dek">Every key term from this report, in one place.</p>
+
+  <dl class="glossary">
+    <dt>Activation function</dt><dd>A fixed, non-linear function (sigmoid, ReLU, SiLU, …) applied to a neuron's weighted sum to produce its output. See Equations 1.2–1.6.</dd>
+    <dt>Active parameters</dt><dd>In a Mixture-of-Experts model, the subset of total parameters actually used to process one token. See Equation 9.1.</dd>
+    <dt>Adam / AdamW</dt><dd>The optimizer used to train virtually every model in this report; adapts each weight's step size using running averages of gradients. See Equation 3.5.</dd>
+    <dt>Attention (self-attention)</dt><dd>The mechanism letting every token directly compare itself to, and draw information from, every other token. See Equation 6.1.</dd>
+    <dt>Autoregressive</dt><dd>Generating text one token at a time, feeding each new token back in to predict the next.</dd>
+    <dt>Backpropagation</dt><dd>The chain-rule algorithm that computes the gradient of the loss with respect to every weight in one backward pass. See Equations 3.3–3.4.</dd>
+    <dt>Bias</dt><dd>A learned per-neuron offset added to the weighted sum, independent of the inputs. See Equation 1.1.</dd>
+    <dt>Causal mask</dt><dd>Forces each token's attention to ignore all future tokens, so the model can't "see" the answer it's trying to predict.</dd>
+    <dt>Constitutional AI (CAI)</dt><dd>Anthropic's published variant of RLAIF (Stage&nbsp;3 of Figure&nbsp;8.1): an AI critic iteratively evaluates and revises a model's outputs against a written "constitution" of principles before human raters score them, reducing annotation cost while encoding explicit values into the reward signal. Used across all Claude models as the RLAIF branch of their training pipeline. See <em>Bai et al., "Constitutional AI: Harmlessness from AI Feedback," 2022.</em></dd>
+    <dt>Context window</dt><dd>The maximum number of tokens a model can process at once.</dd>
+    <dt>Cross-entropy loss</dt><dd>The standard loss function for next-token prediction; heavily penalizes confident wrong predictions. See Equation 3.1.</dd>
+    <dt>Decoder-only</dt><dd>A Transformer consisting of a single stack of blocks that predicts the next token, used by essentially every model in Chapter 10.</dd>
+    <dt>DeepSeek Sparse Attention (DSA)</dt><dd>DeepSeek's technique for selecting only the most relevant earlier tokens before running full attention. See Equation 9.4.</dd>
+    <dt>Embedding (matrix)</dt><dd>A learned lookup table converting token IDs into vectors. See Equation 5.1.</dd>
+    <dt>Epoch / training step</dt><dd>One pass of forward computation, loss measurement, and weight update across a batch of data.</dd>
+    <dt>Feed-forward network (FFN)</dt><dd>A small two-layer MLP applied to each token independently inside a Transformer block. See Equations 7.5–7.6.</dd>
+    <dt>Gradient</dt><dd>How much the loss would change for a tiny change in one parameter — the "slope" used by gradient descent. See Equation 3.2.</dd>
+    <dt>Gated DeltaNet</dt><dd>A linear-cost recurrent attention alternative built on the "delta rule." See Equation 9.5.</dd>
+    <dt>Grouped-Query Attention (GQA)</dt><dd>Multiple Query heads share a single Key/Value head, shrinking the KV cache. See Equation 9.2.</dd>
+    <dt>Hidden layer</dt><dd>Any layer of neurons between the input and output layers of a network.</dd>
+    <dt>KV cache</dt><dd>The stored Key and Value vectors for all previous tokens, kept in memory during text generation so they aren't recomputed.</dd>
+    <dt>Layer (Transformer block)</dt><dd>One repetition of attention + feed-forward (Equation 8.1); large models stack dozens to ~60+ of these.</dd>
+    <dt>LayerNorm</dt><dd>Normalizes a vector to zero mean and unit variance, then rescales/shifts with learned parameters. See Equation 7.2.</dd>
+    <dt>Learning rate (η)</dt><dd>The step size used when updating weights during training. See Equation 3.2.</dd>
+    <dt>Logit</dt><dd>A raw, pre-activation or pre-softmax score — see "pre-activation" (Equation 1.1) and the final output of Equation 8.2 before softmax.</dd>
+    <dt>Mixture of Experts (MoE)</dt><dd>Replacing one feed-forward network with many "expert" networks, of which only a few run per token, selected by a router. See Equation 9.1.</dd>
+    <dt>Multi-head Latent Attention (MLA)</dt><dd>DeepSeek's technique for compressing Key/Value information into a small cached "latent" vector. See Equation 9.3.</dd>
+    <dt>Multi-head attention</dt><dd>Running several attention calculations in parallel, each able to specialise in different relationships. See Equation 6.3.</dd>
+    <dt>Multi-Layer Perceptron (MLP)</dt><dd>A network of fully-connected layers, each computing Equation 2.1.</dd>
+    <dt>Neuron</dt><dd>The basic unit: a weighted sum of inputs plus a bias, passed through an activation function. See Equations 1.1–1.2.</dd>
+    <dt>Parameters</dt><dd>Every weight and bias in a model, collectively — the numbers that training adjusts.</dd>
+    <dt>Positional encoding</dt><dd>Information injected into a Transformer so it knows the order of tokens. See Equations 5.2 (sinusoidal) and 5.3 (RoPE).</dd>
+    <dt>Pre-norm</dt><dd>Applying normalization to the input of a sub-layer (rather than its output) before adding the residual. See Equation 7.4.</dd>
+    <dt>Query / Key / Value (Q/K/V)</dt><dd>Three vectors computed per token for attention: "what I'm looking for," "what I offer," and "what I actually contain." See Equation 6.0.</dd>
+    <dt>ReLU</dt><dd>"Rectified Linear Unit" — outputs zero for negative inputs and passes positive inputs through unchanged. See Equation 1.5.</dd>
+    <dt>Residual connection</dt><dd>Adding a sub-layer's input directly to its output, creating a gradient "shortcut." See Equation 7.1.</dd>
+    <dt>RLHF / RLAIF</dt><dd>Reinforcement Learning from Human (or AI) Feedback — the final training stage that aligns a model's behaviour with human preferences. See Figure 8.1.</dd>
+    <dt>RMSNorm</dt><dd>A cheaper alternative to LayerNorm that rescales by root-mean-square without subtracting the mean. See Equation 7.3.</dd>
+    <dt>RoPE (Rotary Position Embedding)</dt><dd>Encodes token position by rotating Query/Key vectors by a position-dependent angle. See Equation 5.3.</dd>
+    <dt>Router</dt><dd>A small network in a Mixture-of-Experts layer that decides which experts process each token. See Equation 9.1.</dd>
+    <dt>SiLU / Swish</dt><dd>A smooth activation function, \(z\cdot\sigma(z)\), underlying SwiGLU. See Equation 1.6.</dd>
+    <dt>Softmax</dt><dd>Converts a vector of raw scores into a probability distribution that sums to 1. See Equation 6.2.</dd>
+    <dt>Supervised Fine-Tuning (SFT)</dt><dd>The training stage where a pretrained model learns from curated example conversations/instructions. See Figure 8.1.</dd>
+    <dt>SwiGLU</dt><dd>A "gated" feed-forward network combining SiLU with an extra multiplicative gate. See Equation 7.6.</dd>
+    <dt>Tokenization</dt><dd>Splitting text into the sub-word pieces ("tokens") a model actually processes.</dd>
+    <dt>Total parameters</dt><dd>Every weight in a model, including all Mixture-of-Experts experts whether or not they're used for a given token — determines file size on disk.</dd>
+    <dt>Transformer</dt><dd>The 2017 architecture built around self-attention (Equation 6.1) that underlies every model in Chapter 10.</dd>
+    <dt>Vocabulary</dt><dd>The fixed set of tokens a model can read or output, each with an integer ID. See Equation 3.1.</dd>
+    <dt>Weight</dt><dd>A single learnable number controlling how strongly one input influences a neuron, or one entry of a weight matrix. See Equation 1.1 and 2.1.</dd>
+  </dl>
+</section>
+
+<footer>
+  <h2>Sources &amp; Further Reading</h2>
+  <ol>
+    <li>Vaswani et al., "Attention Is All You Need" (2017) — the original Transformer paper; source of Equations 5.2, 6.0, 6.1, 6.3, 7.5. <code>arxiv.org/abs/1706.03762</code></li>
+    <li>Su et al., "RoFormer: Enhanced Transformer with Rotary Position Embedding" — source of Equation 5.3 (RoPE). <code>arxiv.org/abs/2104.09864</code></li>
+    <li>Zhang &amp; Sennrich, "Root Mean Square Layer Normalization" — source of Equation 7.3 (RMSNorm). <code>arxiv.org/abs/1910.07467</code></li>
+    <li>Shazeer, "GLU Variants Improve Transformer" — source of Equation 7.6 (SwiGLU). <code>arxiv.org/abs/2002.05202</code></li>
+    <li>Kingma &amp; Ba, "Adam: A Method for Stochastic Optimization" — source of Equation 3.5. <code>arxiv.org/abs/1412.6980</code></li>
+    <li>DeepSeek-AI, DeepSeek-V3 Technical Report (2024) — source of total/active parameters, MLA configuration (Eq. 9.3), and DeepSeekMoE configuration (Eq. 9.1). <code>github.com/deepseek-ai</code>, <code>huggingface.co/deepseek-ai</code></li>
+    <li>Meta AI, "The Llama 3 Herd of Models" (2024) — source of Llama 3/3.1 parameter counts, GQA, and architectural specifications. <code>ai.meta.com/llama</code>, <code>arxiv.org/abs/2407.21783</code></li>
+    <li>Alibaba Qwen Team, Qwen2.5 Technical Report (2024) — source of Qwen2.5 architecture and benchmark data. <code>huggingface.co/Qwen</code></li>
+    <li>NVIDIA, "Nemotron-4 340B Technical Report" (2024) — source of Nemotron-4 parameter counts and architecture. <code>arxiv.org/abs/2406.11704</code></li>
+    <li>Bai et al. (Anthropic), "Constitutional AI: Harmlessness from AI Feedback" (2022) — source of the Constitutional AI (CAI) training methodology described in Chapter&nbsp;8. <code>arxiv.org/abs/2212.08073</code></li>
+    <li>Anthropic, "The Claude 3.5 Model Family" (2024) — source of Claude 3.5 Sonnet &amp; Opus specifications. <code>anthropic.com/claude</code></li>
+    <li>OpenAI, "Learning to Reason with LLMs" &amp; "Hello GPT-4o" (2024) — source of OpenAI o1 and GPT-4o architecture details. <code>openai.com/research</code></li>
+    <li>Google DeepMind, "Gemini 1.5: Unlocking multimodal understanding across millions of tokens of context" (2024) — source of sparse MoE Transformer and long-context specifications. <code>deepmind.google/technologies/gemini</code></li>
+  </ol>
+  <div class="colophon">
+    <span>Inside the Machine — a beginner-to-frontier reference report</span>
+    <span>Compiled June 2026 · single-file HTML, no external data calls</span>
+  </div>
+</footer>
+
+</main>
+</div>
+
+</body>
+</html>

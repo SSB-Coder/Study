@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>01. Multi-Layer Perceptron (MLP) &amp; Feedforward Networks — Neural Network Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060913;
+  --bg-card: rgba(13, 19, 36, 0.85);
+  --bg-card-hover: rgba(18, 26, 49, 0.95);
+  --border: rgba(0, 229, 255, 0.18);
+  --border-glow: rgba(0, 229, 255, 0.45);
+  --c-cyan: #00e5ff;
+  --c-emerald: #00ff9d;
+  --c-violet: #a855f7;
+  --c-amber: #f59e0b;
+  --c-rose: #ff3366;
+  --c-blue: #3b82f6;
+  --text-main: #e2e8f5;
+  --text-dim: #8b9bb4;
+  --text-faint: #475569;
+  --f-title: 'Orbitron', monospace, sans-serif;
+  --f-body: 'Space Grotesk', system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: var(--f-body);
+  min-height: 100vh;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Background glow effects */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 900px 500px at 15% 10%, rgba(0, 229, 255, 0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 800px 600px at 85% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app-wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 24px 60px;
+}
+
+/* Top Navigation Bar */
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+  margin-bottom: 20px;
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-badge {
+  font-family: var(--f-title);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  background: rgba(0, 229, 255, 0.12);
+  color: var(--c-cyan);
+  border: 1px solid var(--border-glow);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+.brand-title {
+  font-family: var(--f-title);
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  color: #fff;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-family: var(--f-mono);
+  font-size: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.nav-btn:hover {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--c-cyan);
+  border-color: var(--border-glow);
+}
+.nav-btn.primary {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--c-cyan);
+  border-color: var(--border-glow);
+}
+
+/* Header Banner */
+.sim-header {
+  margin-bottom: 20px;
+}
+.sim-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.cat-pill {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: rgba(168, 85, 247, 0.15);
+  color: var(--c-violet);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+.tags-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tag-item {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.sim-h1 {
+  font-family: var(--f-title);
+  font-size: clamp(20px, 3.2vw, 32px);
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #fff;
+  line-height: 1.25;
+  margin-bottom: 8px;
+}
+.sim-h1 span {
+  color: var(--c-cyan);
+  text-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+}
+.sim-summary {
+  font-size: 14.5px;
+  color: var(--text-dim);
+  max-width: 900px;
+}
+
+/* Main Animation Stage Card */
+.stage-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  margin-bottom: 24px;
+}
+.stage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid var(--border);
+}
+.stage-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--c-emerald);
+}
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c-emerald);
+  box-shadow: 0 0 10px var(--c-emerald);
+  animation: pulse 1.8s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+.fps-counter {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* Canvas Viewport */
+.canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  background: #04060d;
+}
+#simCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Control Bar */
+.control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 18px;
+  background: rgba(7, 11, 22, 0.95);
+  border-top: 1px solid var(--border);
+}
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 16px;
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.ctrl-btn:hover {
+  background: rgba(0, 229, 255, 0.2);
+  border-color: var(--border-glow);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.25);
+}
+.ctrl-btn.active {
+  background: var(--c-cyan);
+  color: #000;
+  font-weight: 600;
+  border-color: var(--c-cyan);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.5);
+}
+.ctrl-btn.danger:hover {
+  background: rgba(255, 51, 102, 0.2);
+  border-color: var(--c-rose);
+  color: var(--c-rose);
+}
+.speed-group {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.speed-btn {
+  padding: 6px 11px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+}
+.speed-btn:last-child { border-right: none; }
+.speed-btn.active {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--c-cyan);
+  font-weight: 600;
+}
+.custom-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.custom-ctrl-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.custom-ctrl-item input[type="range"] {
+  accent-color: var(--c-cyan);
+  cursor: pointer;
+}
+.custom-ctrl-item select {
+  background: #0c1222;
+  border: 1px solid var(--border);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+}
+
+/* Telemetry Dashboard HUD */
+.telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.tele-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+.tele-label {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.tele-val {
+  font-family: var(--f-title);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-cyan);
+}
+.tele-sub {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+/* Tabs Section */
+.tabs-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.tabs-nav {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.35);
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: 12px 22px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--f-title);
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.tab-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.02);
+}
+.tab-btn.active {
+  color: var(--c-cyan);
+  border-bottom-color: var(--c-cyan);
+  background: rgba(0, 229, 255, 0.05);
+}
+.tab-pane {
+  display: none;
+  padding: 24px;
+}
+.tab-pane.active {
+  display: block;
+}
+
+/* Tab Content Typography */
+.content-section {
+  margin-bottom: 24px;
+}
+.content-h2 {
+  font-family: var(--f-title);
+  font-size: 16px;
+  color: var(--c-cyan);
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.content-h2::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  background: var(--c-cyan);
+  border-radius: 2px;
+}
+.content-p {
+  font-size: 14.5px;
+  color: #cbd5e1;
+  line-height: 1.75;
+  margin-bottom: 14px;
+}
+.content-list {
+  list-style: none;
+  margin-bottom: 16px;
+}
+.content-list li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 14px;
+  color: #cbd5e1;
+  margin-bottom: 8px;
+}
+.content-list li::before {
+  content: '▹';
+  position: absolute;
+  left: 0;
+  color: var(--c-cyan);
+}
+
+/* Math Box */
+.math-box {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-left: 4px solid var(--c-cyan);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 14px 0;
+  font-family: var(--f-mono);
+  font-size: 13.5px;
+  color: #e0f2fe;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+.math-title {
+  font-family: var(--f-title);
+  font-size: 11px;
+  color: var(--c-cyan);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+/* Code Box */
+.code-container {
+  position: relative;
+  background: #02040a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 14px 0;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.code-body {
+  padding: 16px;
+  overflow-x: auto;
+}
+.code-body pre {
+  font-family: var(--f-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: #c9d1e0;
+}
+.code-kw { color: #ff79c6; font-weight: 600; }
+.code-fn { color: #50fa7b; }
+.code-str { color: #f1fa8c; }
+.code-num { color: #ffb86c; }
+.code-cmt { color: #6272a4; font-style: italic; }
+.code-cls { color: #8be9fd; font-weight: 600; }
+
+/* Trace Table */
+.trace-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  margin: 14px 0;
+}
+.trace-table th {
+  text-align: left;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--c-cyan);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.trace-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+}
+.trace-table tr:hover td {
+  background: rgba(0, 229, 255, 0.04);
+}
+
+/* Footer */
+.sim-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+@media (max-width: 768px) {
+  .app-wrapper { padding: 12px 14px 40px; }
+  .canvas-wrap { height: 380px; }
+  .control-bar { flex-direction: column; align-items: stretch; }
+  .control-group { justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-wrapper">
+  <!-- Navigation Header -->
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <span class="brand-badge">DEEP DIVE 01</span>
+      <span class="brand-title">01. Multi-Layer Perceptron (MLP) &amp; Feedforward Networks</span>
+    </div>
+    <div class="nav-links">
+      <a href="00_Master_Architecture_Matrix.html" class="nav-btn">◀ PREV</a>
+      <a href="index.html" class="nav-btn primary">ALL SIMS</a>
+      <a href="02_CNN_Convolutional.html" class="nav-btn">NEXT ▶</a>
+    </div>
+  </nav>
+
+  <!-- Title & Description Header -->
+  <header class="sim-header">
+    <div class="sim-eyebrow">
+      <span class="cat-pill">Foundations</span>
+      <div class="tags-list">
+        <span class="tag-item">#MLP</span><span class="tag-item">#Dense Layers</span><span class="tag-item">#Matrix Multiplication</span><span class="tag-item">#ReLU</span><span class="tag-item">#Backpropagation</span>
+      </div>
+    </div>
+    <h1 class="sim-h1">01. Multi-Layer <span>Perceptron (MLP) &amp; Feedforward Networks</span></h1>
+    <p class="sim-summary">Explicit matrix multiplication Z = XW^T + b, non-linear activation gating, forward signal propagation, and chain-rule gradient backpropagation.</p>
+  </header>
+
+  <!-- Simulation Stage Card -->
+  <main class="stage-card">
+    <div class="stage-header">
+      <div class="stage-status">
+        <div class="pulse-dot"></div>
+        <span id="liveStatus">ACTIVE SIMULATION</span>
+      </div>
+      <div class="fps-counter" id="fpsDisplay">60 FPS | LATENCY: 1.2ms</div>
+    </div>
+
+    <!-- Canvas -->
+    <div class="canvas-wrap">
+      <canvas id="simCanvas"></canvas>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="control-bar">
+      <div class="control-group">
+        <button id="playPauseBtn" class="ctrl-btn active">⏸ PAUSE</button>
+        <button id="stepBtn" class="ctrl-btn">⏯ STEP</button>
+        <button id="resetBtn" class="ctrl-btn danger">↺ RESET</button>
+      </div>
+
+      <div class="control-group">
+        <span style="font-family:var(--f-mono);font-size:11px;color:var(--text-dim);">SPEED:</span>
+        <div class="speed-group">
+          <button class="speed-btn" data-speed="0.5">0.5x</button>
+          <button class="speed-btn active" data-speed="1.0">1.0x</button>
+          <button class="speed-btn" data-speed="2.0">2.0x</button>
+          <button class="speed-btn" data-speed="4.0">4.0x</button>
+        </div>
+      </div>
+
+      <div class="custom-controls" id="customControlsContainer">
+        
+    <div class="custom-ctrl-item">
+      <span>INTENSITY:</span>
+      <input type="range" id="paramSlider" min="1" max="100" value="50" style="width:70px;">
+    </div>
+    
+      </div>
+    </div>
+  </main>
+
+  <!-- Telemetry HUD -->
+  <section class="telemetry-grid">
+    <div class="tele-card">
+      <div class="tele-label">CURRENT PHASE</div>
+      <div class="tele-val" id="hudPhase">Forward Pass Active</div>
+      <div class="tele-sub" id="hudPhaseSub">Forward Propagation</div>
+    </div>
+    <div class="tele-card">
+      <div class="tele-label">ACTIVE TENSOR SHAPE</div>
+      <div class="tele-val" id="hudTensorShape" style="color:var(--c-emerald);">[Batch: 8, Features: 128]</div>
+      <div class="tele-sub" id="hudTensorSub">Batch x Channels x Dims</div>
+    </div>
+    <div class="tele-card">
+      <div class="tele-label">COMPUTATIONAL FLOPs</div>
+      <div class="tele-val" id="hudFlops" style="color:var(--c-violet);">1.24 MFLOPs</div>
+      <div class="tele-sub">Theoretical Multiply-Adds</div>
+    </div>
+    <div class="tele-card">
+      <div class="tele-label">OUTPUT METRIC / LOSS</div>
+      <div class="tele-val" id="hudMetric" style="color:var(--c-amber);">Loss: 0.042</div>
+      <div class="tele-sub" id="hudMetricSub">Target Convergence</div>
+    </div>
+  </section>
+
+  <!-- Deep Dive Tabs -->
+  <section class="tabs-card">
+    <div class="tabs-nav">
+      <button class="tab-btn active" data-tab="tab-theory">ARCHITECTURE & THEORY</button>
+      <button class="tab-btn" data-tab="tab-math">MATHEMATICS & EQUATIONS</button>
+      <button class="tab-btn" data-tab="tab-code">PYTORCH IMPLEMENTATION</button>
+      <button class="tab-btn" data-tab="tab-trace">EXECUTION TRACE</button>
+    </div>
+
+    <!-- Tab 1: Architecture & Theory -->
+    <div class="tab-pane active" id="tab-theory">
+      <div class="content-section">
+        <h2 class="content-h2">1. Intuition & Architectural Overview</h2>
+        <p class="content-p">Imagine a factory assembly line trying to figure out if a picture shows a &quot;Cat&quot; or a &quot;Dog.&quot; 
+*   **The Input (The Raw Materials):** The picture is broken down into tiny pixels, and each pixel is handed to a worker at the start of the line.
+*   **The Hidden Layers (The Specialists):** These first workers don&#x27;t know what a cat is. They just look at their pixel and shout a number indicating how bright it is. The next line of workers listens to the shouts. One worker in the second row is trained to only listen to workers holding pixels that form a *curve* (like an ear). Another listens for *straight lines* (like a whisker). They add up the shouts they hear. If the shouts are loud enough, they pass the message to the next row.
+*   **The Output (The Final Vote):** By the end of the factory, the final workers are listening to high-level specialists (e.g., &quot;I saw two pointy ears!&quot; and &quot;I saw whiskers!&quot;). They tally the final votes and declare: &quot;It&#x27;s a Cat!&quot;</p>
+        <p class="content-p">An MLP is exactly this: an assembly line of mathematical workers (neurons) passing signals strictly forward, making increasingly complex decisions at each step.</p>
+      </div>
+
+      <div class="content-section">
+        <h2 class="content-h2">2. Core Architectural Components</h2>
+        <ul class="content-list">
+          <li>**The Input (The Raw Materials):** The picture is broken down into tiny pixels, and each pixel is handed to a worker at the start of the line.</li><li>**The Hidden Layers (The Specialists):** These first workers don&#x27;t know what a cat is. They just look at their pixel and shout a number indicating how bright it is. The next line of workers listens to the shouts. One worker in the second row is trained to only listen to workers holding pixels that form a *curve* (like an ear). Another listens for *straight lines* (like a whisker). They add up the shouts they hear. If the shouts are loud enough, they pass the message to the next row.</li><li>**The Output (The Final Vote):** By the end of the factory, the final workers are listening to high-level specialists (e.g., &quot;I saw two pointy ears!&quot; and &quot;I saw whiskers!&quot;). They tally the final votes and declare: &quot;It&#x27;s a Cat!&quot;</li><li>**Input Layer:** A vector of raw numbers (e.g., flattened image pixels). No computation happens here.</li>
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h2 class="content-h2">3. Advantages & Trade-Offs</h2>
+        <p class="content-p">High representational capacity and parameter efficiency, balanced against inductive bias constraints and hardware memory requirements.</p>
+      </div>
+    </div>
+
+    <!-- Tab 2: Mathematics & Equations -->
+    <div class="tab-pane" id="tab-math">
+      <div class="content-section">
+        <h2 class="content-h2">Mathematical Formulation & Equations</h2>
+        <p class="content-p">The following mathematical equations govern the forward pass, loss calculation, and backward pass dynamics visualised in the animation above:</p>
+        
+        <div class="math-box">
+          <div class="math-title">EQUATION 1</div>
+          <div>$$ Z^{[l]} = W^{[l]} A^{[l-1]} + b^{[l]} $$</div>
+        </div>
+        
+        <div class="math-box">
+          <div class="math-title">EQUATION 2</div>
+          <div>$$ A^{[l]} = g^{[l]}(Z^{[l]}) $$</div>
+        </div>
+        
+        <div class="math-box">
+          <div class="math-title">EQUATION 3</div>
+          <div>$$ \mathcal{J}(W, b) = - \frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log(a^{[L](i)}) + (1 - y^{(i)}) \log(1 - a^{[L](i)}) \right] $$</div>
+        </div>
+        
+        <div class="math-box">
+          <div class="math-title">EQUATION 4</div>
+          <div>$$ dZ^{[L]} = A^{[L]} - Y $$</div>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- Tab 3: PyTorch Code -->
+    <div class="tab-pane" id="tab-code">
+      <div class="content-section">
+        <h2 class="content-h2">Repository Implementation</h2>
+        <p class="content-p">Source code extracted directly from the repository at <code>Code/Deep_Dives/01_MLP_Feedforward.py</code>. The visual simulation faithfully mirrors the tensor transformations coded below:</p>
+        <div class="code-container">
+          <div class="code-header">
+            <span>Code/Deep_Dives/01_MLP_Feedforward.py</span>
+            <span>PyTorch 2.x</span>
+          </div>
+          <div class="code-body">
+            <pre><code>&quot;&quot;&quot;
+<span class="code-num">01</span>. Multi-Layer Perceptron (MLP) &amp; Feedforward Neural Network
+Deep Dive Implementation
+
+This file explicitly demonstrates the forward pass and mathematics of an MLP.
+Instead of just using `nn.Linear`, we implement the explicit matrix multiplication
+y = x @ W^T + b to match the mathematical equations <span class="code-kw">in</span> the report.
+&quot;&quot;&quot;
+
+<span class="code-kw">import</span> torch
+<span class="code-kw">import</span> torch.nn <span class="code-kw">as</span> nn
+<span class="code-kw">import</span> torch.nn.functional <span class="code-kw">as</span> F
+
+<span class="code-kw">class</span> <span class="code-fn">ExplicitLinearLayer</span>(nn.Module):
+    &quot;&quot;&quot;An explicit mathematical representation of a single Dense layer.&quot;&quot;&quot;
+    <span <span class="code-kw">class</span>="code-kw">def</span> <span class="code-fn">__init__</span>(<span class="code-kw">self</span>, in_features, out_features):
+        <span class="code-kw">super</span>().<span class="code-fn">__init__</span>()
+        <span <span class="code-kw">class</span>="code-cmt"># Initialize Weights (W) and Biases (b) explicitly</span>
+        <span <span class="code-kw">class</span>="code-cmt"># We use kaiming/he initialization scaled manually</span>
+        stdv = <span class="code-num">1</span>. / (in_features ** <span class="code-num">0.5</span>)
+        <span class="code-kw">self</span>.weight = nn.<span class="code-fn">Parameter</span>(torch.<span class="code-fn">empty</span>(out_features, in_features).<span class="code-fn">uniform_</span>(-stdv, stdv))
+        <span class="code-kw">self</span>.bias = nn.<span class="code-fn">Parameter</span>(torch.<span class="code-fn">zeros</span>(out_features))
+
+    <span <span class="code-kw">class</span>="code-kw">def</span> <span class="code-fn">forward</span>(<span class="code-kw">self</span>, x):
+        <span <span class="code-kw">class</span>="code-cmt"># The core equation: Z = XW^T + b</span>
+        <span <span class="code-kw">class</span>="code-cmt"># F.<span class="code-fn">linear</span>(x, <span class="code-kw">self</span>.weight, <span class="code-kw">self</span>.bias) does exactly: x @ <span class="code-kw">self</span>.weight.T + <span class="code-kw">self</span>.bias</span>
+        <span <span class="code-kw">class</span>="code-cmt"># We write it out explicitly <span class="code-kw">for</span> educational purposes:</span>
+        <span class="code-kw">return</span> torch.<span class="code-fn">matmul</span>(x, <span class="code-kw">self</span>.weight.<span class="code-fn">t</span>()) + <span class="code-kw">self</span>.bias
+
+<span class="code-kw">class</span> <span class="code-fn">DeepMLP</span>(nn.Module):
+    &quot;&quot;&quot;A deep feedforward network acting <span class="code-kw">as</span> our &<span <span class="code-kw">class</span>="code-cmt">#x27;Assembly Line&#x27;.&quot;&quot;&quot;</span>
+    <span <span class="code-kw">class</span>="code-kw">def</span> <span class="code-fn">__init__</span>(<span class="code-kw">self</span>, input_dim, hidden_dim, output_dim):
+        <span class="code-kw">super</span>().<span class="code-fn">__init__</span>()
+        <span <span class="code-kw">class</span>="code-cmt"># Input Layer -&gt; Hidden Layer <span class="code-num">1</span></span>
+        <span class="code-kw">self</span>.layer1 = <span class="code-fn">ExplicitLinearLayer</span>(input_dim, hidden_dim)
+        
+        <span <span class="code-kw">class</span>="code-cmt"># Hidden Layer <span class="code-num">1</span> -&gt; Hidden Layer <span class="code-num">2</span></span>
+        <span class="code-kw">self</span>.layer2 = <span class="code-fn">ExplicitLinearLayer</span>(hidden_dim, hidden_dim)
+        
+        <span <span class="code-kw">class</span>="code-cmt"># Hidden Layer <span class="code-num">2</span> -&gt; Output Layer</span>
+        <span class="code-kw">self</span>.layer3 = <span class="code-fn">ExplicitLinearLayer</span>(hidden_dim, output_dim)
+
+    <span <span class="code-kw">class</span>="code-kw">def</span> <span class="code-fn">forward</span>(<span class="code-kw">self</span>, x):
+        <span <span class="code-kw">class</span>="code-cmt"># Forward pass tracking the activations (A)</span>
+        <span <span class="code-kw">class</span>="code-cmt"># Z^[<span class="code-num">1</span>] = X @ W^[<span class="code-num">1</span>]T + b^[<span class="code-num">1</span>]</span>
+        z1 = <span class="code-kw">self</span>.<span class="code-fn">layer1</span>(x)
+        <span <span class="code-kw">class</span>="code-cmt"># A^[<span class="code-num">1</span>] = <span class="code-fn">ReLU</span>(Z^[<span class="code-num">1</span>])</span>
+        a1 = F.<span class="code-fn">relu</span>(z1)
+        
+        <span <span class="code-kw">class</span>="code-cmt"># Z^[<span class="code-num">2</span>] = A^[<span class="code-num">1</span>] @ W^[<span class="code-num">2</span>]T + b^[<span class="code-num">2</span>]</span>
+        z2 = <span class="code-kw">self</span>.<span class="code-fn">layer2</span>(a1)
+        <span <span class="code-kw">class</span>="code-cmt"># A^[<span class="code-num">2</span>] = <span class="code-fn">ReLU</span>(Z^[<span class="code-num">2</span>])</span>
+        a2 = F.<span class="code-fn">relu</span>(z2)
+        
+        <span <span class="code-kw">class</span>="code-cmt"># Z^[<span class="code-num">3</span>] = A^[<span class="code-num">2</span>] @ W^[<span class="code-num">3</span>]T + b^[<span class="code-num">3</span>]</span>
+        logits = <span class="code-kw">self</span>.<span class="code-fn">layer3</span>(a2)
+        
+        <span <span class="code-kw">class</span>="code-cmt"># Output is Raw Logits (We apply Sigmoid/Softmax <span class="code-kw">in</span> the loss function)</span>
+        <span class="code-kw">return</span> logits
+
+<span class="code-kw">if</span> __name__ == &quot;__main__&quot;:
+    <span class="code-fn">print</span>(&quot;--- <span class="code-num">01</span>. MLP &amp; Feedforward Network ---&quot;)
+    <span <span class="code-kw">class</span>="code-cmt"># Simulate a batch of <span class="code-num">8</span> images, each 28x28 pixels flattened (<span class="code-num">784</span>)</span>
+    batch_size = <span class="code-num">8</span>
+    input_features = <span class="code-num">784</span> 
+    hidden_units = <span class="code-num">128</span>
+    num_classes = <span class="code-num">10</span> <span <span class="code-kw">class</span>="code-cmt"># E.g., classifying digits <span class="code-num">0</span>-<span class="code-num">9</span></span>
+    
+    <span <span class="code-kw">class</span>="code-cmt"># Create the network</span>
+    mlp = <span class="code-fn">DeepMLP</span>(input_features, hidden_units, num_classes)
+    
+    <span <span class="code-kw">class</span>="code-cmt"># Generate dummy data</span>
+    X_dummy = torch.<span class="code-fn">randn</span>(batch_size, input_features)
+    
+    <span <span class="code-kw">class</span>="code-cmt"># Forward Pass</span>
+    predictions = <span class="code-fn">mlp</span>(X_dummy)
+    
+    <span class="code-fn">print</span>(f&quot;Input Shape: {X_dummy.shape} [Batch Size, Features]&quot;)
+    <span class="code-fn">print</span>(f&quot;Output Shape: {predictions.shape} [Batch Size, Classes]&quot;)
+    
+    <span <span class="code-kw">class</span>="code-cmt"># To get final probabilities, we apply Softmax</span>
+    probabilities = F.<span class="code-fn">softmax</span>(predictions, dim=<span class="code-num">1</span>)
+    <span class="code-fn">print</span>(f&quot;Sample probabilities <span class="code-kw">for</span> Image <span class="code-num">0</span>: \n{probabilities[<span class="code-num">0</span>].<span class="code-fn">detach</span>().<span class="code-fn">numpy</span>()}&quot;)
+    <span class="code-fn">print</span>(&quot;Success: Explicit MLP Forward Pass complete.&quot;)
+</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Execution Trace -->
+    <div class="tab-pane" id="tab-trace">
+      <div class="content-section">
+        <h2 class="content-h2">Layer-by-Layer Forward Execution Trace</h2>
+        <table class="trace-table">
+          <thead>
+            <tr>
+              <th>LAYER / STAGE</th>
+              <th>INPUT SHAPE</th>
+              <th>OPERATION</th>
+              <th>OUTPUT SHAPE</th>
+              <th>PARAM COUNT</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+    <tr>
+      <td style="color:var(--c-cyan);">01. Input Tensor</td>
+      <td>Raw Batch [B, D_in]</td>
+      <td>Feature Vector Ingestion & Normalization</td>
+      <td>[B, D_in]</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td style="color:var(--c-emerald);">02. Parameterized Transformation</td>
+      <td>[B, D_in]</td>
+      <td>Affine Weight Matrix Multiply (W @ X^T + b)</td>
+      <td>[B, D_hidden]</td>
+      <td>D_in x D_hidden + D_hidden</td>
+    </tr>
+    <tr>
+      <td style="color:var(--c-violet);">03. Non-Linear Activation</td>
+      <td>[B, D_hidden]</td>
+      <td>Element-wise Non-Linear Gating (ReLU / GeLU / Tanh)</td>
+      <td>[B, D_hidden]</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td style="color:var(--c-amber);">04. Output Layer</td>
+      <td>[B, D_hidden]</td>
+      <td>Projection to Classes / Decoded Logits</td>
+      <td>[B, D_out]</td>
+      <td>D_hidden x D_out + D_out</td>
+    </tr>
+    
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="sim-footer">
+    <span>NEURAL SIMS SUITE &bull; EVERYTHING CLAUDE CODE (ECC)</span>
+    <span>SOURCE: <a href="Reports/Deep_Dives/01_MLP_Feedforward.md" style="color:var(--c-cyan);text-decoration:none;">Reports/Deep_Dives/01_MLP_Feedforward.md</a> &bull; <a href="Code/Deep_Dives/01_MLP_Feedforward.py" style="color:var(--c-cyan);text-decoration:none;">Code/Deep_Dives/01_MLP_Feedforward.py</a></span>
+  </footer>
+</div>
+
+<!-- Tab Switching Script -->
+<script>
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const tabId = btn.getAttribute('data-tab');
+    document.getElementById(tabId).classList.add('active');
+  });
+});
+</script>
+
+<!-- Specialized Animation Engine Script -->
+<script>
+
+(() => {
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+  let isRunning = true;
+  let speed = 1.0;
+  let phase = 0; // 0: Input->H1, 1: H1->H2, 2: H2->Out, 3: Softmax, 4: Backprop
+  let animTime = 0;
+  let inputVals = [0.8, -0.4, 0.9, -0.2, 0.5, 0.1];
+  let h1Vals = [0, 0, 0, 0, 0, 0];
+  let h2Vals = [0, 0, 0, 0, 0, 0];
+  let outVals = [0.1, 0.8, 0.1];
+
+  function resize() {
+    canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
+    canvas.height = canvas.parentElement.clientHeight * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function forwardMath() {
+    // Layer 1 (ReLU)
+    for(let i=0; i<6; i++) {
+      let sum = 0;
+      for(let j=0; j<6; j++) sum += inputVals[j] * Math.sin(i*j + animTime*0.5);
+      h1Vals[i] = Math.max(0, sum * 0.4);
+    }
+    // Layer 2 (ReLU)
+    for(let i=0; i<6; i++) {
+      let sum = 0;
+      for(let j=0; j<6; j++) sum += h1Vals[j] * Math.cos(i + j);
+      h2Vals[i] = Math.max(0, sum * 0.35);
+    }
+    // Output (Softmax logits)
+    let raw = [0, 0, 0];
+    for(let i=0; i<3; i++) {
+      for(let j=0; j<6; j++) raw[i] += h2Vals[j] * (0.3 + i*0.2);
+    }
+    let exp = raw.map(v => Math.exp(v));
+    let s = exp.reduce((a,b)=>a+b, 0) || 1;
+    outVals = exp.map(v => v/s);
+  }
+
+  function draw() {
+    const W = canvas.parentElement.clientWidth;
+    const H = canvas.parentElement.clientHeight;
+    ctx.clearRect(0, 0, W, H);
+
+    // Layer X positions
+    const xIn = W * 0.12;
+    const xH1 = W * 0.38;
+    const xH2 = W * 0.64;
+    const xOut = W * 0.88;
+
+    // Draw Synapses (Connections)
+    function drawSynapses(x1, yList1, x2, yList2, color, pulse) {
+      for(let i=0; i<yList1.length; i++) {
+        for(let j=0; j<yList2.length; j++) {
+          const y1 = yList1[i];
+          const y2 = yList2[j];
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+
+          if(pulse) {
+            // moving particle along connection
+            const t = (animTime * 1.5 + (i+j)*0.2) % 1;
+            const px = x1 + (x2 - x1) * t;
+            const py = y1 + (y2 - y1) * t;
+            ctx.beginPath();
+            ctx.arc(px, py, 2.2, 0, Math.PI*2);
+            ctx.fillStyle = '#00e5ff';
+            ctx.shadowColor = '#00e5ff';
+            ctx.shadowBlur = 6;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+        }
+      }
+    }
+
+    const yIn = [H*0.2, H*0.32, H*0.44, H*0.56, H*0.68, H*0.8];
+    const yH1 = [H*0.2, H*0.32, H*0.44, H*0.56, H*0.68, H*0.8];
+    const yH2 = [H*0.2, H*0.32, H*0.44, H*0.56, H*0.68, H*0.8];
+    const yOut = [H*0.35, H*0.5, H*0.65];
+
+    // Synapses between layers
+    drawSynapses(xIn, yIn, xH1, yH1, 'rgba(0, 229, 255, 0.12)', isRunning);
+    drawSynapses(xH1, yH1, xH2, yH2, 'rgba(168, 85, 247, 0.12)', isRunning);
+    drawSynapses(xH2, yH2, xOut, yOut, 'rgba(0, 255, 157, 0.15)', isRunning);
+
+    // Draw Neurons
+    function drawLayer(x, yList, vals, labelPrefix, color) {
+      yList.forEach((y, i) => {
+        const val = vals[i] || 0;
+        const radius = 16;
+        // Node circle
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI*2);
+        ctx.fillStyle = '#090e1c';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Activation intensity fill
+        const glowAlpha = Math.min(1, Math.max(0.1, Math.abs(val)));
+        ctx.beginPath();
+        ctx.arc(x, y, radius - 2, 0, Math.PI*2);
+        ctx.fillStyle = color.replace(')', `, ${glowAlpha * 0.45})`).replace('rgb', 'rgba');
+        ctx.fill();
+
+        // Label
+        ctx.fillStyle = '#fff';
+        ctx.font = '10px "JetBrains Mono"';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(labelPrefix + i, x, y - 4);
+        ctx.fillStyle = color;
+        ctx.fillText(val.toFixed(2), x, y + 6);
+      });
+    }
+
+    drawLayer(xIn, yIn, inputVals, 'X', 'rgb(0, 229, 255)');
+    drawLayer(xH1, yH1, h1Vals, 'H1_', 'rgb(168, 85, 247)');
+    drawLayer(xH2, yH2, h2Vals, 'H2_', 'rgb(168, 85, 247)');
+    drawLayer(xOut, yOut, outVals, 'Y', 'rgb(0, 255, 157)');
+
+    // Layer Titles
+    ctx.fillStyle = '#8b9bb4';
+    ctx.font = '11px "Orbitron"';
+    ctx.textAlign = 'center';
+    ctx.fillText('INPUT LAYER (X)', xIn, 40);
+    ctx.fillText('HIDDEN 1 (W1, ReLU)', xH1, 40);
+    ctx.fillText('HIDDEN 2 (W2, ReLU)', xH2, 40);
+    ctx.fillText('OUTPUT (Softmax)', xOut, 40);
+
+    // Probability Bars on Output
+    outVals.forEach((p, i) => {
+      const y = yOut[i];
+      const barW = p * 60;
+      ctx.fillStyle = 'rgba(0, 255, 157, 0.2)';
+      ctx.fillRect(xOut + 28, y - 6, 60, 12);
+      ctx.fillStyle = '#00ff9d';
+      ctx.fillRect(xOut + 28, y - 6, barW, 12);
+      ctx.fillStyle = '#fff';
+      ctx.font = '10px "JetBrains Mono"';
+      ctx.textAlign = 'left';
+      ctx.fillText((p*100).toFixed(1) + '%', xOut + 94, y + 3);
+    });
+
+    // Update Telemetry
+    document.getElementById('hudPhase').textContent = 'Z^[l] = W^[l]A^[l-1] + b';
+    document.getElementById('hudTensorShape').textContent = '[B: 8, Features: 784 -> 128 -> 10]';
+    document.getElementById('hudFlops').textContent = '102.4 KFLOPs';
+    document.getElementById('hudMetric').textContent = 'Loss: ' + (0.05 + 0.02 * Math.sin(animTime)).toFixed(4);
+  }
+
+  function loop() {
+    if (isRunning) {
+      animTime += 0.03 * speed;
+      forwardMath();
+    }
+    draw();
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  // Control handlers
+  const btnPlay = document.getElementById('playPauseBtn');
+  btnPlay.addEventListener('click', () => {
+    isRunning = !isRunning;
+    btnPlay.textContent = isRunning ? '⏸ PAUSE' : '▶ PLAY';
+    btnPlay.classList.toggle('active', isRunning);
+  });
+  document.getElementById('stepBtn').addEventListener('click', () => {
+    animTime += 0.2;
+    forwardMath();
+    draw();
+  });
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    animTime = 0;
+    inputVals = inputVals.map(() => (Math.random()*2 - 1));
+    forwardMath();
+  });
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      speed = parseFloat(btn.getAttribute('data-speed'));
+    });
+  });
+})();
+
+</script>
+
+</body>
+</html>

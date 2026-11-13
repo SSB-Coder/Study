@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Sims Master Portal — Complete AI Architecture Visualizations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #05070f;
+  --card: rgba(13, 19, 36, 0.85);
+  --border: rgba(0, 229, 255, 0.18);
+  --border-glow: rgba(0, 229, 255, 0.45);
+  --cyan: #00e5ff;
+  --emerald: #00ff9d;
+  --violet: #a855f7;
+  --text: #e2e8f5;
+  --dim: #8b9bb4;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  min-height: 100vh;
+  padding: 30px 20px 80px;
+}
+
+.hero {
+  max-width: 1300px;
+  margin: 0 auto 30px;
+  text-align: center;
+  position: relative;
+}
+.hero-badge {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--cyan);
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid var(--border-glow);
+  padding: 6px 14px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-bottom: 16px;
+}
+.hero-h1 {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(28px, 4.5vw, 46px);
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+.hero-h1 span {
+  color: var(--cyan);
+  text-shadow: 0 0 24px rgba(0, 229, 255, 0.4);
+}
+.hero-sub {
+  color: var(--dim);
+  font-size: 16px;
+  max-width: 750px;
+  margin: 0 auto 28px;
+}
+
+.stats-bar {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+.stat-pill {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+.stat-num {
+  font-weight: 700;
+  color: var(--cyan);
+  font-size: 16px;
+}
+
+.filter-bar {
+  max-width: 1300px;
+  margin: 0 auto 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.search-input {
+  width: 100%;
+  padding: 14px 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+.search-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.3);
+}
+.pills-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.filter-btn {
+  padding: 7px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--dim);
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.filter-btn:hover, .filter-btn.active {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--cyan);
+  border-color: var(--border-glow);
+}
+
+.sim-grid {
+  max-width: 1300px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px;
+}
+.sim-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s ease;
+}
+.sim-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-glow);
+  box-shadow: 0 12px 30px rgba(0, 229, 255, 0.15);
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.card-badge {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  color: var(--cyan);
+  background: rgba(0, 229, 255, 0.1);
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+}
+.card-cat {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--violet);
+  text-transform: uppercase;
+}
+.card-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.35;
+  margin-bottom: 10px;
+}
+.card-summary {
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 1.6;
+  margin-bottom: 16px;
+  flex: 1;
+}
+.card-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.tag-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--dim);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.card-launch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 10px;
+  background: rgba(0, 229, 255, 0.12);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--cyan);
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+}
+.card-launch-btn:hover {
+  background: var(--cyan);
+  color: #000;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.5);
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-badge">EVERYTHING CLAUDE CODE (ECC) &bull; INTERACTIVE SIMULATIONS</div>
+  <h1 class="hero-h1">NEURAL SIMS <span>MASTER PORTAL</span></h1>
+  <p class="hero-sub">Complete interactive visual animations, live forward/backward tensors, mathematical formulations, and PyTorch implementations for every architecture and research paper in the repository.</p>
+
+  <div class="stats-bar">
+    <div class="stat-pill"><span class="stat-num">57</span> Visual Simulations</div>
+    <div class="stat-pill"><span class="stat-num">100%</span> Standalone HTML5 Canvas</div>
+    <div class="stat-pill"><span class="stat-num">60 FPS</span> Real-Time Dynamics</div>
+    <div class="stat-pill"><span class="stat-num">1-to-1</span> Report & Code Fidelity</div>
+  </div>
+</header>
+
+<section class="filter-bar">
+  <input type="text" id="searchInput" class="search-input" placeholder="Search by architecture, keyword (e.g. 'CNN', 'FlashAttention', 'Mamba', 'RLHF', 'BPE')...">
+  <div class="pills-group" id="filterPills">
+    <button class="filter-btn active" data-cat="all">ALL (57)</button>
+    <button class="filter-btn" data-cat="Foundations">FOUNDATIONS</button>
+    <button class="filter-btn" data-cat="Computer Vision">COMPUTER VISION</button>
+    <button class="filter-btn" data-cat="Sequences & Recurrence">SEQUENCES</button>
+    <button class="filter-btn" data-cat="Transformers & LLMs">TRANSFORMERS</button>
+    <button class="filter-btn" data-cat="Bio-Inspired & Brain">BIO-INSPIRED</button>
+    <button class="filter-btn" data-cat="Generative AI">GENERATIVE AI</button>
+    <button class="filter-btn" data-cat="Systems & Efficiency">SYSTEMS</button>
+    <button class="filter-btn" data-cat="Frontier Architectures">FRONTIER</button>
+    <button class="filter-btn" data-cat="Mathematical Foundations">MATHEMATICS</button>
+    <button class="filter-btn" data-cat="AI for Science">AI FOR SCIENCE</button>
+  </div>
+</section>
+
+<main class="sim-grid" id="simGrid">
+
+        <div class="sim-card" data-category="Foundations" data-tags="perceptron mlp decision boundary backpropagation" data-title="perceptrons & multi-layer perceptrons: the foundations">
+          <div class="card-header">
+            <span class="card-badge">FOUNDATION</span>
+            <span class="card-cat">Foundations</span>
+          </div>
+          <h2 class="card-title">Perceptrons & Multi-Layer Perceptrons: The Foundations</h2>
+          <p class="card-summary">Interactive exploration of the atomic perceptron unit, linear decision boundaries, the XOR crisis, and multi-layer feedforward networks with backpropagation.</p>
+          <div class="card-tags"><span class="tag-pill">#Perceptron</span><span class="tag-pill">#MLP</span><span class="tag-pill">#Decision Boundary</span></div>
+          <a href="00_Simple_NNs_Perceptron_MLP.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Foundations" data-tags="cnn rnn architecture evolution spatial vs temporal" data-title="the evolution: from spatial convolutions to recurrent sequences">
+          <div class="card-header">
+            <span class="card-badge">FOUNDATION</span>
+            <span class="card-cat">Foundations</span>
+          </div>
+          <h2 class="card-title">The Evolution: From Spatial Convolutions to Recurrent Sequences</h2>
+          <p class="card-summary">Visual comparison of architectural paradigms: How 2D spatial translation invariance (CNN) and 1D temporal recurrence (RNN) solved MLP limitations.</p>
+          <div class="card-tags"><span class="tag-pill">#CNN</span><span class="tag-pill">#RNN</span><span class="tag-pill">#Architecture Evolution</span></div>
+          <a href="00_Evolution_CNN_RNN.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Transformers & LLMs" data-tags="self-attention qkv projections attention weights softmax" data-title="scaled dot-product & multi-head self-attention">
+          <div class="card-header">
+            <span class="card-badge">FOUNDATION</span>
+            <span class="card-cat">Transformers & LLMs</span>
+          </div>
+          <h2 class="card-title">Scaled Dot-Product & Multi-Head Self-Attention</h2>
+          <p class="card-summary">Deep dive on the core engine of modern LLMs: Query, Key, and Value linear projections, scaled dot-product attention matrices, and multi-head representation subspaces.</p>
+          <div class="card-tags"><span class="tag-pill">#Self-Attention</span><span class="tag-pill">#QKV Projections</span><span class="tag-pill">#Attention Weights</span></div>
+          <a href="00_Self_Attention_Mechanism.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Transformers & LLMs" data-tags="transformer encoder-decoder layernorm residuals ffn" data-title="complete generative transformer encoder-decoder architecture">
+          <div class="card-header">
+            <span class="card-badge">FOUNDATION</span>
+            <span class="card-cat">Transformers & LLMs</span>
+          </div>
+          <h2 class="card-title">Complete Generative Transformer Encoder-Decoder Architecture</h2>
+          <p class="card-summary">The complete 'Attention Is All You Need' architecture: Positional encodings, multi-head attention, residual highways, LayerNorm, feed-forward expansion, and cross-attention.</p>
+          <div class="card-tags"><span class="tag-pill">#Transformer</span><span class="tag-pill">#Encoder-Decoder</span><span class="tag-pill">#LayerNorm</span></div>
+          <a href="00_Transformer_Full_Architecture.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Mathematical Foundations" data-tags="calculus jacobian hessian backpropagation adam" data-title="the complete mathematical foundations of neural networks">
+          <div class="card-header">
+            <span class="card-badge">FOUNDATION</span>
+            <span class="card-cat">Mathematical Foundations</span>
+          </div>
+          <h2 class="card-title">The Complete Mathematical Foundations of Neural Networks</h2>
+          <p class="card-summary">Rigorous mathematical visualization: Tensor algebra, multivariate calculus chain rule, loss gradients, curvature Hessians, and optimizer dynamics from SGD to Adam.</p>
+          <div class="card-tags"><span class="tag-pill">#Calculus</span><span class="tag-pill">#Jacobian</span><span class="tag-pill">#Hessian</span></div>
+          <a href="00_The_Complete_Mathematics_of_Neural_Networks.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Foundations" data-tags="taxonomy pros & cons complexity flops sota tradeoffs" data-title="master architecture matrix & comparative taxonomy">
+          <div class="card-header">
+            <span class="card-badge">FOUNDATION</span>
+            <span class="card-cat">Foundations</span>
+          </div>
+          <h2 class="card-title">Master Architecture Matrix & Comparative Taxonomy</h2>
+          <p class="card-summary">Comprehensive comparative taxonomy of all neural network paradigms: Compute complexity, inductive biases, memory bottlenecks, and optimal use cases.</p>
+          <div class="card-tags"><span class="tag-pill">#Taxonomy</span><span class="tag-pill">#Pros & Cons</span><span class="tag-pill">#Complexity</span></div>
+          <a href="00_Master_Architecture_Matrix.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Foundations" data-tags="mlp dense layers matrix multiplication relu backpropagation" data-title="01. multi-layer perceptron (mlp) & feedforward networks">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 01</span>
+            <span class="card-cat">Foundations</span>
+          </div>
+          <h2 class="card-title">01. Multi-Layer Perceptron (MLP) & Feedforward Networks</h2>
+          <p class="card-summary">Explicit matrix multiplication Z = XW^T + b, non-linear activation gating, forward signal propagation, and chain-rule gradient backpropagation.</p>
+          <div class="card-tags"><span class="tag-pill">#MLP</span><span class="tag-pill">#Dense Layers</span><span class="tag-pill">#Matrix Multiplication</span></div>
+          <a href="01_MLP_Feedforward.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Computer Vision" data-tags="cnn conv2d kernels maxpool feature maps flatten" data-title="02. convolutional neural networks (cnn)">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 02</span>
+            <span class="card-cat">Computer Vision</span>
+          </div>
+          <h2 class="card-title">02. Convolutional Neural Networks (CNN)</h2>
+          <p class="card-summary">Sliding 3x3 kernel over 2D input matrix, dot-product feature map generation, ReLU non-linearity, 2x2 max pooling, flattening into 1D vector, and dense classification.</p>
+          <div class="card-tags"><span class="tag-pill">#CNN</span><span class="tag-pill">#Conv2D</span><span class="tag-pill">#Kernels</span></div>
+          <a href="02_CNN_Convolutional.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Sequences & Recurrence" data-tags="rnn recurrence hidden state bptt vanishing gradients" data-title="03. recurrent neural networks (rnn)">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 03</span>
+            <span class="card-cat">Sequences & Recurrence</span>
+          </div>
+          <h2 class="card-title">03. Recurrent Neural Networks (RNN)</h2>
+          <p class="card-summary">Sequential time-step unrolling, recurrent hidden state memory h_t = tanh(W_hh h_{t-1} + W_xh x_t + b), and backpropagation through time vanishing gradient mechanics.</p>
+          <div class="card-tags"><span class="tag-pill">#RNN</span><span class="tag-pill">#Recurrence</span><span class="tag-pill">#Hidden State</span></div>
+          <a href="03_RNN_Recurrent.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Sequences & Recurrence" data-tags="lstm gru forget gate cell state gating signals" data-title="04. long short-term memory (lstm) & gated recurrent units (gru)">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 04</span>
+            <span class="card-cat">Sequences & Recurrence</span>
+          </div>
+          <h2 class="card-title">04. Long Short-Term Memory (LSTM) & Gated Recurrent Units (GRU)</h2>
+          <p class="card-summary">Internal cell gating circuitry: Forget gate f_t, Input gate i_t, Candidate cell state, Output gate o_t, cell state highway, and GRU reset/update gates.</p>
+          <div class="card-tags"><span class="tag-pill">#LSTM</span><span class="tag-pill">#GRU</span><span class="tag-pill">#Forget Gate</span></div>
+          <a href="04_LSTM_GRU.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Generative AI" data-tags="vae autoencoder latent space reparameterization trick kl divergence" data-title="05. autoencoders & variational autoencoders (vae)">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 05</span>
+            <span class="card-cat">Generative AI</span>
+          </div>
+          <h2 class="card-title">05. Autoencoders & Variational Autoencoders (VAE)</h2>
+          <p class="card-summary">Bottleneck compression, Gaussian latent space mean mu and variance sigma^2, the reparameterization trick z = mu + sigma * epsilon, and reconstruction vs KL loss.</p>
+          <div class="card-tags"><span class="tag-pill">#VAE</span><span class="tag-pill">#Autoencoder</span><span class="tag-pill">#Latent Space</span></div>
+          <a href="05_Autoencoders_VAE.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Generative AI" data-tags="gan generator discriminator minimax game adversarial loss" data-title="06. generative adversarial networks (gans)">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 06</span>
+            <span class="card-cat">Generative AI</span>
+          </div>
+          <h2 class="card-title">06. Generative Adversarial Networks (GANs)</h2>
+          <p class="card-summary">Adversarial zero-sum game: Generator transforming latent noise z into synthetic samples, and Discriminator classifying Real vs Fake with minimax dynamics.</p>
+          <div class="card-tags"><span class="tag-pill">#GAN</span><span class="tag-pill">#Generator</span><span class="tag-pill">#Discriminator</span></div>
+          <a href="06_GANs.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Generative AI" data-tags="diffusion ddpm u-net noise schedule reverse denoising" data-title="07. diffusion models & score-based generative systems">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 07</span>
+            <span class="card-cat">Generative AI</span>
+          </div>
+          <h2 class="card-title">07. Diffusion Models & Score-Based Generative Systems</h2>
+          <p class="card-summary">Forward Gaussian noise addition process q(x_t|x_{t-1}) and reverse denoising pass with U-Net predicting and subtracting noise epsilon_theta to recover clean samples.</p>
+          <div class="card-tags"><span class="tag-pill">#Diffusion</span><span class="tag-pill">#DDPM</span><span class="tag-pill">#U-Net</span></div>
+          <a href="07_Diffusion_Models.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Geometric & Graphs" data-tags="gnn gcn message passing adjacency matrix node embedding" data-title="08. graph neural networks (gnn) & graph convolutions">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 08</span>
+            <span class="card-cat">Geometric & Graphs</span>
+          </div>
+          <h2 class="card-title">08. Graph Neural Networks (GNN) & Graph Convolutions</h2>
+          <p class="card-summary">Graph topology message passing: Sending feature packets along edges, degree-normalized neighborhood aggregation, and node embedding updates.</p>
+          <div class="card-tags"><span class="tag-pill">#GNN</span><span class="tag-pill">#GCN</span><span class="tag-pill">#Message Passing</span></div>
+          <a href="08_GNN_Graph.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Bio-Inspired & Brain" data-tags="snn lif action potentials surrogate gradients neuromorphic" data-title="09. spiking neural networks (snn) & neuromorphic computing">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 09</span>
+            <span class="card-cat">Bio-Inspired & Brain</span>
+          </div>
+          <h2 class="card-title">09. Spiking Neural Networks (SNN) & Neuromorphic Computing</h2>
+          <p class="card-summary">Leaky Integrate-and-Fire membrane potential dynamics V_m(t), spike threshold crossing, refractory periods, raster plots, and surrogate gradient backpropagation.</p>
+          <div class="card-tags"><span class="tag-pill">#SNN</span><span class="tag-pill">#LIF</span><span class="tag-pill">#Action Potentials</span></div>
+          <a href="09_SNN_Spiking.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Bio-Inspired & Brain" data-tags="lnn neural ode continuous-time dynamic systems robustness" data-title="10. liquid neural networks (lnn) & continuous-time odes">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 10</span>
+            <span class="card-cat">Bio-Inspired & Brain</span>
+          </div>
+          <h2 class="card-title">10. Liquid Neural Networks (LNN) & Continuous-Time ODEs</h2>
+          <p class="card-summary">Continuous-time state evolution governed by ODEs dx/dt = -[A + f(x)]x + I(t), adaptive step numerical solvers, and resilience to irregular temporal sampling.</p>
+          <div class="card-tags"><span class="tag-pill">#LNN</span><span class="tag-pill">#Neural ODE</span><span class="tag-pill">#Continuous-Time</span></div>
+          <a href="10_LNN_Liquid.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Bio-Inspired & Brain" data-tags="rbm dbn gibbs sampling contrastive divergence energy-based" data-title="11. restricted boltzmann machines (rbm) & deep belief networks">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 11</span>
+            <span class="card-cat">Bio-Inspired & Brain</span>
+          </div>
+          <h2 class="card-title">11. Restricted Boltzmann Machines (RBM) & Deep Belief Networks</h2>
+          <p class="card-summary">Bipartite energy-based modeling, alternating Gibbs sampling between visible and hidden layers, energy minimization, and Contrastive Divergence (CD-k).</p>
+          <div class="card-tags"><span class="tag-pill">#RBM</span><span class="tag-pill">#DBN</span><span class="tag-pill">#Gibbs Sampling</span></div>
+          <a href="11_RBM_DeepBelief.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Bio-Inspired & Brain" data-tags="som kohonen topological map bmu competitive learning" data-title="12. self-organizing maps (som) / kohonen networks">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 12</span>
+            <span class="card-cat">Bio-Inspired & Brain</span>
+          </div>
+          <h2 class="card-title">12. Self-Organizing Maps (SOM) / Kohonen Networks</h2>
+          <p class="card-summary">Unsupervised competitive learning: Best Matching Unit (BMU) Euclidean search, Gaussian neighborhood bubble shrinkage, and 2D topological feature map self-organization.</p>
+          <div class="card-tags"><span class="tag-pill">#SOM</span><span class="tag-pill">#Kohonen</span><span class="tag-pill">#Topological Map</span></div>
+          <a href="12_SOM_Kohonen.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Transformers & LLMs" data-tags="transformer attention causal mask multi-head layernorm" data-title="13. classic dense transformers">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 13</span>
+            <span class="card-cat">Transformers & LLMs</span>
+          </div>
+          <h2 class="card-title">13. Classic Dense Transformers</h2>
+          <p class="card-summary">Token embeddings, sinusoidal positional encodings, Q, K, V projections, scaled dot-product attention, causal masking, softmax weights, and residual feed-forward blocks.</p>
+          <div class="card-tags"><span class="tag-pill">#Transformer</span><span class="tag-pill">#Attention</span><span class="tag-pill">#Causal Mask</span></div>
+          <a href="13_Classic_Transformer_Dense.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Transformers & LLMs" data-tags="moe sparse routing top-k gating load balancing deepseek/mixtral" data-title="14. sparse mixture of experts (moe)">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 14</span>
+            <span class="card-cat">Transformers & LLMs</span>
+          </div>
+          <h2 class="card-title">14. Sparse Mixture of Experts (MoE)</h2>
+          <p class="card-summary">Router gating network computing softmax logits over N experts, Top-K token dispatch, parallel expert execution, and auxiliary loss load balancing.</p>
+          <div class="card-tags"><span class="tag-pill">#MoE</span><span class="tag-pill">#Sparse Routing</span><span class="tag-pill">#Top-K Gating</span></div>
+          <a href="14_Transformer_MoE_Sparse.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Frontier Architectures" data-tags="mamba ssm selective state space parallel scan linear time" data-title="15. state space models (ssm) & mamba hybrids">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 15</span>
+            <span class="card-cat">Frontier Architectures</span>
+          </div>
+          <h2 class="card-title">15. State Space Models (SSM) & Mamba Hybrids</h2>
+          <p class="card-summary">Continuous state space discretization into (A, B, C), input-dependent selection parameters Delta_t, and GPU hardware-friendly parallel associative scan with O(L) complexity.</p>
+          <div class="card-tags"><span class="tag-pill">#Mamba</span><span class="tag-pill">#SSM</span><span class="tag-pill">#Selective State Space</span></div>
+          <a href="15_Transformer_SSM_Mamba_Hybrids.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Transformers & LLMs" data-tags="omnimodal multimodal cross-attention vit patches audio frames" data-title="16. natively omnimodal architectures">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 16</span>
+            <span class="card-cat">Transformers & LLMs</span>
+          </div>
+          <h2 class="card-title">16. Natively Omnimodal Architectures</h2>
+          <p class="card-summary">Simultaneous ingestion of text tokens, vision patches, and audio frames projected into a unified latent space with joint cross-modal multi-head attention.</p>
+          <div class="card-tags"><span class="tag-pill">#Omnimodal</span><span class="tag-pill">#Multimodal</span><span class="tag-pill">#Cross-Attention</span></div>
+          <a href="16_Transformer_Omnimodal.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Frontier Architectures" data-tags="agentic ai chain-of-thought ppo advantage tool use tree search" data-title="17. agentic & adaptive reasoning architectures">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 17</span>
+            <span class="card-cat">Frontier Architectures</span>
+          </div>
+          <h2 class="card-title">17. Agentic & Adaptive Reasoning Architectures</h2>
+          <p class="card-summary">Multi-step reasoning loops: Internal scratchpad tokens, policy logits, value network baseline, PPO advantage calculation, and tool call generation.</p>
+          <div class="card-tags"><span class="tag-pill">#Agentic AI</span><span class="tag-pill">#Chain-of-Thought</span><span class="tag-pill">#PPO Advantage</span></div>
+          <a href="17_Transformer_Agentic_Reasoning.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Frontier Architectures" data-tags="jepa lecun non-generative latent prediction ema target" data-title="18. joint embedding predictive architecture (jepa)">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 18</span>
+            <span class="card-cat">Frontier Architectures</span>
+          </div>
+          <h2 class="card-title">18. Joint Embedding Predictive Architecture (JEPA)</h2>
+          <p class="card-summary">Self-supervised predictive learning in latent space: Context encoder, target encoder with EMA updates, and latent predictor predicting masked feature embeddings without pixel decoding.</p>
+          <div class="card-tags"><span class="tag-pill">#JEPA</span><span class="tag-pill">#LeCun</span><span class="tag-pill">#Non-Generative</span></div>
+          <a href="18_JEPA_Predictive_Architecture.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Frontier Architectures" data-tags="neurosymbolic knowledge graphs differentiable logic first-order logic" data-title="19. neurosymbolic ai architectures">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 19</span>
+            <span class="card-cat">Frontier Architectures</span>
+          </div>
+          <h2 class="card-title">19. Neurosymbolic AI Architectures</h2>
+          <p class="card-summary">Bridging neural perception probabilities with symbolic deduction engines, fuzzy t-norm logic operations (AND/OR), and knowledge graph consistency proofs.</p>
+          <div class="card-tags"><span class="tag-pill">#Neurosymbolic</span><span class="tag-pill">#Knowledge Graphs</span><span class="tag-pill">#Differentiable Logic</span></div>
+          <a href="19_Neurosymbolic_AI_Hybrids.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Frontier Architectures" data-tags="kan b-splines learnable edges symbolic regression interpretability" data-title="20. kolmogorov-arnold networks (kan)">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 20</span>
+            <span class="card-cat">Frontier Architectures</span>
+          </div>
+          <h2 class="card-title">20. Kolmogorov-Arnold Networks (KAN)</h2>
+          <p class="card-summary">Learnable non-linear B-spline activation curves living on edges between simple summation nodes, spline grid refinement, and symbolic mathematical distillation.</p>
+          <div class="card-tags"><span class="tag-pill">#KAN</span><span class="tag-pill">#B-Splines</span><span class="tag-pill">#Learnable Edges</span></div>
+          <a href="20_KAN_Kolmogorov_Arnold.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Bio-Inspired & Brain" data-tags="active inference free energy friston perception-action loop" data-title="21. active inference & the free energy principle">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 21</span>
+            <span class="card-cat">Bio-Inspired & Brain</span>
+          </div>
+          <h2 class="card-title">21. Active Inference & The Free Energy Principle</h2>
+          <p class="card-summary">Internal generative world models, variational free energy minimization F = Complexity - Accuracy, epistemic exploration, and pragmatic action selection.</p>
+          <div class="card-tags"><span class="tag-pill">#Active Inference</span><span class="tag-pill">#Free Energy</span><span class="tag-pill">#Friston</span></div>
+          <a href="21_Active_Inference.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Mathematical Foundations" data-tags="information theory entropy information bottleneck manifold untangling" data-title="22. information theory, manifolds & the information bottleneck">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 22</span>
+            <span class="card-cat">Mathematical Foundations</span>
+          </div>
+          <h2 class="card-title">22. Information Theory, Manifolds & The Information Bottleneck</h2>
+          <p class="card-summary">Information plane trajectories I(X;T) vs I(T;Y), compression vs fitting phases during training, and progressive high-dimensional manifold untangling across layers.</p>
+          <div class="card-tags"><span class="tag-pill">#Information Theory</span><span class="tag-pill">#Entropy</span><span class="tag-pill">#Information Bottleneck</span></div>
+          <a href="22_Information_Theory_and_Manifolds.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Systems & Efficiency" data-tags="flashattention triton gpu sram vs hbm online softmax tiling" data-title="23. hardware systems, flashattention & triton">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 23</span>
+            <span class="card-cat">Systems & Efficiency</span>
+          </div>
+          <h2 class="card-title">23. Hardware Systems, FlashAttention & Triton</h2>
+          <p class="card-summary">GPU memory hierarchy (HBM vs fast SRAM cache), block tiling B_r x B_c, and the online softmax algorithm avoiding O(N^2) memory bandwidth writes.</p>
+          <div class="card-tags"><span class="tag-pill">#FlashAttention</span><span class="tag-pill">#Triton</span><span class="tag-pill">#GPU SRAM vs HBM</span></div>
+          <a href="23_Systems_FlashAttention_and_Triton.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Transformers & LLMs" data-tags="scaling laws chinchilla rlhf ppo dpo reward model" data-title="24. scaling laws, rlhf, and dpo">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 24</span>
+            <span class="card-cat">Transformers & LLMs</span>
+          </div>
+          <h2 class="card-title">24. Scaling Laws, RLHF, and DPO</h2>
+          <p class="card-summary">Chinchilla compute-optimal frontier curves, Actor-Critic training loops, reward models, KL divergence boundary constraints, and clipped PPO objectives.</p>
+          <div class="card-tags"><span class="tag-pill">#Scaling Laws</span><span class="tag-pill">#Chinchilla</span><span class="tag-pill">#RLHF</span></div>
+          <a href="24_Scaling_Laws_and_RLHF.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Systems & Efficiency" data-tags="linear attention gla kernel trick o(n) complexity associativity" data-title="25. linear attention & gated linear attention (gla)">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 25</span>
+            <span class="card-cat">Systems & Efficiency</span>
+          </div>
+          <h2 class="card-title">25. Linear Attention & Gated Linear Attention (GLA)</h2>
+          <p class="card-summary">Converting quadratic attention to linear O(N) via matrix associativity Q(K^T V), kernel feature maps phi(x), and input-dependent gated decay states.</p>
+          <div class="card-tags"><span class="tag-pill">#Linear Attention</span><span class="tag-pill">#GLA</span><span class="tag-pill">#Kernel Trick</span></div>
+          <a href="25_Linear_Attention_and_GLA.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Frontier Architectures" data-tags="rwkv xlstm slstm mlstm matrix memory linear recurrence" data-title="26. rwkv & extended lstm (xlstm)">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 26</span>
+            <span class="card-cat">Frontier Architectures</span>
+          </div>
+          <h2 class="card-title">26. RWKV & Extended LSTM (xLSTM)</h2>
+          <p class="card-summary">Linear transformer-RNN hybrids: RWKV exponential decay time-mixing and xLSTM matrix memory mLSTM with covariance associative updates C_t = f_t C_{t-1} + i_t v_t k_t^T.</p>
+          <div class="card-tags"><span class="tag-pill">#RWKV</span><span class="tag-pill">#xLSTM</span><span class="tag-pill">#sLSTM</span></div>
+          <a href="26_RWKV_and_xLSTM.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Frontier Architectures" data-tags="titans neural memory surprise metric meta-learning fast/slow memory" data-title="27. titans: long-term neural memory modules">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 27</span>
+            <span class="card-cat">Frontier Architectures</span>
+          </div>
+          <h2 class="card-title">27. Titans: Long-Term Neural Memory Modules</h2>
+          <p class="card-summary">Dual-branch architecture: Short-term attention window + persistent Neural Memory module updated via gradient-based surprise signals S_t = ||grad_M L||.</p>
+          <div class="card-tags"><span class="tag-pill">#Titans</span><span class="tag-pill">#Neural Memory</span><span class="tag-pill">#Surprise Metric</span></div>
+          <a href="27_Titans_Neural_Memory.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Mathematical Foundations" data-tags="emergence phase transitions evaluations mmlu in-context learning" data-title="28. emergence of intelligence, scaling phase transitions & evals">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 28</span>
+            <span class="card-cat">Mathematical Foundations</span>
+          </div>
+          <h2 class="card-title">28. Emergence of Intelligence, Scaling Phase Transitions & Evals</h2>
+          <p class="card-summary">Non-linear capability jumps: How continuous cross-entropy reduction triggers sharp phase transitions on multi-step reasoning tasks and in-context learning emergence.</p>
+          <div class="card-tags"><span class="tag-pill">#Emergence</span><span class="tag-pill">#Phase Transitions</span><span class="tag-pill">#Evaluations</span></div>
+          <a href="28_The_Emergence_of_Intelligence_and_Evaluations.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Systems & Efficiency" data-tags="tokenization bpe minhash lsh deduplication data curation" data-title="29. tokenization, bpe & data curation pipelines">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 29</span>
+            <span class="card-cat">Systems & Efficiency</span>
+          </div>
+          <h2 class="card-title">29. Tokenization, BPE & Data Curation Pipelines</h2>
+          <p class="card-summary">Byte-Pair Encoding merge rule engine, k-gram text shingling, MinHash hash permutations, Locality Sensitive Hashing (LSH) banding, and dataset deduplication.</p>
+          <div class="card-tags"><span class="tag-pill">#Tokenization</span><span class="tag-pill">#BPE</span><span class="tag-pill">#MinHash</span></div>
+          <a href="29_Tokenization_and_Data_Curation.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Transformers & LLMs" data-tags="rope sinusoidal complex plane rotation relative distance context extension" data-title="30. positional encodings & rotary position embedding (rope)">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 30</span>
+            <span class="card-cat">Transformers & LLMs</span>
+          </div>
+          <h2 class="card-title">30. Positional Encodings & Rotary Position Embedding (RoPE)</h2>
+          <p class="card-summary">2D complex plane rotation of Query and Key vectors by angle m*theta, preserving relative distance (R_m Q)^T (R_n K) = Q^T R_{n-m} K for long-context generalization.</p>
+          <div class="card-tags"><span class="tag-pill">#RoPE</span><span class="tag-pill">#Sinusoidal</span><span class="tag-pill">#Complex Plane Rotation</span></div>
+          <a href="30_Positional_Encodings_and_RoPE.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Systems & Efficiency" data-tags="speculative decoding mla draft model deepseek kv cache compression" data-title="31. inference acceleration: speculative decoding & mla">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 31</span>
+            <span class="card-cat">Systems & Efficiency</span>
+          </div>
+          <h2 class="card-title">31. Inference Acceleration: Speculative Decoding & MLA</h2>
+          <p class="card-summary">Draft model speculative proposal with single-pass target verification, and Multi-Head Latent Attention (MLA) joint low-rank KV cache compression.</p>
+          <div class="card-tags"><span class="tag-pill">#Speculative Decoding</span><span class="tag-pill">#MLA</span><span class="tag-pill">#Draft Model</span></div>
+          <a href="31_Speculative_Decoding_and_MLA.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Systems & Efficiency" data-tags="distributed training zero deepspeed nccl ring-allreduce" data-title="32. distributed training & deepspeed zero 1-3">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 32</span>
+            <span class="card-cat">Systems & Efficiency</span>
+          </div>
+          <h2 class="card-title">32. Distributed Training & DeepSpeed ZeRO 1-3</h2>
+          <p class="card-summary">GPU cluster memory partitioning: ZeRO-1 (optimizer states), ZeRO-2 (gradients), ZeRO-3 (parameters), and NCCL ring communication topologies.</p>
+          <div class="card-tags"><span class="tag-pill">#Distributed Training</span><span class="tag-pill">#ZeRO</span><span class="tag-pill">#DeepSpeed</span></div>
+          <a href="32_Distributed_Training_and_ZeRO.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Mathematical Foundations" data-tags="mechanistic interpretability induction heads superposition sparse autoencoders" data-title="33. mechanistic interpretability & circuit analysis">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 33</span>
+            <span class="card-cat">Mathematical Foundations</span>
+          </div>
+          <h2 class="card-title">33. Mechanistic Interpretability & Circuit Analysis</h2>
+          <p class="card-summary">Transformer circuit reverse-engineering: Induction heads [A][B] ... [A] -> [B], residual stream communication channels, and Sparse Autoencoders disentangling superposition.</p>
+          <div class="card-tags"><span class="tag-pill">#Mechanistic Interpretability</span><span class="tag-pill">#Induction Heads</span><span class="tag-pill">#Superposition</span></div>
+          <a href="33_Mechanistic_Interpretability.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Frontier Architectures" data-tags="tool use function calling fine-tuning loss masking agent runtime" data-title="34. agentic tool use & function-calling fine-tuning">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 34</span>
+            <span class="card-cat">Frontier Architectures</span>
+          </div>
+          <h2 class="card-title">34. Agentic Tool Use & Function-Calling Fine-Tuning</h2>
+          <p class="card-summary">Structured token emission (<tool_call>), sandbox execution feedback (<tool_response>), and training loss masking preserving gradient updates on assistant tokens.</p>
+          <div class="card-tags"><span class="tag-pill">#Tool Use</span><span class="tag-pill">#Function Calling</span><span class="tag-pill">#Fine-Tuning</span></div>
+          <a href="34_Agentic_Tool_Use_FineTuning.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Systems & Efficiency" data-tags="benchmarking roofline model arithmetic intensity flops memory bound" data-title="35. benchmarking architecture efficiency & roofline analysis">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 35</span>
+            <span class="card-cat">Systems & Efficiency</span>
+          </div>
+          <h2 class="card-title">35. Benchmarking Architecture Efficiency & Roofline Analysis</h2>
+          <p class="card-summary">Hardware execution profiling: Arithmetic Intensity (FLOPs/byte), Roofline curves, memory-bandwidth bounded decoding vs compute-bounded pre-fill regimes.</p>
+          <div class="card-tags"><span class="tag-pill">#Benchmarking</span><span class="tag-pill">#Roofline Model</span><span class="tag-pill">#Arithmetic Intensity</span></div>
+          <a href="35_Benchmarking_Efficiency.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Frontier Architectures" data-tags="test-time scaling prm tree of thoughts mcts reasoning compute" data-title="36. test-time compute scaling & process reward models (prm)">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 36</span>
+            <span class="card-cat">Frontier Architectures</span>
+          </div>
+          <h2 class="card-title">36. Test-Time Compute Scaling & Process Reward Models (PRM)</h2>
+          <p class="card-summary">Step-by-step verification via Process Reward Models (PRMs), Tree of Thoughts search, Monte Carlo tree exploration, and test-time compute scaling laws.</p>
+          <div class="card-tags"><span class="tag-pill">#Test-Time Scaling</span><span class="tag-pill">#PRM</span><span class="tag-pill">#Tree of Thoughts</span></div>
+          <a href="36_Test_Time_Scaling_and_PRMs.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Transformers & LLMs" data-tags="deepseek v3/r1 claude thinking gemini reasoning o3 frontier ai" data-title="37. 2026 sota frontier literature review & models">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 37</span>
+            <span class="card-cat">Transformers & LLMs</span>
+          </div>
+          <h2 class="card-title">37. 2026 SOTA Frontier Literature Review & Models</h2>
+          <p class="card-summary">Architectural breakdown of 2026 state-of-the-art models: Multi-Head Latent Attention, dual-pipe parallelism, auxiliary-loss-free routing, and native reasoning chains.</p>
+          <div class="card-tags"><span class="tag-pill">#DeepSeek V3/R1</span><span class="tag-pill">#Claude Thinking</span><span class="tag-pill">#Gemini Reasoning</span></div>
+          <a href="37_2026_SOTA_Literature_Review.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Systems & Efficiency" data-tags="quantization lora int8/fp8 low-rank peft weight updates" data-title="38. quantization (int8/4) & low-rank adaptation (lora)">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 38</span>
+            <span class="card-cat">Systems & Efficiency</span>
+          </div>
+          <h2 class="card-title">38. Quantization (INT8/4) & Low-Rank Adaptation (LoRA)</h2>
+          <p class="card-summary">Post-training quantization grid mapping FP32 to INT8 with scale and zero-point, and LoRA low-rank decomposition Delta W = (alpha/r) B * A cutting parameters by 99%.</p>
+          <div class="card-tags"><span class="tag-pill">#Quantization</span><span class="tag-pill">#LoRA</span><span class="tag-pill">#INT8/FP8</span></div>
+          <a href="38_Quantization_and_LoRA.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Systems & Efficiency" data-tags="vector db hnsw ann cosine similarity proximity graph" data-title="39. vector databases & hnsw approximate search">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 39</span>
+            <span class="card-cat">Systems & Efficiency</span>
+          </div>
+          <h2 class="card-title">39. Vector Databases & HNSW Approximate Search</h2>
+          <p class="card-summary">Hierarchical Navigable Small World (HNSW) graphs: Express highway routing at upper layers, layer transition enter-points, and beam nearest neighbor search at layer 0.</p>
+          <div class="card-tags"><span class="tag-pill">#Vector DB</span><span class="tag-pill">#HNSW</span><span class="tag-pill">#ANN</span></div>
+          <a href="39_Vector_Databases_and_HNSW.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Systems & Efficiency" data-tags="cuda streams pytorch caching allocator autograd graph kernel pipeline" data-title="40. pytorch & cuda execution runtime architecture">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 40</span>
+            <span class="card-cat">Systems & Efficiency</span>
+          </div>
+          <h2 class="card-title">40. PyTorch & CUDA Execution Runtime Architecture</h2>
+          <p class="card-summary">Host CPU vs GPU device execution pipelines, non-blocking asynchronous CUDA streams, caching allocator memory blocks, and dynamic autograd computation graphs.</p>
+          <div class="card-tags"><span class="tag-pill">#CUDA Streams</span><span class="tag-pill">#PyTorch Caching Allocator</span><span class="tag-pill">#Autograd Graph</span></div>
+          <a href="40_Python_PyTorch_and_CUDA_Execution_Glossary.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Systems & Efficiency" data-tags="rag hybrid search reciprocal rank fusion cross-encoder re-ranking" data-title="41. advanced rag architecture, rrf & re-ranking">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 41</span>
+            <span class="card-cat">Systems & Efficiency</span>
+          </div>
+          <h2 class="card-title">41. Advanced RAG Architecture, RRF & Re-ranking</h2>
+          <p class="card-summary">Hybrid dense-sparse retrieval, Reciprocal Rank Fusion (RRF) candidate merging, cross-encoder relevance re-ranking, and context compression pipelines.</p>
+          <div class="card-tags"><span class="tag-pill">#RAG</span><span class="tag-pill">#Hybrid Search</span><span class="tag-pill">#Reciprocal Rank Fusion</span></div>
+          <a href="41_Advanced_RAG_Architecture_and_Ecosystem.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Systems & Efficiency" data-tags="fine-tuning qlora prefix tuning dpo parameter efficiency" data-title="42. comprehensive fine-tuning mastery & paradigms">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 42</span>
+            <span class="card-cat">Systems & Efficiency</span>
+          </div>
+          <h2 class="card-title">42. Comprehensive Fine-Tuning Mastery & Paradigms</h2>
+          <p class="card-summary">Comparative landscape of adaptation: Full fine-tuning, LoRA, QLoRA 4-bit NormalFloat quantization, double dequantization, paged optimizers, and DPO alignment.</p>
+          <div class="card-tags"><span class="tag-pill">#Fine-Tuning</span><span class="tag-pill">#QLoRA</span><span class="tag-pill">#Prefix Tuning</span></div>
+          <a href="42_Comprehensive_FineTuning_Mastery.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Systems & Efficiency" data-tags="vllm pagedattention deepspeed triton torch.compile" data-title="43. modern ai frameworks: vllm, deepspeed & triton">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 43</span>
+            <span class="card-cat">Systems & Efficiency</span>
+          </div>
+          <h2 class="card-title">43. Modern AI Frameworks: vLLM, DeepSpeed & Triton</h2>
+          <p class="card-summary">Execution engines of the modern AI stack: vLLM PagedAttention virtual memory, DeepSpeed ZeRO memory optimizations, and PyTorch 2.0 Inductor compiler passes.</p>
+          <div class="card-tags"><span class="tag-pill">#vLLM</span><span class="tag-pill">#PagedAttention</span><span class="tag-pill">#DeepSpeed</span></div>
+          <a href="43_Modern_AI_Frameworks_Encyclopedia.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="Systems & Efficiency" data-tags="libraries cookbook pytorch huggingface vllm langchain faiss" data-title="44. complete ml, dl, ai & transformer libraries master guide">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 44</span>
+            <span class="card-cat">Systems & Efficiency</span>
+          </div>
+          <h2 class="card-title">44. Complete ML, DL, AI & Transformer Libraries Master Guide</h2>
+          <p class="card-summary">End-to-end integration cookbook: Scikit-Learn preprocessing, PyTorch models, HuggingFace transformers, PEFT LoRA, vLLM serving, and vector retrieval pipelines.</p>
+          <div class="card-tags"><span class="tag-pill">#Libraries Cookbook</span><span class="tag-pill">#PyTorch</span><span class="tag-pill">#HuggingFace</span></div>
+          <a href="44_Complete_ML_DL_AI_Libraries_Cookbook.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+        <div class="sim-card" data-category="AI for Science" data-tags="pinns physics pde navier-stokes burgers autograd collocation residual" data-title="45. physics-informed neural networks (pinns)">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 45</span>
+            <span class="card-cat">AI for Science</span>
+          </div>
+          <h2 class="card-title">45. Physics-Informed Neural Networks (PINNs)</h2>
+          <p class="card-summary">Physics-constrained deep learning: continuous autograd PDE residuals, collocation sampling over space-time domains, and Navier-Stokes fluid turbulence solver.</p>
+          <div class="card-tags"><span class="tag-pill">#PINNs</span><span class="tag-pill">#PDE Residuals</span><span class="tag-pill">#Navier-Stokes</span></div>
+          <a href="45_PINNs_Physics_Informed_Neural_Networks.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+
+        <div class="sim-card" data-category="AI for Science" data-tags="fno fourier neural operator pde mesh-free green functions spectral zero-shot" data-title="46. fourier neural operators (fno) & neural pde solvers">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 46</span>
+            <span class="card-cat">AI for Science</span>
+          </div>
+          <h2 class="card-title">46. Fourier Neural Operators (FNO) & Neural PDE Solvers</h2>
+          <p class="card-summary">Infinite-dimensional operator learning: fast spectral convolution via FFT, frequency mode truncation, and mesh-independent zero-shot super-resolution.</p>
+          <div class="card-tags"><span class="tag-pill">#FNO</span><span class="tag-pill">#Spectral Conv</span><span class="tag-pill">#Zero-Shot PDE</span></div>
+          <a href="46_Fourier_Neural_Operators_FNO.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+
+        <div class="sim-card" data-category="AI for Science" data-tags="equivariant gnn e3 se3 molecular dynamics drug discovery painn egnn forces" data-title="47. se(3) / e(3) equivariant gnns & molecular dynamics">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 47</span>
+            <span class="card-cat">AI for Science</span>
+          </div>
+          <h2 class="card-title">47. SE(3) / E(3) Equivariant GNNs & Molecular Dynamics</h2>
+          <p class="card-summary">Symmetry-preserving geometric deep learning: E(n)-equivariant message passing, rotational/translational equivariance for 3D atomic forces, and molecular property prediction.</p>
+          <div class="card-tags"><span class="tag-pill">#Equivariant GNN</span><span class="tag-pill">#SE(3)</span><span class="tag-pill">#Molecular Dynamics</span></div>
+          <a href="47_Equivariant_GNNs_and_Molecular_Dynamics.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+
+        <div class="sim-card" data-category="AI for Science" data-tags="alphafold evoformer structural biology msa pair representations triangular attention protein folding" data-title="48. evoformer & alphafold: geometric deep learning for biology">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 48</span>
+            <span class="card-cat">AI for Science</span>
+          </div>
+          <h2 class="card-title">48. Evoformer & AlphaFold: Geometric Deep Learning for Biology</h2>
+          <p class="card-summary">Dual-track co-evolutionary modeling: Multiple Sequence Alignment (MSA) representation, 2D residue pair distance matrices, and triangular multiplicative attention updates.</p>
+          <div class="card-tags"><span class="tag-pill">#AlphaFold</span><span class="tag-pill">#Evoformer</span><span class="tag-pill">#Triangular Attention</span></div>
+          <a href="48_Evoformer_and_AlphaFold_Architectures.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+
+        <div class="sim-card" data-category="AI for Science" data-tags="chip design floorplanning eda macro placement wirelength congestion simulated annealing rl" data-title="49. ai for chip design, eda & floorplanning">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 49</span>
+            <span class="card-cat">AI for Science</span>
+          </div>
+          <h2 class="card-title">49. AI for Chip Design, EDA & Floorplanning</h2>
+          <p class="card-summary">Automated silicon VLSI layout optimization: netlist hypergraph embedding, differentiable Log-Sum-Exp wirelength, density overlap loss, and macro placement.</p>
+          <div class="card-tags"><span class="tag-pill">#Chip Design</span><span class="tag-pill">#EDA Floorplanning</span><span class="tag-pill">#Netlist GNN</span></div>
+          <a href="49_AI_for_Chip_Design_and_Floorplanning.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+
+        <div class="sim-card" data-category="AI for Science" data-tags="quantum many-body variational monte carlo vmc neural quantum states ising rbm physics" data-title="50. neural network quantum states & variational monte carlo">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 50</span>
+            <span class="card-cat">AI for Science</span>
+          </div>
+          <h2 class="card-title">50. Neural Network Quantum States & Variational Monte Carlo</h2>
+          <p class="card-summary">Solving quantum many-body Schrödinger equations: parameterizing complex wavefunctions via Neural Quantum States (NQS), Metropolis-Hastings MCMC sampling, and energy minimization.</p>
+          <div class="card-tags"><span class="tag-pill">#Quantum VMC</span><span class="tag-pill">#Wavefunctions</span><span class="tag-pill">#Many-Body Physics</span></div>
+          <a href="50_Neural_Network_Quantum_States_VMC.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+
+        <div class="sim-card" data-category="AI for Science" data-tags="automated theorem proving lean 4 formal verification kan symbolic regression physics discovery" data-title="51. automated theorem proving, lean 4 & symbolic ai">
+          <div class="card-header">
+            <span class="card-badge">DEEP DIVE 51</span>
+            <span class="card-cat">AI for Science</span>
+          </div>
+          <h2 class="card-title">51. Automated Theorem Proving, Lean 4 & Symbolic AI</h2>
+          <p class="card-summary">Rigorous mathematical verification & scientific discovery: tree search over Lean 4 proof tactics, premise selection, and Kolmogorov-Arnold Network symbolic regression.</p>
+          <div class="card-tags"><span class="tag-pill">#Theorem Proving</span><span class="tag-pill">#Lean 4</span><span class="tag-pill">#Symbolic Regression</span></div>
+          <a href="51_Automated_Theorem_Proving_and_Lean4.html" class="card-launch-btn">LAUNCH SIMULATION ➔</a>
+        </div>
+        
+</main>
+
+<script>
+const searchInput = document.getElementById('searchInput');
+const filterBtns = document.querySelectorAll('.filter-btn');
+const cards = document.querySelectorAll('.sim-card');
+let activeCategory = 'all';
+
+function filterCards() {
+  const query = searchInput.value.toLowerCase().trim();
+  cards.forEach(card => {
+    const title = card.getAttribute('data-title');
+    const cat = card.getAttribute('data-category');
+    const tags = card.getAttribute('data-tags');
+    const matchesCat = (activeCategory === 'all' || cat === activeCategory);
+    const matchesSearch = (title.includes(query) || tags.includes(query) || query === '');
+    if(matchesCat && matchesSearch) {
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+searchInput.addEventListener('input', filterCards);
+
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    filterBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeCategory = btn.getAttribute('data-cat');
+    filterCards();
+  });
+});
+</script>
+
+</body>
+</html>

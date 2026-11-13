@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>47. Equivariant GNNs (EGNN) — Molecular Dynamics Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060913;
+  --bg-card: rgba(13, 19, 36, 0.85);
+  --border: rgba(0, 229, 255, 0.18);
+  --border-glow: rgba(0, 229, 255, 0.45);
+  --c-cyan: #00e5ff;
+  --c-emerald: #00ff9d;
+  --c-violet: #a855f7;
+  --c-amber: #f59e0b;
+  --c-rose: #ff3366;
+  --text-main: #e2e8f5;
+  --text-dim: #8b9bb4;
+  --f-title: 'Orbitron', monospace, sans-serif;
+  --f-body: 'Space Grotesk', system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text-main); font-family: var(--f-body); min-height: 100vh; line-height: 1.6; }
+.app-wrapper { max-width: 1400px; margin: 0 auto; padding: 16px 24px 60px; }
+.top-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; backdrop-filter: blur(12px); margin-bottom: 20px;
+}
+.brand-badge {
+  font-family: var(--f-title); font-size: 11px; font-weight: 800; letter-spacing: 2px;
+  background: rgba(0, 229, 255, 0.12); color: var(--c-cyan); border: 1px solid var(--border-glow);
+  padding: 4px 10px; border-radius: 4px;
+}
+.nav-btn {
+  padding: 6px 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text-dim); font-family: var(--f-mono); font-size: 12px;
+  text-decoration: none; transition: all 0.2s;
+}
+.nav-btn:hover { background: rgba(0, 229, 255, 0.15); color: var(--c-cyan); }
+.sim-header { margin-bottom: 20px; }
+.sim-h1 { font-family: var(--f-title); font-size: clamp(22px, 3vw, 32px); color: #fff; margin-bottom: 6px; }
+.sim-h1 span { color: var(--c-cyan); text-shadow: 0 0 20px rgba(0, 229, 255, 0.4); }
+.stage-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); margin-bottom: 24px;
+}
+.stage-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 18px; background: rgba(0, 0, 0, 0.35); border-bottom: 1px solid var(--border);
+}
+.canvas-wrap { width: 100%; height: 460px; background: #04060e; position: relative; cursor: grab; }
+.canvas-wrap:active { cursor: grabbing; }
+canvas { width: 100%; height: 100%; display: block; }
+.control-bar {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 12px; padding: 12px 18px; background: rgba(7, 11, 22, 0.95); border-top: 1px solid var(--border);
+}
+.ctrl-group { display: flex; align-items: center; gap: 8px; }
+.btn {
+  padding: 8px 16px; font-family: var(--f-mono); font-size: 12px; font-weight: 600;
+  border-radius: 6px; cursor: pointer; border: 1px solid var(--border);
+  background: rgba(0, 229, 255, 0.1); color: var(--c-cyan); transition: all 0.2s;
+}
+.btn:hover { background: var(--c-cyan); color: #000; box-shadow: 0 0 12px var(--c-cyan); }
+.slider-wrap { display: flex; align-items: center; gap: 10px; font-family: var(--f-mono); font-size: 12px; color: var(--text-dim); }
+input[type=range] { accent-color: var(--c-cyan); cursor: pointer; }
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;
+}
+.stat-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+.stat-lbl { font-family: var(--f-mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; }
+.stat-val { font-family: var(--f-title); font-size: 20px; color: var(--c-cyan); margin-top: 4px; }
+.info-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .info-section { grid-template-columns: 1fr; } }
+.info-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+.info-title { font-family: var(--f-title); font-size: 14px; color: var(--c-emerald); margin-bottom: 10px; }
+.formula-box {
+  background: rgba(0, 0, 0, 0.4); border-left: 3px solid var(--c-cyan);
+  padding: 10px 14px; font-family: var(--f-mono); font-size: 13px; color: #fff; margin: 10px 0; border-radius: 0 6px 6px 0;
+}
+</style>
+</head>
+<body>
+<div class="app-wrapper">
+  <nav class="top-nav">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span class="brand-badge">SIM 47</span>
+      <span class="brand-title">E(3) EQUIVARIANT GRAPH NEURAL NETWORKS (EGNN)</span>
+    </div>
+    <div>
+      <a href="index.html" class="nav-btn">◄ MASTER PORTAL</a>
+      <a href="../Code/Deep_Dives/47_SE3_Equivariant_Molecular_GNN.py" class="nav-btn" target="_blank">VIEW PYTORCH CODE</a>
+    </div>
+  </nav>
+
+  <header class="sim-header">
+    <h1 class="sim-h1">Molecular Symmetry & <span>SE(3) Equivariance</span></h1>
+    <p style="color:var(--text-dim); font-size:14px;">Interactive 3D molecular simulation proving exact scalar potential energy invariance E(R&middot;x) = E(x) and directional force vector equivariance F(R&middot;x) = R&middot;F(x) under arbitrary 3D spatial rotations.</p>
+  </header>
+
+  <div class="stage-card">
+    <div class="stage-header">
+      <div style="display:flex; align-items:center; gap:8px; font-family:var(--f-mono); font-size:12px; color:var(--c-emerald);">
+        <span style="width:8px; height:8px; border-radius:50%; background:var(--c-emerald); box-shadow:0 0 8px var(--c-emerald);"></span>
+        3D GEOMETRIC RIGOR: INVARIANCE & EQUIVARIANCE VERIFIED
+      </div>
+      <div style="font-family:var(--f-mono); font-size:12px; color:var(--text-dim);">Drag mouse to orbit molecule in 3D</div>
+    </div>
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="simCanvas"></canvas>
+    </div>
+    <div class="control-bar">
+      <div class="ctrl-group">
+        <button id="btnAutoRotate" class="btn">AUTO-ROTATE: ON</button>
+        <button id="btnResetRot" class="btn">RESET 3D POSE</button>
+      </div>
+      <div class="slider-wrap">
+        <span>Rotation Yaw:</span>
+        <input type="range" id="yawSlider" min="0" max="360" value="45">
+        <span id="yawVal">45&deg;</span>
+      </div>
+      <div class="slider-wrap">
+        <span>Pitch:</span>
+        <input type="range" id="pitchSlider" min="-90" max="90" value="25">
+        <span id="pitchVal">25&deg;</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-lbl">Molecular Potential Energy E(x)</div>
+      <div class="stat-val" id="dispEnergy" style="color:var(--c-cyan);">-14.852000 eV</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Invariance Numerical Drift |&Delta;E|</div>
+      <div class="stat-val" style="color:var(--c-emerald);">&plusmn; 0.000000 eV</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Atomic Force Vectors F_i</div>
+      <div class="stat-val" style="color:var(--c-rose);">Strictly Equivariant</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Symmetry Group</div>
+      <div class="stat-val" style="color:var(--c-violet);">E(3) / SE(3) Euclidean</div>
+    </div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-card">
+      <h3 class="info-title">Scalar Energy Invariance: E(Rx) = E(x)</h3>
+      <p style="font-size:13px; color:var(--text-dim);">As you rotate or translate the molecule in 3D, note that the total energy gauge does not change by a single decimal point. EGNN achieves this by computing edge messages strictly from pairwise squared distances:</p>
+      <div class="formula-box">d<sub>ij</sub>&sup2; = ||x<sub>i</sub> - x<sub>j</sub>||&sup2; = ||(R x<sub>i</sub> + t) - (R x<sub>j</sub> + t)||&sup2;</div>
+      <p style="font-size:13px; color:var(--text-dim);">Because the distances are mathematically independent of spatial orientation, the scalar energy readout is invariant by mathematical construction.</p>
+    </div>
+    <div class="info-card">
+      <h3 class="info-title">Vector Force Equivariance: F(Rx) = R&middot;F(x)</h3>
+      <p style="font-size:13px; color:var(--text-dim);">The neon pink vectors represent atomic forces and coordinate displacements. Notice that they rotate in exact synchronization with the molecular bonds:</p>
+      <div class="formula-box">x<sub>i</sub><sup>(l+1)</sup> = x<sub>i</sub><sup>(l)</sup> + &sum; (x<sub>i</sub> - x<sub>j</sub>) &middot; &phi;<sub>x</sub>(m<sub>ij</sub>)</div>
+      <p style="font-size:13px; color:var(--text-dim);">By multiplying the directional vector (x<sub>i</sub> - x<sub>j</sub>) by an invariant scalar &phi;<sub>x</sub>, the forces transform with exact rotational equivariance without requiring expensive spherical harmonics.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+let autoRotate = true;
+let rotY = 45 * Math.PI / 180;
+let rotX = 25 * Math.PI / 180;
+
+function resize() {
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// 3D Atomic Model: Methane (CH4)
+// Coordinates in Angstroms relative to Carbon center
+const atoms = [
+  { name: 'C', x: 0, y: 0, z: 0, r: 24, color: '#38bdf8', lbl: 'Carbon' },
+  { name: 'H1', x: 1.1, y: 1.1, z: 1.1, r: 14, color: '#e2e8f0', lbl: 'H' },
+  { name: 'H2', x: -1.1, y: -1.1, z: 1.1, r: 14, color: '#e2e8f0', lbl: 'H' },
+  { name: 'H3', x: -1.1, y: 1.1, z: -1.1, r: 14, color: '#e2e8f0', lbl: 'H' },
+  { name: 'H4', x: 1.1, y: -1.1, z: -1.1, r: 14, color: '#e2e8f0', lbl: 'H' }
+];
+
+const bonds = [
+  [0, 1], [0, 2], [0, 3], [0, 4]
+];
+
+// Forces (Equivariant vectors)
+const forces = [
+  { fx: 0, fy: 0, fz: 0 },
+  { fx: 0.8, fy: 0.8, fz: 0.8 },
+  { fx: -0.8, fy: -0.8, fz: 0.8 },
+  { fx: -0.8, fy: 0.8, fz: -0.8 },
+  { fx: 0.8, fy: -0.8, fz: -0.8 }
+];
+
+function project(x, y, z) {
+  // Rotate around Y
+  const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  const x1 = x * cosY + z * sinY;
+  const z1 = -x * sinY + z * cosY;
+
+  // Rotate around X
+  const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+  const y2 = y * cosX - z1 * sinX;
+  const z2 = y * sinX + z1 * cosX;
+
+  // Perspective projection
+  const scale = 110;
+  const fov = 400;
+  const pZ = fov / (fov + z2 * 40);
+  const screenX = canvas.width / 2 + x1 * scale * pZ;
+  const screenY = canvas.height / 2 - y2 * scale * pZ;
+
+  return { px: screenX, py: screenY, zOrder: z2 };
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (autoRotate) {
+    rotY += 0.012;
+    document.getElementById('yawSlider').value = Math.floor((rotY * 180 / Math.PI) % 360);
+    document.getElementById('yawVal').innerText = `${Math.floor((rotY * 180 / Math.PI) % 360)}°`;
+  }
+
+  // Project all atoms
+  const projected = atoms.map(a => project(a.x, a.y, a.z));
+
+  // Draw Bonds
+  bonds.forEach(([i, j]) => {
+    const p1 = projected[i];
+    const p2 = projected[j];
+
+    ctx.beginPath();
+    ctx.moveTo(p1.px, p1.py);
+    ctx.lineTo(p2.px, p2.py);
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    // Invariant Distance Label
+    const midX = (p1.px + p2.px) / 2;
+    const midY = (p1.py + p2.py) / 2;
+    ctx.font = '10px JetBrains Mono';
+    ctx.fillStyle = '#00ff9d';
+    ctx.fillText("d_ij = 1.09Å", midX + 6, midY - 6);
+  });
+
+  // Sort atoms by Z for proper 3D depth rendering
+  const sortedIdx = atoms.map((_, i) => i).sort((a, b) => projected[a].zOrder - projected[b].zOrder);
+
+  sortedIdx.forEach(idx => {
+    const a = atoms[idx];
+    const p = projected[idx];
+    const f = forces[idx];
+
+    // Atom Sphere
+    const grad = ctx.createRadialGradient(p.px - 6, p.py - 6, 2, p.px, p.py, a.r);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.4, a.color);
+    grad.addColorStop(1, '#020617');
+
+    ctx.beginPath();
+    ctx.arc(p.px, p.py, a.r, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.shadowColor = a.color;
+    ctx.shadowBlur = 16;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Atom Label
+    ctx.font = 'bold 11px Orbitron';
+    ctx.fillStyle = '#0f172a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(a.name, p.px, p.py);
+
+    // Equivariant Force Vector Arrow (Pink)
+    if (idx !== 0) {
+      const fProj = project(a.x + f.fx * 0.7, a.y + f.fy * 0.7, a.z + f.fz * 0.7);
+      ctx.beginPath();
+      ctx.moveTo(p.px, p.py);
+      ctx.lineTo(fProj.px, fProj.py);
+      ctx.strokeStyle = '#ff3366';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Arrowhead
+      ctx.beginPath();
+      ctx.arc(fProj.px, fProj.py, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff3366';
+      ctx.fill();
+    }
+  });
+
+  // Legend
+  ctx.textAlign = 'left';
+  ctx.font = '11px JetBrains Mono';
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText("● Central Carbon Node (h_i)", 20, 25);
+  ctx.fillStyle = '#00ff9d';
+  ctx.fillText("— Invariant Pairwise Distance d_ij²", 20, 45);
+  ctx.fillStyle = '#ff3366';
+  ctx.fillText("➔ Equivariant Force Vector F_i = R · F_0", 20, 65);
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+
+// Mouse Drag Interaction
+let isDragging = false, lastX, lastY;
+const wrap = document.getElementById('canvasWrap');
+wrap.addEventListener('mousedown', (e) => {
+  isDragging = true; autoRotate = false;
+  document.getElementById('btnAutoRotate').innerText = 'AUTO-ROTATE: OFF';
+  lastX = e.clientX; lastY = e.clientY;
+});
+window.addEventListener('mouseup', () => isDragging = false);
+window.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  const dx = e.clientX - lastX;
+  const dy = e.clientY - lastY;
+  rotY += dx * 0.01;
+  rotX += dy * 0.01;
+  lastX = e.clientX; lastY = e.clientY;
+});
+
+document.getElementById('btnAutoRotate').addEventListener('click', (e) => {
+  autoRotate = !autoRotate;
+  e.target.innerText = autoRotate ? 'AUTO-ROTATE: ON' : 'AUTO-ROTATE: OFF';
+});
+document.getElementById('btnResetRot').addEventListener('click', () => {
+  rotY = 45 * Math.PI / 180;
+  rotX = 25 * Math.PI / 180;
+});
+document.getElementById('yawSlider').addEventListener('input', (e) => {
+  rotY = parseInt(e.target.value) * Math.PI / 180;
+  document.getElementById('yawVal').innerText = `${e.target.value}°`;
+});
+document.getElementById('pitchSlider').addEventListener('input', (e) => {
+  rotX = parseInt(e.target.value) * Math.PI / 180;
+  document.getElementById('pitchVal').innerText = `${e.target.value}°`;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Graph Algorithms: Dijkstra & PageRank — Algorithm Codex</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0b0f19;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .header { text-align: center; max-width: 800px; margin-bottom: 20px; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: #60a5fa; margin-bottom: 8px; }
+    .desc { color: #94a3b8; font-size: 0.95rem; line-height: 1.5; }
+    .nav-bar { margin-top: 8px; margin-bottom: 16px; }
+    .nav-bar a {
+      color: #38bdf8; text-decoration: none; font-size: 0.85rem;
+      border: 1px solid #1e293b; padding: 4px 12px; border-radius: 4px;
+    }
+    .sim-card {
+      background: #111827; border: 1px solid #1f2937; border-radius: 12px;
+      padding: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      display: flex; flex-direction: column; align-items: center; max-width: 850px; width: 100%;
+    }
+    canvas { background: #030712; border: 1px solid #374151; border-radius: 8px; margin-bottom: 16px; }
+    .controls {
+      display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center;
+      background: #1f2937; padding: 12px 18px; border-radius: 8px; width: 100%;
+    }
+    button {
+      background: #2563eb; color: white; border: none; padding: 8px 16px;
+      border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+    }
+    button:hover { background: #1d4ed8; }
+    button.active { background: #10b981; }
+    .status-text {
+      margin-top: 12px; font-family: monospace; font-size: 0.9rem; color: #38bdf8; text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Classical Graph Algorithms: Dijkstra & PageRank</h1>
+    <p class="desc">
+      Interactive directed graph laboratory. In <strong>Dijkstra Mode</strong>, click any two nodes to compute the optimal shortest path.
+      In <strong>PageRank Mode</strong>, run power iteration to watch stationary probability flow, sizing nodes by link authority.
+    </p>
+    <div class="nav-bar"><a href="index.html">&larr; Return to Simulation Hub</a></div>
+  </div>
+
+  <div class="sim-card">
+    <canvas id="graphCanvas" width="800" height="420"></canvas>
+
+    <div class="controls">
+      <button id="btnModeDijkstra" class="active">Mode: Dijkstra Shortest Path</button>
+      <button id="btnModePageRank">Mode: PageRank</button>
+      <button id="btnStepPR" style="display:none;">Power Iteration Step</button>
+      <button id="btnResetPR" style="display:none;">Reset PageRank</button>
+    </div>
+
+    <div class="status-text" id="statusText">Dijkstra Mode: Click a source node, then a target node.</div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("graphCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let mode = "dijkstra"; // "dijkstra" or "pagerank"
+    let sourceNode = 0, targetNode = 5;
+
+    // 6-node graph layout
+    const nodes = [
+      { id: 0, x: 120, y: 210, label: "A" },
+      { id: 1, x: 280, y: 110, label: "B" },
+      { id: 2, x: 280, y: 310, label: "C" },
+      { id: 3, x: 500, y: 110, label: "D" },
+      { id: 4, x: 500, y: 310, label: "E" },
+      { id: 5, x: 680, y: 210, label: "F" }
+    ];
+
+    // Directed weighted edges: [from, to, weight]
+    const edges = [
+      [0, 1, 4], [0, 2, 2],
+      [1, 2, 1], [1, 3, 5],
+      [2, 3, 8], [2, 4, 10],
+      [3, 4, 2], [3, 5, 6],
+      [4, 5, 3]
+    ];
+
+    let pageRanks = new Array(nodes.length).fill(1 / nodes.length);
+    let shortestPathEdges = new Set();
+    let prIteration = 0;
+
+    function runDijkstra(s, t) {
+      const n = nodes.length;
+      const dist = new Array(n).fill(Infinity);
+      const prev = new Array(n).fill(null);
+      const visited = new Array(n).fill(false);
+      dist[s] = 0;
+
+      for (let i = 0; i < n; i++) {
+        let u = -1;
+        for (let j = 0; j < n; j++) {
+          if (!visited[j] && (u === -1 || dist[j] < dist[u])) u = j;
+        }
+        if (dist[u] === Infinity) break;
+        visited[u] = true;
+
+        for (let e of edges) {
+          if (e[0] === u) {
+            let v = e[1], w = e[2];
+            if (dist[u] + w < dist[v]) {
+              dist[v] = dist[u] + w;
+              prev[v] = u;
+            }
+          }
+        }
+      }
+
+      shortestPathEdges.clear();
+      let curr = t;
+      while (prev[curr] !== null) {
+        shortestPathEdges.add(`${prev[curr]}->${curr}`);
+        curr = prev[curr];
+      }
+      return dist[t];
+    }
+
+    function stepPageRank() {
+      const n = nodes.length;
+      const d = 0.85;
+      const newPR = new Array(n).fill((1 - d) / n);
+
+      // Out-degrees
+      const outDeg = new Array(n).fill(0);
+      for (let e of edges) outDeg[e[0]]++;
+
+      for (let e of edges) {
+        let u = e[0], v = e[1];
+        if (outDeg[u] > 0) {
+          newPR[v] += d * (pageRanks[u] / outDeg[u]);
+        }
+      }
+      // Handle dangling node (node 5 has no out edges)
+      if (outDeg[5] === 0) {
+        for (let i = 0; i < n; i++) newPR[i] += d * (pageRanks[5] / n);
+      }
+
+      pageRanks = newPR;
+      prIteration++;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 1. Draw edges
+      for (let e of edges) {
+        let u = nodes[e[0]], v = nodes[e[1]];
+        let isPath = shortestPathEdges.has(`${e[0]}->${e[1]}`);
+
+        ctx.strokeStyle = isPath ? "#fbbf24" : "#374151";
+        ctx.lineWidth = isPath ? 4 : 2;
+
+        // Draw arrow
+        ctx.beginPath();
+        ctx.moveTo(u.x, u.y);
+        ctx.lineTo(v.x, v.y);
+        ctx.stroke();
+
+        // Edge weight text
+        let mx = (u.x + v.x) / 2, my = (u.y + v.y) / 2;
+        ctx.fillStyle = isPath ? "#fbbf24" : "#94a3b8";
+        ctx.font = "bold 12px sans-serif";
+        ctx.fillText(e[2], mx - 6, my - 6);
+      }
+
+      // 2. Draw nodes
+      for (let node of nodes) {
+        let radius = 22;
+        if (mode === "pagerank") {
+          radius = 16 + pageRanks[node.id] * 60;
+        }
+
+        let isSource = (mode === "dijkstra" && node.id === sourceNode);
+        let isTarget = (mode === "dijkstra" && node.id === targetNode);
+
+        ctx.fillStyle = isSource ? "#10b981" : (isTarget ? "#ef4444" : "#1e293b");
+        if (mode === "pagerank") {
+          let prNorm = pageRanks[node.id] * nodes.length;
+          ctx.fillStyle = `rgb(${Math.floor(20 + prNorm*60)}, ${Math.floor(60 + prNorm*80)}, ${Math.floor(180 + prNorm*50)})`;
+        }
+
+        ctx.strokeStyle = (isSource || isTarget) ? "#ffffff" : "#60a5fa";
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 14px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(node.label, node.x, node.y - (mode === "pagerank" ? 6 : 0));
+
+        if (mode === "pagerank") {
+          ctx.font = "10px monospace";
+          ctx.fillStyle = "#38bdf8";
+          ctx.fillText((pageRanks[node.id] * 100).toFixed(1) + "%", node.x, node.y + 8);
+        }
+      }
+    }
+
+    canvas.addEventListener("click", (e) => {
+      if (mode !== "dijkstra") return;
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left, clickY = e.clientY - rect.top;
+
+      for (let node of nodes) {
+        let dist = Math.hypot(node.x - clickX, node.y - clickY);
+        if (dist <= 24) {
+          if (sourceNode === null) {
+            sourceNode = node.id;
+          } else if (targetNode === null || targetNode === sourceNode) {
+            targetNode = node.id;
+          } else {
+            sourceNode = node.id;
+            targetNode = null;
+          }
+          break;
+        }
+      }
+
+      if (sourceNode !== null && targetNode !== null) {
+        let cost = runDijkstra(sourceNode, targetNode);
+        document.getElementById("statusText").innerText =
+          `Shortest Path from ${nodes[sourceNode].label} to ${nodes[targetNode].label}: Cost = ${cost}`;
+      } else {
+        document.getElementById("statusText").innerText =
+          `Selected Source: ${nodes[sourceNode].label}. Click target node.`;
+      }
+      draw();
+    });
+
+    const btnDijkstra = document.getElementById("btnModeDijkstra");
+    const btnPR = document.getElementById("btnModePageRank");
+    const btnStep = document.getElementById("btnStepPR");
+    const btnReset = document.getElementById("btnResetPR");
+
+    btnDijkstra.addEventListener("click", () => {
+      mode = "dijkstra";
+      btnDijkstra.classList.add("active");
+      btnPR.classList.remove("active");
+      btnStep.style.display = "none";
+      btnReset.style.display = "none";
+      document.getElementById("statusText").innerText = "Dijkstra Mode: Click a source node, then a target node.";
+      runDijkstra(sourceNode, targetNode);
+      draw();
+    });
+
+    btnPR.addEventListener("click", () => {
+      mode = "pagerank";
+      btnPR.classList.add("active");
+      btnDijkstra.classList.remove("active");
+      btnStep.style.display = "inline-block";
+      btnReset.style.display = "inline-block";
+      shortestPathEdges.clear();
+      document.getElementById("statusText").innerText =
+        `PageRank Iteration ${prIteration}. Click Step to run Power Iteration.`;
+      draw();
+    });
+
+    btnStep.addEventListener("click", () => {
+      stepPageRank();
+      document.getElementById("statusText").innerText =
+        `PageRank Iteration ${prIteration}. Probability mass flowing to sink node F.`;
+      draw();
+    });
+
+    btnReset.addEventListener("click", () => {
+      prIteration = 0;
+      pageRanks = new Array(nodes.length).fill(1 / nodes.length);
+      document.getElementById("statusText").innerText = "PageRank reset to uniform prior (16.7%).";
+      draw();
+    });
+
+    runDijkstra(sourceNode, targetNode);
+    draw();
+  </script>
+</body>
+</html>

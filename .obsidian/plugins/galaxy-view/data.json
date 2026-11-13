@@ -1,0 +1,1355 @@
+{
+  "bloom": {
+    "strength": 0.9,
+    "radius": 0.4,
+    "threshold": 0.18
+  },
+  "physics": {
+    "repel": 260,
+    "linkDistance": 62,
+    "linkStrength": 1.1,
+    "centerPull": 0.03,
+    "flatten": 0,
+    "coreGravity": -0.08,
+    "spiral": 0
+  },
+  "look": {
+    "nodeSize": 1.3,
+    "linkOpacity": 0.24,
+    "linkCurve": 0.3,
+    "twinkle": 1.5,
+    "sizeBy": "degree"
+  },
+  "space": {
+    "nebula": 0.45,
+    "fieldStars": 0.2,
+    "clusterClouds": 0.4
+  },
+  "cruise": true,
+  "cruiseSpeed": 3,
+  "showUnresolved": false,
+  "showOrphans": true,
+  "showTags": false,
+  "tagLens": null,
+  "colorByTag": false,
+  "showTagHubs": false,
+  "tagHubLimit": 20,
+  "hiddenFolders": [],
+  "filterQuery": "",
+  "showGhostEdges": false,
+  "showStarfield": false,
+  "colorTheme": "sunset",
+  "qualityOverride": "high",
+  "preset": "deep-space",
+  "activePreset": "supernova",
+  "customPresets": [
+    {
+      "id": "custom-mu6pwusm",
+      "name": "Mine 1",
+      "nameEn": "Mine 1",
+      "starfield": true,
+      "space": {
+        "nebula": 0.12,
+        "fieldStars": 0.1,
+        "clusterClouds": 0
+      },
+      "theme": "sunset",
+      "bloom": {
+        "strength": 0.42,
+        "radius": 0.35,
+        "threshold": 0.24
+      },
+      "physics": {
+        "repel": 200,
+        "linkDistance": 95,
+        "linkStrength": 0.9,
+        "centerPull": 0.09,
+        "flatten": 0.5,
+        "coreGravity": 0.2,
+        "spiral": 0
+      },
+      "look": {
+        "nodeSize": 1.15,
+        "linkOpacity": 0.11,
+        "linkCurve": 0.75,
+        "twinkle": 0.4,
+        "sizeBy": "degree"
+      }
+    }
+  ],
+  "language": "auto",
+  "panelSections": {
+    "filter": true,
+    "nav": true,
+    "advanced": true,
+    "look": true
+  },
+  "panelWidth": 300,
+  "hintsSeen": false,
+  "selectionDepth": 1,
+  "tour": {
+    "speed": 3
+  },
+  "colorGroups": [
+    {
+      "query": "path:Algorithm_Codex",
+      "color": "#f58529"
+    },
+    {
+      "query": "path:Transformer",
+      "color": "#dd2a7b"
+    }
+  ],
+  "positionCache": {
+    "Transformer/non-agentic-ai-research-directions.md": [
+      -257.5,
+      -115.5,
+      147.4
+    ],
+    "Transformer/Transformer_Cheat_Sheet.md": [
+      -303,
+      -38.2,
+      234
+    ],
+    "Transformer/STUDY_ROADMAP.md": [
+      -314.4,
+      -203,
+      122.9
+    ],
+    "Transformer/SELF_ASSESSMENT_QUIZ.md": [
+      -257.5,
+      -195,
+      239
+    ],
+    "Transformer/Reports/07_All_Neural_Network_Types.md": [
+      -355.8,
+      -99.7,
+      163.1
+    ],
+    "Transformer/Reports/06_Mathematical_Foundations.md": [
+      -324.9,
+      -151.2,
+      224.4
+    ],
+    "Transformer/Reports/05_Future_Of_AI.md": [
+      -380.8,
+      -193,
+      213.1
+    ],
+    "Transformer/Reports/Deep_Dives/51_Automated_Theorem_Proving_and_Lean4.md": [
+      -386.4,
+      -236,
+      189.9
+    ],
+    "Transformer/Reports/Deep_Dives/47_Equivariant_GNNs_and_Molecular_Dynamics.md": [
+      -334.6,
+      -333.9,
+      162.2
+    ],
+    "Transformer/Reports/Deep_Dives/49_AI_for_Chip_Design_and_Floorplanning.md": [
+      -401.9,
+      -172.5,
+      182.9
+    ],
+    "Transformer/Reports/Deep_Dives/50_Neural_Network_Quantum_States_VMC.md": [
+      -393.8,
+      -121.1,
+      131.1
+    ],
+    "Transformer/Reports/Deep_Dives/48_Evoformer_and_AlphaFold_Architectures.md": [
+      -239.6,
+      -310.6,
+      178.8
+    ],
+    "Transformer/Reports/Deep_Dives/46_Fourier_Neural_Operators_FNO.md": [
+      -313.3,
+      -306.3,
+      177.6
+    ],
+    "Transformer/Reports/Deep_Dives/45_PINNs_Physics_Informed_Neural_Networks.md": [
+      -272.4,
+      -315.6,
+      190
+    ],
+    "Transformer/Reports/Deep_Dives/44_Complete_ML_DL_AI_Libraries_Master_Guide.md": [
+      -250.2,
+      -286.2,
+      245.2
+    ],
+    "Transformer/Reports/Deep_Dives/42_Comprehensive_FineTuning_Mastery.md": [
+      -289.2,
+      -126.4,
+      19.2
+    ],
+    "Transformer/Reports/Deep_Dives/43_Modern_AI_Frameworks_Encyclopedia.md": [
+      -243,
+      -297.2,
+      143.3
+    ],
+    "Transformer/Reports/Deep_Dives/40_Python_PyTorch_and_CUDA_Execution_Glossary.md": [
+      -286.1,
+      -324.6,
+      -5.9
+    ],
+    "Transformer/Reports/Deep_Dives/38_Quantization_and_LoRA.md": [
+      -345.3,
+      -335.4,
+      39.2
+    ],
+    "Transformer/Reports/Deep_Dives/41_Advanced_RAG_Architecture_and_Ecosystem.md": [
+      -413.1,
+      -211.9,
+      5
+    ],
+    "Transformer/Reports/Deep_Dives/39_Vector_Databases_and_HNSW.md": [
+      -271.2,
+      -290.2,
+      -8.8
+    ],
+    "Transformer/Reports/Deep_Dives/37_2026_SOTA_Literature_Review.md": [
+      -142.3,
+      -200.7,
+      106.6
+    ],
+    "Transformer/Reports/Deep_Dives/36_Test_Time_Scaling_and_PRMs.md": [
+      -230.9,
+      -230.5,
+      61.8
+    ],
+    "Transformer/Reports/Deep_Dives/35_Benchmarking_Efficiency.md": [
+      -271.7,
+      -185.4,
+      5.7
+    ],
+    "Transformer/Reports/Deep_Dives/33_Mechanistic_Interpretability.md": [
+      -308.2,
+      -332,
+      22.4
+    ],
+    "Transformer/Reports/Deep_Dives/32_Distributed_Training_and_ZeRO.md": [
+      -212.2,
+      -239.2,
+      32.6
+    ],
+    "Transformer/Reports/Deep_Dives/31_Speculative_Decoding_and_MLA.md": [
+      -179.4,
+      -290.8,
+      122.4
+    ],
+    "Transformer/Reports/Deep_Dives/30_Positional_Encodings_and_RoPE.md": [
+      -282,
+      -315.3,
+      140.3
+    ],
+    "Transformer/Reports/Deep_Dives/29_Tokenization_and_Data_Curation.md": [
+      -381.8,
+      -243,
+      -3.7
+    ],
+    "Transformer/Reports/Deep_Dives/27_Titans_Neural_Memory.md": [
+      -198.8,
+      -250.4,
+      167.1
+    ],
+    "Transformer/Reports/Deep_Dives/26_RWKV_and_xLSTM.md": [
+      -272.5,
+      -281.1,
+      49.5
+    ],
+    "Transformer/Reports/Deep_Dives/28_The_Emergence_of_Intelligence_and_Evaluations.md": [
+      -366.6,
+      -120.9,
+      7.2
+    ],
+    "Transformer/Reports/Deep_Dives/25_Linear_Attention_and_GLA.md": [
+      -398.2,
+      -156.4,
+      -2.1
+    ],
+    "Transformer/Reports/Deep_Dives/24_Scaling_Laws_and_RLHF.md": [
+      -212.2,
+      -269.9,
+      9.9
+    ],
+    "Transformer/Reports/Deep_Dives/23_Systems_FlashAttention_and_Triton.md": [
+      -298,
+      -351.4,
+      169.1
+    ],
+    "Transformer/Reports/Deep_Dives/22_Information_Theory_and_Manifolds.md": [
+      -324.7,
+      -195.9,
+      3.4
+    ],
+    "Transformer/Reports/Deep_Dives/21_Active_Inference.md": [
+      -382.6,
+      -154.9,
+      38.7
+    ],
+    "Transformer/Reports/Deep_Dives/20_KAN_Kolmogorov_Arnold.md": [
+      -340.4,
+      -310.9,
+      6.1
+    ],
+    "Transformer/Reports/Deep_Dives/17_Transformer_Agentic_Reasoning.md": [
+      -227.1,
+      -150.6,
+      36.7
+    ],
+    "Transformer/Reports/Deep_Dives/19_Neurosymbolic_AI_Hybrids.md": [
+      -293.9,
+      -153.4,
+      -17.9
+    ],
+    "Transformer/Reports/Deep_Dives/18_JEPA_Predictive_Architecture.md": [
+      -339.2,
+      -329.9,
+      128.3
+    ],
+    "Transformer/Reports/Deep_Dives/16_Transformer_Omnimodal.md": [
+      -180.1,
+      -280.3,
+      157.5
+    ],
+    "Transformer/Reports/Deep_Dives/14_Transformer_MoE_Sparse.md": [
+      -203.2,
+      -278.6,
+      53.6
+    ],
+    "Transformer/Reports/Deep_Dives/15_Transformer_SSM_Mamba_Hybrids.md": [
+      -259.2,
+      -312.4,
+      24.1
+    ],
+    "Transformer/Reports/Deep_Dives/13_Classic_Transformer_Dense.md": [
+      -369.6,
+      -304.7,
+      59.8
+    ],
+    "Transformer/Reports/Deep_Dives/12_SOM_Kohonen.md": [
+      -324.7,
+      -112.2,
+      195.8
+    ],
+    "Transformer/Reports/Deep_Dives/10_LNN_Liquid.md": [
+      -408.1,
+      -188.3,
+      42.8
+    ],
+    "Transformer/Reports/Deep_Dives/11_RBM_DeepBelief.md": [
+      -420.7,
+      -196.1,
+      152.2
+    ],
+    "Transformer/Reports/Deep_Dives/06_GANs.md": [
+      -324.9,
+      -167.1,
+      32.9
+    ],
+    "Transformer/Reports/Deep_Dives/09_SNN_Spiking.md": [
+      -336.2,
+      -86.2,
+      128.5
+    ],
+    "Transformer/Reports/Deep_Dives/07_Diffusion_Models.md": [
+      -327.9,
+      -306.6,
+      66.5
+    ],
+    "Transformer/Reports/Deep_Dives/08_GNN_Graph.md": [
+      -340.3,
+      -119.2,
+      34.5
+    ],
+    "Transformer/Reports/Deep_Dives/05_Autoencoders_VAE.md": [
+      -312,
+      -278.2,
+      37
+    ],
+    "Transformer/Reports/Deep_Dives/04_LSTM_GRU.md": [
+      -362.5,
+      -135.3,
+      205.5
+    ],
+    "Transformer/Reports/Deep_Dives/03_RNN_Recurrent.md": [
+      -324.3,
+      -119.3,
+      -10.4
+    ],
+    "Transformer/Reports/Deep_Dives/02_CNN_Convolutional.md": [
+      -400.9,
+      -231.4,
+      42.7
+    ],
+    "Transformer/Reports/Deep_Dives/01_MLP_Feedforward.md": [
+      -355.3,
+      -150.7,
+      -26.4
+    ],
+    "Transformer/Reports/Deep_Dives/00_The_Complete_Mathematics_of_Neural_Networks.md": [
+      -383.6,
+      -192.9,
+      -21.2
+    ],
+    "Transformer/Reports/09_Complete_ML_DL_AI_Libraries_Master_Guide.md": [
+      -303.8,
+      -224.2,
+      269
+    ],
+    "Transformer/Reports/08_Architecture_Pros_and_Cons.md": [
+      -395.9,
+      -129.1,
+      170.9
+    ],
+    "Transformer/Reports/04_Limitations_and_Improvements.md": [
+      -353.6,
+      -224.9,
+      22.2
+    ],
+    "Transformer/Reports/03_Transformers_and_SOTA_Models.md": [
+      -340.8,
+      -203.3,
+      223.2
+    ],
+    "Transformer/Reports/02_Evolution_of_Neural_Networks.md": [
+      -283.9,
+      -114.5,
+      189.2
+    ],
+    "Transformer/Reports/01_Foundations_AI_ML_DL.md": [
+      -245.3,
+      -147.6,
+      183.6
+    ],
+    "Transformer/PROMPT_Build_Algorithm_Codex_AUDITED.md": [
+      340.5,
+      48.7,
+      542.3
+    ],
+    "Transformer/PAPERS_TO_READ_CATALOG.md": [
+      -245.8,
+      -376.8,
+      97.9
+    ],
+    "Transformer/LLM_DEBUGGING_AND_TROUBLESHOOTING.md": [
+      -282.4,
+      -164.4,
+      214.6
+    ],
+    "Transformer/FUTURE_RESEARCH_MAP.md": [
+      -295.2,
+      -93.5,
+      131.1
+    ],
+    "Algorithm_Codex/STUDY_ROADMAP.md": [
+      297.8,
+      12,
+      -210.7
+    ],
+    "Algorithm_Codex/SELF_ASSESSMENT_QUIZ.md": [
+      -82.2,
+      -128,
+      -194.9
+    ],
+    "Algorithm_Codex/Reports/00_Foundations_Classical_vs_Deep_Learning.md": [
+      -419.9,
+      -105.8,
+      -600.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/X06_EKF_SLAM.md": [
+      438.7,
+      265,
+      379
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/X10_Canny_Edge_Detection.md": [
+      269.1,
+      477.9,
+      237.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/Z03_Elliptic_Curve_Cryptography_and_Hash_Trees.md": [
+      -598.9,
+      38.9,
+      -383.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/Z05_Causal_Discovery_PC_Algorithm.md": [
+      184.7,
+      21.3,
+      -485.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/Z04_Algorithmic_Information_Theory_and_Universal_Compression.md": [
+      665.8,
+      -47.3,
+      260.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/Z02_Zero_Knowledge_Proofs_and_Verifiable_Computation.md": [
+      589.4,
+      208.1,
+      263.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/X09_RANSAC.md": [
+      519.8,
+      -164.9,
+      379.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/Z01_Computational_Geometry_Convex_Hull_and_Delaunay.md": [
+      -178.7,
+      468.8,
+      -311.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/Y03_Gromov_Wasserstein_and_Sliced_Optimal_Transport.md": [
+      -124.9,
+      -26.1,
+      -712.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/Y02_Topological_Data_Analysis_Persistent_Homology.md": [
+      -157.9,
+      50,
+      651.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/Y01_Lie_Groups_SO3_SE3_and_Equivariance.md": [
+      460.7,
+      -0.9,
+      487.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/X11_Lucas_Kanade_Optical_Flow.md": [
+      -466,
+      364.7,
+      -364
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/X08_Forward_and_Inverse_Kinematics_Jacobian.md": [
+      395.2,
+      -421.5,
+      363.4
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/X05_Unscented_Kalman_Filter_UKF.md": [
+      -509.1,
+      59.6,
+      -483.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/W12_Multi_Body_Dynamics_Slider_Crank.md": [
+      -445.4,
+      222.4,
+      -485.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/X07_Particle_Filter_SLAM.md": [
+      18,
+      -419.1,
+      479.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/W09_SAT_Solving_DPLL.md": [
+      -465.4,
+      399.3,
+      -103.4
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/X02_RRT_Star.md": [
+      -19.4,
+      339.1,
+      494.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/X04_Extended_Kalman_Filter_EKF.md": [
+      -221.8,
+      539.8,
+      -51.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/X03_Probabilistic_Roadmaps_PRM.md": [
+      -266.4,
+      -17.1,
+      -673.1
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/X01_Rapidly_Exploring_Random_Trees_RRT.md": [
+      -677.5,
+      -75.3,
+      -178.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/W11_Topology_Optimization_SIMP.md": [
+      223.3,
+      -402.7,
+      438.1
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/W14_Surrogate_Based_Design_Optimization.md": [
+      -231.1,
+      -275.3,
+      -656.4
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/W13_Engine_Thermodynamic_Cycle_Simulation.md": [
+      314.1,
+      290.6,
+      467
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/W08_Static_Timing_Analysis.md": [
+      -339.4,
+      110,
+      -621.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/W10_Finite_Element_Method_Truss_Analysis.md": [
+      -12.3,
+      287.2,
+      324.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/W02_Rectilinear_Steiner_Minimum_Tree.md": [
+      -173.8,
+      245.5,
+      554.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/W06_Boolean_Logic_Minimization_Quine_McCluskey.md": [
+      50.3,
+      -37.2,
+      -753.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/W05_Min_Cut_Circuit_Partitioning.md": [
+      -62.7,
+      490.6,
+      294.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/W07_Binary_Decision_Diagrams_BDD.md": [
+      -159.6,
+      536.8,
+      -160.4
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/W04_VLSI_Floorplanning_Slicing_Tree.md": [
+      -318.4,
+      430.1,
+      -237.4
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/W01_Maze_Routing_Lee_Algorithm.md": [
+      -79.5,
+      -439.5,
+      -566.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/W03_Force_Directed_and_Simulated_Annealing_Placement.md": [
+      -337.2,
+      -230.3,
+      -490
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/V05_Root_Finding_Methods.md": [
+      37.2,
+      -430.2,
+      1.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/V04_Numerical_Integration.md": [
+      -73.2,
+      552.5,
+      131
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/V03_QR_Algorithm_for_Eigenvalues.md": [
+      575.7,
+      52.7,
+      390.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/V02_LU_Decomposition_and_Linear_Solver.md": [
+      105.3,
+      454.8,
+      227.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/V01_QR_Decomposition.md": [
+      100.5,
+      -61.9,
+      591.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/U05_Circuit_Nodal_Analysis.md": [
+      155.9,
+      -322.8,
+      537.1
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/U04_State_Space_Control_and_LQR.md": [
+      -179.4,
+      222.9,
+      -628
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/U06_Error_Correcting_Codes_Hamming_Reed_Solomon.md": [
+      0.8,
+      80.8,
+      664.4
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/U03_PID_Controller.md": [
+      -232.6,
+      -43.6,
+      611.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/U02_Digital_Filter_Design.md": [
+      695.1,
+      -2.6,
+      147.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/U01_Fast_Fourier_Transform_FFT.md": [
+      -566.4,
+      -225.9,
+      -364.1
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/T06_Reaction_Diffusion_Turing_Patterns.md": [
+      -161.1,
+      346.1,
+      427.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/T05_Population_Genetics_Wright_Fisher_Coalescent.md": [
+      -78.5,
+      -256.6,
+      612.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/T04_Molecular_Mechanics_Force_Fields.md": [
+      -129.9,
+      -645.4,
+      -141.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/T03_Molecular_Fingerprints_and_Similarity.md": [
+      -149,
+      505.2,
+      110.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/T02_Phylogenetic_Trees_UPGMA_Neighbor_Joining.md": [
+      120.2,
+      449,
+      394.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/T01_Sequence_Alignment_Needleman_Wunsch_Smith_Waterman.md": [
+      -336.9,
+      -381.1,
+      -327.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/S05_Lomb_Scargle_Periodogram.md": [
+      -624.3,
+      86.4,
+      -241.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/S03_2D_Ising_Model_Metropolis.md": [
+      38.7,
+      -245.3,
+      499.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/S04_Finite_Difference_PDE_Solving.md": [
+      -303.3,
+      213.4,
+      -460.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/S06_Kepler_Equation_Orbit_Propagation.md": [
+      -497.8,
+      -223.5,
+      -476
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/S01_N_Body_Gravitational_Simulation.md": [
+      399.8,
+      305.5,
+      276.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/S02_Molecular_Dynamics_Velocity_Verlet.md": [
+      -78.8,
+      425.1,
+      -500.1
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/R08_Quantum_Error_Correction_Bit_Flip_Code.md": [
+      229.6,
+      -540.8,
+      273.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/R07_Tensor_Networks_and_Matrix_Product_States.md": [
+      -30.8,
+      190.8,
+      -659.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/R06_Shors_Algorithm_Period_Finding.md": [
+      56.2,
+      -640.3,
+      101.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/R05_Grovers_Search_Algorithm.md": [
+      71.7,
+      -592.2,
+      262.1
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/R01_Qubit_State_Vectors_and_Quantum_Gates.md": [
+      -663.4,
+      160.3,
+      -84.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/R04_Quantum_Approximate_Optimization_Algorithm_QAOA.md": [
+      128,
+      315.9,
+      520.4
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/Q02_Multi_Agent_Deep_Deterministic_Policy_Gradients_MADDPG.md": [
+      -231.1,
+      380.6,
+      -441.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/R03_Variational_Quantum_Eigensolver_VQE.md": [
+      210.4,
+      142,
+      557.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/Q03_Algorithmic_Mechanism_Design_and_VCG_Auctions.md": [
+      208.9,
+      -10.8,
+      637.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/R02_Quantum_Circuit_Simulator.md": [
+      345.7,
+      -239.4,
+      534.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/Q01_Value_Decomposition_Networks_and_QMIX.md": [
+      329.4,
+      -313.9,
+      300.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/P03_Energy_Based_Models_and_Score_Matching.md": [
+      -67,
+      -194.4,
+      -665.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/P02_Langevin_Dynamics_and_MALA.md": [
+      522.8,
+      -285.1,
+      247.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/P01_Hamiltonian_Monte_Carlo_Leapfrog.md": [
+      -211.7,
+      -410.3,
+      -475.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/O03_Information_Geometry_and_Natural_Gradients.md": [
+      -84.5,
+      -590.2,
+      -306.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/O02_Entropic_Regularized_Optimal_Transport_Sinkhorn.md": [
+      -13.7,
+      30.9,
+      541.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/O01_Earth_Movers_Distance_Wasserstein_Metrics.md": [
+      283,
+      -95.1,
+      461.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/N03_Symbolic_Expression_Trees_and_Simplification.md": [
+      -450.8,
+      -433.8,
+      -291.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/N02_Forward_Mode_Autodiff_and_Dual_Numbers.md": [
+      148.5,
+      245.9,
+      405.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/N01_Tape_Based_Reverse_Mode_Autodiff.md": [
+      346,
+      -83.3,
+      -142.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/M02_Locality_Sensitive_Hashing.md": [
+      272.2,
+      91.3,
+      -313.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/M04_Probabilistic_Streaming_Sketches.md": [
+      200.6,
+      52.3,
+      -277.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/M03_Space_Partitioning_Trees.md": [
+      256.3,
+      -104.5,
+      -210.1
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/M01_Hierarchical_Navigable_Small_World_HNSW.md": [
+      311.6,
+      111.7,
+      -137.4
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/L08_Game_Theory_and_Multi_Agent_Equilibria.md": [
+      181.8,
+      -24.1,
+      -213.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/K07_Reservoir_Computing_Echo_State_Networks.md": [
+      201.4,
+      -43.2,
+      -168.1
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/L05_Fuzzy_Logic_Systems.md": [
+      342.5,
+      -30.1,
+      -323.1
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/K05_Physics_Informed_Neural_Networks.md": [
+      192,
+      2.2,
+      -150.1
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/L07_Classical_Graph_Algorithms_for_ML.md": [
+      406.3,
+      -47.9,
+      -220.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/L06_Rule_Based_Expert_Systems.md": [
+      349.3,
+      87.9,
+      -118.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/L04_Constraint_Satisfaction_Problems.md": [
+      338.4,
+      59.9,
+      -315.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/L03_Adversarial_Search_Minimax.md": [
+      244.3,
+      -68.1,
+      -131.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/L01_Uninformed_Search.md": [
+      232.2,
+      -35.2,
+      -303.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/L02_Informed_Search_A_Star.md": [
+      221,
+      86.3,
+      -138.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/K06_Classical_Word_Embeddings_Word2Vec.md": [
+      203.4,
+      89.9,
+      -183.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/K04_Capsule_Networks.md": [
+      357.9,
+      -85.3,
+      -282.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/K01_Hopfield_Networks.md": [
+      414.4,
+      49.3,
+      -208.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/J11_Active_Learning.md": [
+      287.9,
+      57.4,
+      -321.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/K03_Neural_ODEs.md": [
+      322.9,
+      115.4,
+      -260.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/K02_Normalizing_Flows.md": [
+      309.1,
+      60.5,
+      -92
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/J10_Explainable_AI.md": [
+      274,
+      -105.4,
+      -257.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/J12_Multi_Task_and_Transfer_Learning.md": [
+      327.7,
+      -65.6,
+      -308.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/J09_Recommender_Systems.md": [
+      312.7,
+      94.5,
+      -292.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/J07_Causal_Inference.md": [
+      233.7,
+      21.1,
+      -395.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/J08_Anomaly_Detection.md": [
+      401.6,
+      30.1,
+      -132.1
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/J06_Continual_Lifelong_Learning_EWC.md": [
+      388,
+      -54.1,
+      -259.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/J05_Online_Learning_and_Concept_Drift.md": [
+      333.2,
+      141.2,
+      -183.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/J02_Self_Supervised_Contrastive_Learning.md": [
+      326.8,
+      -113.2,
+      -214
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/I03_Constrained_Optimization_KKT.md": [
+      291.4,
+      -18.8,
+      -328.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/J01_Semi_Supervised_Learning.md": [
+      373.3,
+      104.5,
+      -252.4
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/J04_Federated_Learning_FedAvg.md": [
+      324.4,
+      141,
+      -221.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/J03_Meta_Learning_MAML.md": [
+      336.1,
+      -39.5,
+      -97.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/I05_Linear_Programming_Simplex.md": [
+      250.7,
+      127.6,
+      -237.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/I04_Convex_Optimization_and_Duality.md": [
+      269.4,
+      41.9,
+      -94.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/I02_Newton_and_Quasi_Newton_BFGS.md": [
+      294.4,
+      -124.3,
+      -214.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/I01_Gradient_Descent_Optimizer_Family.md": [
+      236.5,
+      101.2,
+      -273.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/H09_Multi_Objective_NSGA_II.md": [
+      276.7,
+      -50.5,
+      -100.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/H04_Particle_Swarm_Optimization.md": [
+      350.3,
+      8.4,
+      -312
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/H08_NEAT_NeuroEvolution.md": [
+      179.9,
+      62.8,
+      -211.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/H07_Differential_Evolution.md": [
+      372.7,
+      -44.7,
+      -123
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/H06_Simulated_Annealing.md": [
+      289.3,
+      95,
+      -103.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/H05_Ant_Colony_Optimization.md": [
+      357.8,
+      -101.5,
+      -185.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/H03_Evolution_Strategies.md": [
+      202.7,
+      -50.6,
+      -255
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/H02_Genetic_Programming.md": [
+      384.5,
+      -70.4,
+      -159.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/H01_Genetic_Algorithms.md": [
+      218.3,
+      16.1,
+      -298
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/G12_Imitation_Learning_and_Inverse_RL.md": [
+      407.4,
+      29.4,
+      -248.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/G13_Offline_and_Hierarchical_RL.md": [
+      392,
+      87.7,
+      -208.1
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/G14_Partially_Observable_MDPs.md": [
+      199.1,
+      84.3,
+      -252.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/G11_Multi_Agent_RL_Basics.md": [
+      324.4,
+      -104.1,
+      -258.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/G09_Continuous_Control_DDPG.md": [
+      234.4,
+      -87.1,
+      -238.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/G08_PPO_Clipped_Objective.md": [
+      292,
+      147.8,
+      -241.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/G10_Model_Based_RL_and_MCTS.md": [
+      370,
+      98.6,
+      -174
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/G07_Actor_Critic.md": [
+      180.3,
+      16.8,
+      -198
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/G05_Deep_Q_Networks.md": [
+      295.9,
+      135.1,
+      -165.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/G06_Policy_Gradient_REINFORCE.md": [
+      202.4,
+      -72.4,
+      -207
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/G04_Temporal_Difference_Learning.md": [
+      287.6,
+      -85.9,
+      -136.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/G01_Multi_Armed_Bandits.md": [
+      279.6,
+      -58.7,
+      -312.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/G02_MDPs_and_Dynamic_Programming.md": [
+      360.1,
+      44.6,
+      -98.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/G03_Monte_Carlo_Prediction_and_Control.md": [
+      316.1,
+      -111.2,
+      -169.4
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/F04_Volatility_Modeling_ARCH_GARCH.md": [
+      414.9,
+      -37.5,
+      -182.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/F03_Survival_Analysis.md": [
+      355.6,
+      85.6,
+      -292.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/F02_ARIMA_and_SARIMA.md": [
+      316.6,
+      -70,
+      -116.4
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/F01_Decomposition_and_Smoothing.md": [
+      217.3,
+      112.2,
+      -216.4
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/E09_Bayesian_Optimization.md": [
+      190.4,
+      -16.4,
+      -267.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/E08_Latent_Dirichlet_Allocation.md": [
+      402.6,
+      70.5,
+      -246.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/E06_Kalman_Filters_and_Particle_Filters.md": [
+      253.6,
+      1.9,
+      -318
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/E07_Conditional_Random_Fields.md": [
+      406.4,
+      20.6,
+      -168.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/E05_Gaussian_Processes.md": [
+      226.6,
+      -30.8,
+      -118.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/E04_Variational_Inference.md": [
+      300.9,
+      -12.7,
+      -87.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/E02_Hidden_Markov_Models.md": [
+      414.8,
+      -0.6,
+      -210.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/E03_Markov_Chain_Monte_Carlo.md": [
+      349.4,
+      123.6,
+      -155.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/E01_Bayesian_Networks.md": [
+      239.7,
+      62.5,
+      -308.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/D04_Stacking_and_Blending_Ensembles.md": [
+      353.4,
+      110.7,
+      -212.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/D03_Gradient_Boosting_Machines.md": [
+      370.5,
+      -89.1,
+      -237.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/C09_Manifold_Learning_Isomap_and_LLE.md": [
+      385.9,
+      74.7,
+      -136.4
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/D02_AdaBoost.md": [
+      363.6,
+      0,
+      -101.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/C10_UMAP.md": [
+      259,
+      104.3,
+      -135.8
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/D01_Bagging_and_Random_Forests.md": [
+      281.6,
+      125.4,
+      -276.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/C08_Association_Rule_Mining.md": [
+      218.3,
+      19.7,
+      -117.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/C07_t_SNE.md": [
+      269.3,
+      -111.5,
+      -166.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/C06_Independent_Component_Analysis.md": [
+      177.6,
+      23.1,
+      -244.7
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/C04_Gaussian_Mixture_Models_and_EM.md": [
+      311.3,
+      22.8,
+      -92.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/C05_Principal_Component_Analysis.md": [
+      235,
+      55.8,
+      -107.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/B06_Support_Vector_Machines.md": [
+      233.1,
+      -81.2,
+      -168
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/C02_Hierarchical_Agglomerative_Clustering.md": [
+      389.9,
+      3.5,
+      -300.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/C01_k_Means_and_k_Means_Plus_Plus.md": [
+      257.6,
+      -4.3,
+      -88.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/C03_DBSCAN.md": [
+      192.2,
+      50.5,
+      -154.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/B09_Probability_Calibration.md": [
+      379.4,
+      45.3,
+      -288.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/B07_Linear_and_Quadratic_Discriminant_Analysis.md": [
+      271.7,
+      144.6,
+      -199.4
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/B08_Generalized_Linear_Models.md": [
+      401.7,
+      65.9,
+      -168.6
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/B05_Decision_Trees.md": [
+      404.1,
+      -12.8,
+      -253.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/B04_Naive_Bayes.md": [
+      244.5,
+      123.6,
+      -173.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/B02_Logistic_Regression.md": [
+      242.2,
+      -71.4,
+      -288.2
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/B03_k_Nearest_Neighbors.md": [
+      297.1,
+      -87.1,
+      -288.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/B01_Linear_Regression.md": [
+      368.9,
+      -40.7,
+      -290.3
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/A03_Hypothesis_Testing_Toolkit.md": [
+      388.4,
+      -73.6,
+      -202.5
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/A02_Bias_Variance_Decomposition_and_Resampling.md": [
+      314,
+      30,
+      -328.9
+    ],
+    "Algorithm_Codex/Reports/Deep_Dives/A01_Probability_and_Estimation_Primitives.md": [
+      399.9,
+      -19.8,
+      -143.3
+    ],
+    "Algorithm_Codex/Reports/00_Probability_and_Statistics_Primer.md": [
+      -538.4,
+      266.7,
+      -240.8
+    ],
+    "Algorithm_Codex/README.md": [
+      -32.1,
+      -90.1,
+      -147.1
+    ],
+    "Algorithm_Codex/PAPERS_AND_TEXTBOOKS_CATALOG.md": [
+      -102.3,
+      -57.6,
+      -180.7
+    ],
+    "Algorithm_Codex/CROSS_REFERENCE_WITH_TRANSFORMER_REPO.md": [
+      -80.8,
+      -18.6,
+      -138
+    ],
+    "Algorithm_Codex/ALGORITHM_CHEAT_SHEET.md": [
+      -314.1,
+      -221.8,
+      -67.9
+    ]
+  }
+}

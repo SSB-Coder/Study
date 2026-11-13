@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MDP GridWorld & Value Iteration — Algorithm Codex</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0b0f19;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .header {
+      text-align: center;
+      max-width: 800px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #60a5fa;
+      margin-bottom: 8px;
+    }
+    .desc {
+      color: #94a3b8;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .nav-bar {
+      margin-top: 8px;
+      margin-bottom: 16px;
+    }
+    .nav-bar a {
+      color: #38bdf8;
+      text-decoration: none;
+      font-size: 0.85rem;
+      border: 1px solid #1e293b;
+      padding: 4px 12px;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+    .nav-bar a:hover {
+      background: #1e293b;
+    }
+    .sim-card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 1000px;
+      width: 100%;
+    }
+    canvas {
+      background: #030712;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      cursor: crosshair;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 16px;
+      width: 100%;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    button:hover { background: #1d4ed8; }
+    button.secondary {
+      background: #374151;
+    }
+    button.secondary:hover { background: #4b5563; }
+    .param-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+    input[type="range"] {
+      accent-color: #3b82f6;
+    }
+    .metrics-panel {
+      display: flex;
+      gap: 20px;
+      margin-top: 16px;
+      font-size: 0.9rem;
+      color: #a7f3d0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: #0f172a;
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: 1px solid #1e293b;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>MDP GridWorld & Value Iteration</h1>
+    <p class="desc">Module G: Dynamic programming value heatmap and greedy policy directional arrows.</p>
+    <div class="nav-bar"><a href="index.html">← Back to All Visualizers</a></div>
+  </div>
+
+  <div class="sim-card">
+    <canvas id="simCanvas" width="600" height="420"></canvas>
+    
+    <div class="controls">
+      
+<button id="btnStepVI">Step Value Iteration</button>
+<button id="btnConverge">Run to Convergence</button>
+<button id="btnReset" class="secondary">Reset Values</button>
+
+    </div>
+
+    <div class="metrics-panel" id="metricsPanel">
+      <span>Status: Ready</span>
+    </div>
+  </div>
+
+  <script>
+    
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const R = 4, C = 4;
+const cellW = W / C, cellH = H / R;
+
+let V = Array.from({length: R}, () => new Array(C).fill(0.0));
+let gamma = 0.9;
+let iterCount = 0;
+
+const actions = [
+  {dr: -1, dc: 0, arrow: '↑'}, // UP
+  {dr: 0, dc: 1, arrow: '→'},  // RIGHT
+  {dr: 1, dc: 0, arrow: '↓'},  // DOWN
+  {dr: 0, dc: -1, arrow: '←'}  // LEFT
+];
+
+function stepVI() {
+  let newV = Array.from({length: R}, () => new Array(C).fill(0.0));
+  let maxDelta = 0;
+
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      if (r === R - 1 && c === C - 1) {
+        newV[r][c] = 0; // Goal terminal
+        continue;
+      }
+
+      let maxQ = -Infinity;
+      for (let a of actions) {
+        let nr = Math.min(Math.max(r + a.dr, 0), R - 1);
+        let nc = Math.min(Math.max(c + a.dc, 0), C - 1);
+        let rew = (nr === R - 1 && nc === C - 1) ? 10.0 : -1.0;
+        let q = rew + gamma * V[nr][nc];
+        if (q > maxQ) maxQ = q;
+      }
+      newV[r][c] = maxQ;
+      maxDelta = Math.max(maxDelta, Math.abs(newV[r][c] - V[r][c]));
+    }
+  }
+
+  V = newV;
+  iterCount++;
+  document.getElementById('metricsPanel').innerHTML = 
+    `<span>Iteration: ${iterCount}</span><span>Max Bellman Delta: ${maxDelta.toFixed(4)}</span><span>Start V(0,0): ${V[0][0].toFixed(2)}</span>`;
+  draw();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  for (let r = 0; r < R; r++) {
+    for (let c = 0; c < C; c++) {
+      let x = c * cellW, y = r * cellH;
+
+      // Color intensity based on value
+      if (r === R - 1 && c === C - 1) {
+        ctx.fillStyle = '#059669'; // Goal green
+      } else {
+        let intensity = Math.min(Math.max((V[r][c] + 5) / 15, 0), 1);
+        ctx.fillStyle = `rgb(${Math.floor(15 + intensity * 30)}, ${Math.floor(23 + intensity * 60)}, ${Math.floor(42 + intensity * 120)})`;
+      }
+      ctx.fillRect(x, y, cellW, cellH);
+
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, cellW, cellH);
+
+      // Best action arrow
+      if (!(r === R - 1 && c === C - 1)) {
+        let bestA = null, maxQ = -Infinity;
+        for (let a of actions) {
+          let nr = Math.min(Math.max(r + a.dr, 0), R - 1);
+          let nc = Math.min(Math.max(c + a.dc, 0), C - 1);
+          let rew = (nr === R - 1 && nc === C - 1) ? 10.0 : -1.0;
+          let q = rew + gamma * V[nr][nc];
+          if (q > maxQ) { maxQ = q; bestA = a; }
+        }
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(bestA.arrow, x + cellW/2, y + cellH/2 - 5);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '13px monospace';
+        ctx.fillText(V[r][c].toFixed(2), x + cellW/2, y + cellH/2 + 20);
+      } else {
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText("GOAL (+10)", x + cellW/2, y + cellH/2);
+      }
+    }
+  }
+}
+
+document.getElementById('btnStepVI').onclick = stepVI;
+document.getElementById('btnConverge').onclick = () => {
+  for (let i = 0; i < 25; i++) stepVI();
+};
+document.getElementById('btnReset').onclick = () => {
+  V = Array.from({length: R}, () => new Array(C).fill(0.0));
+  iterCount = 0;
+  draw();
+};
+
+draw();
+
+  </script>
+</body>
+</html>

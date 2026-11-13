@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Computational Geometry: Convex Hull & Delaunay Triangulation — Algorithm Codex</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background-color: #0b0f19; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 24px 16px; }
+    .header { text-align: center; max-width: 860px; margin-bottom: 20px; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: #38bdf8; margin-bottom: 8px; }
+    .desc { color: #94a3b8; font-size: 0.95rem; line-height: 1.5; }
+    .nav-bar { margin-top: 8px; margin-bottom: 16px; }
+    .nav-bar a { color: #38bdf8; text-decoration: none; font-size: 0.85rem; border: 1px solid #1e293b; padding: 4px 12px; border-radius: 4px; }
+    .sim-card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; align-items: center; max-width: 860px; width: 100%; }
+    canvas { background: #030712; border: 1px solid #374151; border-radius: 8px; margin-bottom: 16px; cursor: crosshair; }
+    .controls { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: center; background: #1f2937; padding: 12px 18px; border-radius: 8px; width: 100%; }
+    .btn-group { display: flex; gap: 8px; }
+    button { background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; font-size: 0.85rem; }
+    button:hover { background: #0369a1; }
+    button.secondary { background: #374151; }
+    button.secondary:hover { background: #4b5563; }
+    .status-text { margin-top: 12px; font-family: monospace; font-size: 0.9rem; color: #38bdf8; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Module Z01: Computational Geometry Visualizer</h1>
+    <p class="desc">Interactive 2D spatial lab. Click anywhere on the canvas to add vertices, or generate random point clouds to evaluate real-time Graham Scan Convex Hull and Bowyer-Watson Delaunay Triangulation!</p>
+    <div class="nav-bar"><a href="index.html">&larr; Return to Simulation Hub</a></div>
+  </div>
+  <div class="sim-card">
+    <canvas id="geomCanvas" width="760" height="440"></canvas>
+    <div class="controls">
+      <div class="btn-group">
+        <button id="btnBoth">Both Hull & Triangles</button>
+        <button id="btnHullOnly" class="secondary">Convex Hull Only</button>
+        <button id="btnDelaunayOnly" class="secondary">Delaunay Only</button>
+      </div>
+      <div class="btn-group">
+        <button id="btnRandom">Generate 25 Points</button>
+        <button id="btnClear" class="secondary">Clear</button>
+      </div>
+    </div>
+    <div class="status-text" id="statusText">Points: 0 | Hull Vertices: 0 | Delaunay Triangles: 0</div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("geomCanvas");
+    const ctx = canvas.getContext("2d");
+    let points = [];
+    let displayMode = "both"; // 'both', 'hull', 'delaunay'
+
+    function initPoints(n = 25) {
+      points = [];
+      const pad = 50;
+      for (let i = 0; i < n; i++) {
+        points.push({
+          x: pad + Math.random() * (canvas.width - 2 * pad),
+          y: pad + Math.random() * (canvas.height - 2 * pad)
+        });
+      }
+      render();
+    }
+
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      points.push({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+      render();
+    });
+
+    document.getElementById("btnBoth").onclick = () => { displayMode = "both"; render(); };
+    document.getElementById("btnHullOnly").onclick = () => { displayMode = "hull"; render(); };
+    document.getElementById("btnDelaunayOnly").onclick = () => { displayMode = "delaunay"; render(); };
+    document.getElementById("btnRandom").onclick = () => { initPoints(25); };
+    document.getElementById("btnClear").onclick = () => { points = []; render(); };
+
+    // Graham Scan 2D
+    function computeConvexHull(pts) {
+      if (pts.length <= 3) return [...pts];
+      // Pivot with min Y
+      let pivot = pts[0];
+      for (let p of pts) {
+        if (p.y < pivot.y || (p.y === pivot.y && p.x < pivot.x)) pivot = p;
+      }
+      const others = pts.filter(p => p !== pivot);
+      others.sort((a, b) => {
+        const angA = Math.atan2(a.y - pivot.y, a.x - pivot.x);
+        const angB = Math.atan2(b.y - pivot.y, b.x - pivot.x);
+        if (Math.abs(angA - angB) < 1e-9) {
+          const distA = (a.x - pivot.x)**2 + (a.y - pivot.y)**2;
+          const distB = (b.x - pivot.x)**2 + (b.y - pivot.y)**2;
+          return distA - distB;
+        }
+        return angA - angB;
+      });
+
+      const stack = [pivot];
+      for (let p of others) {
+        while (stack.length >= 2) {
+          const p1 = stack[stack.length - 2];
+          const p2 = stack[stack.length - 1];
+          const cross = (p2.x - p1.x)*(p.y - p1.y) - (p2.y - p1.y)*(p.x - p1.x);
+          if (cross <= 0) stack.pop();
+          else break;
+        }
+        stack.push(p);
+      }
+      return stack;
+    }
+
+    // Bowyer-Watson Delaunay Triangulation
+    function computeDelaunay(pts) {
+      if (pts.length < 3) return [];
+      const maxDelta = 10000;
+      const p1 = { x: canvas.width / 2 - maxDelta, y: canvas.height / 2 - maxDelta };
+      const p2 = { x: canvas.width / 2 + maxDelta, y: canvas.height / 2 - maxDelta };
+      const p3 = { x: canvas.width / 2, y: canvas.height / 2 + maxDelta };
+
+      const allPts = [...pts, p1, p2, p3];
+      const superIndices = new Set([pts.length, pts.length + 1, pts.length + 2]);
+      let triangles = [[pts.length, pts.length + 1, pts.length + 2]];
+
+      function inCircumcircle(p, a, b, c) {
+        let cp = (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);
+        if (cp < 0) { const temp = b; b = c; c = temp; }
+        const ax = a.x - p.x, ay = a.y - p.y;
+        const bx = b.x - p.x, by = b.y - p.y;
+        const cx = c.x - p.x, cy = c.y - p.y;
+        const det = (ax*ax + ay*ay) * (bx*cy - by*cx) -
+                    (bx*bx + by*by) * (ax*cy - ay*cx) +
+                    (cx*cx + cy*cy) * (ax*by - ay*bx);
+        return det > 1e-7;
+      }
+
+      for (let i = 0; i < pts.length; i++) {
+        const pt = pts[i];
+        const badTriangles = [];
+        for (let tri of triangles) {
+          if (inCircumcircle(pt, allPts[tri[0]], allPts[tri[1]], allPts[tri[2]])) {
+            badTriangles.push(tri);
+          }
+        }
+        const edges = [];
+        for (let tri of badTriangles) {
+          const triEdges = [[tri[0], tri[1]], [tri[1], tri[2]], [tri[2], tri[0]]];
+          for (let [u, v] of triEdges) {
+            const eKey = Math.min(u, v) + "_" + Math.max(u, v);
+            let count = 0;
+            for (let otri of badTriangles) {
+              const otriEdges = [[otri[0], otri[1]], [otri[1], otri[2]], [otri[2], otri[0]]];
+              for (let [ou, ov] of otriEdges) {
+                if (Math.min(ou, ov) + "_" + Math.max(ou, ov) === eKey) count++;
+              }
+            }
+            if (count === 1) edges.push([u, v]);
+          }
+        }
+        triangles = triangles.filter(t => !badTriangles.includes(t));
+        for (let [u, v] of edges) triangles.push([u, v, i]);
+      }
+
+      return triangles.filter(tri => !tri.some(idx => superIndices.has(idx)));
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const hull = computeConvexHull(points);
+      const triangles = computeDelaunay(points);
+
+      // Draw Delaunay Triangles
+      if (displayMode === "both" || displayMode === "delaunay") {
+        ctx.strokeStyle = "rgba(16, 185, 129, 0.4)";
+        ctx.lineWidth = 1.2;
+        for (let tri of triangles) {
+          ctx.beginPath();
+          ctx.moveTo(points[tri[0]].x, points[tri[0]].y);
+          ctx.lineTo(points[tri[1]].x, points[tri[1]].y);
+          ctx.lineTo(points[tri[2]].x, points[tri[2]].y);
+          ctx.closePath();
+          ctx.stroke();
+        }
+      }
+
+      // Draw Convex Hull
+      if (displayMode === "both" || displayMode === "hull") {
+        if (hull.length >= 3) {
+          ctx.strokeStyle = "#38bdf8";
+          ctx.lineWidth = 2.5;
+          ctx.fillStyle = "rgba(56, 189, 248, 0.08)";
+          ctx.beginPath();
+          ctx.moveTo(hull[0].x, hull[0].y);
+          for (let i = 1; i < hull.length; i++) ctx.lineTo(hull[i].x, hull[i].y);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+      }
+
+      // Draw Points
+      for (let p of points) {
+        ctx.fillStyle = "#f59e0b";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      document.getElementById("statusText").innerText = 
+        `Points: ${points.length} | Hull Vertices: ${hull.length} | Delaunay Triangles: ${triangles.length}`;
+    }
+
+    initPoints(25);
+  </script>
+</body>
+</html>

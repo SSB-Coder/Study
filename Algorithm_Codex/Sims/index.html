@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Algorithm Codex — Interactive Simulation Lab</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0b0f19;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 40px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .hero {
+      text-align: center;
+      max-width: 900px;
+      margin-bottom: 40px;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: #60a5fa;
+      letter-spacing: -0.025em;
+      margin-bottom: 12px;
+    }
+    .subtitle {
+      font-size: 1.1rem;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      width: 100%;
+    }
+    .sim-card-link {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .sim-card-link:hover {
+      transform: translateY(-4px);
+      border-color: #3b82f6;
+      box-shadow: 0 12px 25px -5px rgba(59, 130, 246, 0.15);
+    }
+    .card-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      padding: 3px 8px;
+      border-radius: 4px;
+      width: fit-content;
+      margin-bottom: 12px;
+    }
+    h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #f8fafc;
+      margin-bottom: 8px;
+    }
+    p {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      line-height: 1.5;
+      flex-grow: 1;
+      margin-bottom: 16px;
+    }
+    .card-footer {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #60a5fa;
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1>Algorithm Codex — Interactive Simulation Lab</h1>
+    <p class="subtitle">
+      Zero-dependency, standalone HTML5 Canvas simulators bringing classical machine learning, optimization, reinforcement learning, evolutionary search, and symbolic AI algorithms to life.
+    </p>
+  </div>
+
+  <div class="grid">
+    
+    <a href="01_linear_regression_gradient_descent.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE</div>
+      <h3>Linear Regression & Gradient Descent</h3>
+      <p>Module B: Interactive 2D gradient descent fitting linear weights to points in real time.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+    
+    <a href="02_kmeans_clustering.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE</div>
+      <h3>k-Means Clustering & Voronoi Cells</h3>
+      <p>Module C: Step-by-step centroid updates and cluster reassignment on 2D data points.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+    
+    <a href="03_decision_tree_boundary.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE</div>
+      <h3>CART Decision Tree Partitioning</h3>
+      <p>Module B: Recursive axis-aligned orthogonal cuts minimizing Gini impurity on 2D datasets.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+    
+    <a href="04_support_vector_machines.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE</div>
+      <h3>Support Vector Machines (SVM)</h3>
+      <p>Module B: Maximum margin hyperplane visualizer with support vector boundaries and margin tuning.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+    
+    <a href="05_pca_variance_projection.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE</div>
+      <h3>Principal Component Analysis (PCA)</h3>
+      <p>Module C: Eigenvector variance decomposition on 2D Gaussian point clouds.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+    
+    <a href="06_markov_decision_process_gridworld.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE</div>
+      <h3>MDP GridWorld & Value Iteration</h3>
+      <p>Module G: Dynamic programming value heatmap and greedy policy directional arrows.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+    
+    <a href="07_multi_armed_bandit_regret.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE</div>
+      <h3>Multi-Armed Bandit (UCB1)</h3>
+      <p>Module G: 5 slot machines balancing exploration vs exploitation with Upper Confidence Bounds.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+    
+    <a href="08_a_star_pathfinding.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE</div>
+      <h3>A* Heuristic Pathfinding</h3>
+      <p>Module L: Manhattan heuristic search exploring nodes to find the shortest obstacle-free path.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+    
+    <a href="09_genetic_algorithm_tsp.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE</div>
+      <h3>Genetic Algorithm (TSP)</h3>
+      <p>Module H: Natural selection and order crossover (OX) evolving short Hamiltonian cycles for 20 cities.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+    
+    <a href="10_particle_swarm_optimization.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE</div>
+      <h3>Particle Swarm Optimization (PSO)</h3>
+      <p>Module H: Swarm particles balancing cognitive memory and social consensus to find global minima.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+    
+    <a href="11_hopfield_network_associative_memory.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE</div>
+      <h3>Hopfield Network Associative Memory</h3>
+      <p>Module K: Lyapunov energy descent restoring noisy, corrupted 8x8 pixel patterns into stored attractors.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+    
+    <a href="12_recommender_systems_matrix_factorization.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Recommender Systems (Matrix Factorization)</h3>
+      <p>Module J: Dynamic SGD low-rank matrix decomposition predicting missing ratings with real-time latent embedding alignment.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+    
+    <a href="13_dijkstra_pagerank_graph.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Graph Algorithms: Dijkstra & PageRank</h3>
+      <p>Module L: Interactive directed graph laboratory computing optimal shortest paths and stationary PageRank probability mass flow.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+    
+    <a href="14_hnsw_vector_search.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>HNSW Vector Search (Vector DBs & RAG)</h3>
+      <p>Module M: Hierarchical Navigable Small World multi-layer skip-graph routing from highway to ground Voronoi cells.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="15_computational_graph_autodiff.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Computational Graph & Tape Autodiff</h3>
+      <p>Module N: Interactive DAG execution visualizing topological sorting, forward primal flow, and reverse-mode adjoint backprop.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="16_optimal_transport_sinkhorn.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Entropic Optimal Transport & Sinkhorn</h3>
+      <p>Module O: 2D distribution transport visualizer morphing entropic fog into sparse Wasserstein mass matching couplings.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+
+    <a href="17_bloch_sphere_qubit.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Bloch Sphere 3D Qubit Visualizer</h3>
+      <p>Module R01: 3D interactive quantum state vector rotations, Hadamard, and Pauli gates.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="18_grover_amplitude_amplification.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Grover Amplitude Amplification</h3>
+      <p>Module R05: Step-by-step oracle phase inversion and diffusion inversion about the mean.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="19_n_body_gravitational_orbits.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>N-Body Gravitational Orbits</h3>
+      <p>Module S01: Symplectic velocity-Verlet N-body planetary orbits and 3-body Figure-8 choreography.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="20_ising_model_metropolis.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>2D Ising Model Ferromagnetism</h3>
+      <p>Module S03: Live Metropolis-Hastings spin flip simulation showing Curie temperature phase transitions.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="21_sequence_alignment_needleman_wunsch.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Needleman-Wunsch Sequence Alignment</h3>
+      <p>Module T01: Interactive dynamic programming scoring grid with glowing optimal backtracking path.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="22_reaction_diffusion_turing_patterns.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Gray-Scott Reaction-Diffusion Turing Patterns</h3>
+      <p>Module T06: Emergent biological morphogenesis simulator generating spots, stripes, and mitosis.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="23_fast_fourier_transform_fft.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Fast Fourier Transform (FFT)</h3>
+      <p>Module U01: Real-time time-to-frequency decomposition of composite multi-tone harmonic waveforms.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="24_pid_controller_tuning.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Interactive PID Controller Tuning</h3>
+      <p>Module U03: Closed-loop step response visualizer with Kp, Ki, Kd sliders and disturbance impulse injection.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="25_qr_gram_schmidt_orthogonalization.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>QR Gram-Schmidt Orthogonalization</h3>
+      <p>Module V01: Interactive 2D vector projection and orthonormal basis Q generation.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="26_maze_routing_lee_wavefront.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Lee Wavefront VLSI Maze Routing</h3>
+      <p>Module W01: BFS wavefront expansion and backtrace on interactive circuit board grids.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="27_force_directed_placement.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Force-Directed Netlist Placement</h3>
+      <p>Module W03: Fruchterman-Reingold spring-electrical equilibrium for circuit graph placement.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="28_slider_crank_mechanism.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Slider-Crank Mechanism Dynamics</h3>
+      <p>Module W12: Kinematic and dynamic engine piston crosshead linkage simulator.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="29_rrt_path_planning.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>RRT Robotic Path Planning</h3>
+      <p>Module X01: Rapidly-exploring Random Tree 2D trajectory exploration with obstacle avoidance.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="30_ekf_slam_landmarks.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>EKF SLAM with Uncertainty Contours</h3>
+      <p>Module X06: Simultaneous Localization and Mapping with covariance uncertainty ellipses.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="31_ransac_outlier_rejection.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>RANSAC Outlier Rejection vs OLS</h3>
+      <p>Module X09: Random sample consensus linear regression with draggable extreme outliers.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="32_canny_edge_detection.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Canny Edge Detection Pipeline</h3>
+      <p>Module X10: Step-by-step classical computer vision filter from Gaussian blur to hysteresis edges.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+
+    <a href="33_se3_rigid_transformations_lie_group.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>SE(3) Rigid-Body Lie Group Manifold</h3>
+      <p>Module Y01: 3D twist coordinates, exponential Rodrigues map, and geodesic screw motion.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+    <a href="34_computational_geometry_convex_hull_delaunay.html" class="sim-card-link">
+      <div class="card-badge">INTERACTIVE ★</div>
+      <h3>Convex Hull & Delaunay Triangulation</h3>
+      <p>Module Z01: Real-time Graham Scan convex hull and Bowyer-Watson Delaunay triangulation on dynamic 2D point clouds.</p>
+      <div class="card-footer">Launch Canvas Simulator →</div>
+    </a>
+
+  </div>
+</body>
+</html>

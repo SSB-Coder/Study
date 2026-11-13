@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12. Self-Organizing Maps (SOM) / Kohonen Networks — Neural Network Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060913;
+  --bg-card: rgba(13, 19, 36, 0.85);
+  --bg-card-hover: rgba(18, 26, 49, 0.95);
+  --border: rgba(0, 229, 255, 0.18);
+  --border-glow: rgba(0, 229, 255, 0.45);
+  --c-cyan: #00e5ff;
+  --c-emerald: #00ff9d;
+  --c-violet: #a855f7;
+  --c-amber: #f59e0b;
+  --c-rose: #ff3366;
+  --c-blue: #3b82f6;
+  --text-main: #e2e8f5;
+  --text-dim: #8b9bb4;
+  --text-faint: #475569;
+  --f-title: 'Orbitron', monospace, sans-serif;
+  --f-body: 'Space Grotesk', system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: var(--f-body);
+  min-height: 100vh;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Background glow effects */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 900px 500px at 15% 10%, rgba(0, 229, 255, 0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 800px 600px at 85% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app-wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 24px 60px;
+}
+
+/* Top Navigation Bar */
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+  margin-bottom: 20px;
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-badge {
+  font-family: var(--f-title);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  background: rgba(0, 229, 255, 0.12);
+  color: var(--c-cyan);
+  border: 1px solid var(--border-glow);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+.brand-title {
+  font-family: var(--f-title);
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  color: #fff;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-family: var(--f-mono);
+  font-size: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.nav-btn:hover {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--c-cyan);
+  border-color: var(--border-glow);
+}
+.nav-btn.primary {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--c-cyan);
+  border-color: var(--border-glow);
+}
+
+/* Header Banner */
+.sim-header {
+  margin-bottom: 20px;
+}
+.sim-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.cat-pill {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: rgba(168, 85, 247, 0.15);
+  color: var(--c-violet);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+.tags-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tag-item {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.sim-h1 {
+  font-family: var(--f-title);
+  font-size: clamp(20px, 3.2vw, 32px);
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #fff;
+  line-height: 1.25;
+  margin-bottom: 8px;
+}
+.sim-h1 span {
+  color: var(--c-cyan);
+  text-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+}
+.sim-summary {
+  font-size: 14.5px;
+  color: var(--text-dim);
+  max-width: 900px;
+}
+
+/* Main Animation Stage Card */
+.stage-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  margin-bottom: 24px;
+}
+.stage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid var(--border);
+}
+.stage-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--c-emerald);
+}
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c-emerald);
+  box-shadow: 0 0 10px var(--c-emerald);
+  animation: pulse 1.8s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+.fps-counter {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* Canvas Viewport */
+.canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  background: #04060d;
+}
+#simCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Control Bar */
+.control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 18px;
+  background: rgba(7, 11, 22, 0.95);
+  border-top: 1px solid var(--border);
+}
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 16px;
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.ctrl-btn:hover {
+  background: rgba(0, 229, 255, 0.2);
+  border-color: var(--border-glow);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.25);
+}
+.ctrl-btn.active {
+  background: var(--c-cyan);
+  color: #000;
+  font-weight: 600;
+  border-color: var(--c-cyan);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.5);
+}
+.ctrl-btn.danger:hover {
+  background: rgba(255, 51, 102, 0.2);
+  border-color: var(--c-rose);
+  color: var(--c-rose);
+}
+.speed-group {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.speed-btn {
+  padding: 6px 11px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+}
+.speed-btn:last-child { border-right: none; }
+.speed-btn.active {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--c-cyan);
+  font-weight: 600;
+}
+.custom-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.custom-ctrl-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.custom-ctrl-item input[type="range"] {
+  accent-color: var(--c-cyan);
+  cursor: pointer;
+}
+.custom-ctrl-item select {
+  background: #0c1222;
+  border: 1px solid var(--border);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+}
+
+/* Telemetry Dashboard HUD */
+.telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.tele-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+.tele-label {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.tele-val {
+  font-family: var(--f-title);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-cyan);
+}
+.tele-sub {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+/* Tabs Section */
+.tabs-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.tabs-nav {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.35);
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: 12px 22px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--f-title);
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.tab-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.02);
+}
+.tab-btn.active {
+  color: var(--c-cyan);
+  border-bottom-color: var(--c-cyan);
+  background: rgba(0, 229, 255, 0.05);
+}
+.tab-pane {
+  display: none;
+  padding: 24px;
+}
+.tab-pane.active {
+  display: block;
+}
+
+/* Tab Content Typography */
+.content-section {
+  margin-bottom: 24px;
+}
+.content-h2 {
+  font-family: var(--f-title);
+  font-size: 16px;
+  color: var(--c-cyan);
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.content-h2::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  background: var(--c-cyan);
+  border-radius: 2px;
+}
+.content-p {
+  font-size: 14.5px;
+  color: #cbd5e1;
+  line-height: 1.75;
+  margin-bottom: 14px;
+}
+.content-list {
+  list-style: none;
+  margin-bottom: 16px;
+}
+.content-list li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 14px;
+  color: #cbd5e1;
+  margin-bottom: 8px;
+}
+.content-list li::before {
+  content: '▹';
+  position: absolute;
+  left: 0;
+  color: var(--c-cyan);
+}
+
+/* Math Box */
+.math-box {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-left: 4px solid var(--c-cyan);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 14px 0;
+  font-family: var(--f-mono);
+  font-size: 13.5px;
+  color: #e0f2fe;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+.math-title {
+  font-family: var(--f-title);
+  font-size: 11px;
+  color: var(--c-cyan);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+/* Code Box */
+.code-container {
+  position: relative;
+  background: #02040a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 14px 0;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.code-body {
+  padding: 16px;
+  overflow-x: auto;
+}
+.code-body pre {
+  font-family: var(--f-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: #c9d1e0;
+}
+.code-kw { color: #ff79c6; font-weight: 600; }
+.code-fn { color: #50fa7b; }
+.code-str { color: #f1fa8c; }
+.code-num { color: #ffb86c; }
+.code-cmt { color: #6272a4; font-style: italic; }
+.code-cls { color: #8be9fd; font-weight: 600; }
+
+/* Trace Table */
+.trace-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  margin: 14px 0;
+}
+.trace-table th {
+  text-align: left;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--c-cyan);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.trace-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+}
+.trace-table tr:hover td {
+  background: rgba(0, 229, 255, 0.04);
+}
+
+/* Footer */
+.sim-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+@media (max-width: 768px) {
+  .app-wrapper { padding: 12px 14px 40px; }
+  .canvas-wrap { height: 380px; }
+  .control-bar { flex-direction: column; align-items: stretch; }
+  .control-group { justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-wrapper">
+  <!-- Navigation Header -->
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <span class="brand-badge">DEEP DIVE 12</span>
+      <span class="brand-title">12. Self-Organizing Maps (SOM) / Kohonen Networks</span>
+    </div>
+    <div class="nav-links">
+      <a href="11_RBM_DeepBelief.html" class="nav-btn">◀ PREV</a>
+      <a href="index.html" class="nav-btn primary">ALL SIMS</a>
+      <a href="13_Classic_Transformer_Dense.html" class="nav-btn">NEXT ▶</a>
+    </div>
+  </nav>
+
+  <!-- Title & Description Header -->
+  <header class="sim-header">
+    <div class="sim-eyebrow">
+      <span class="cat-pill">Bio-Inspired &amp; Brain</span>
+      <div class="tags-list">
+        <span class="tag-item">#SOM</span><span class="tag-item">#Kohonen</span><span class="tag-item">#Topological Map</span><span class="tag-item">#BMU</span><span class="tag-item">#Competitive Learning</span>
+      </div>
+    </div>
+    <h1 class="sim-h1">12. Self-Organizing <span>Maps (SOM) / Kohonen Networks</span></h1>
+    <p class="sim-summary">Unsupervised competitive learning: Best Matching Unit (BMU) Euclidean search, Gaussian neighborhood bubble shrinkage, and 2D topological feature map self-organization.</p>
+  </header>
+
+  <!-- Simulation Stage Card -->
+  <main class="stage-card">
+    <div class="stage-header">
+      <div class="stage-status">
+        <div class="pulse-dot"></div>
+        <span id="liveStatus">ACTIVE SIMULATION</span>
+      </div>
+      <div class="fps-counter" id="fpsDisplay">60 FPS | LATENCY: 1.2ms</div>
+    </div>
+
+    <!-- Canvas -->
+    <div class="canvas-wrap">
+      <canvas id="simCanvas"></canvas>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="control-bar">
+      <div class="control-group">
+        <button id="playPauseBtn" class="ctrl-btn active">⏸ PAUSE</button>
+        <button id="stepBtn" class="ctrl-btn">⏯ STEP</button>
+        <button id="resetBtn" class="ctrl-btn danger">↺ RESET</button>
+      </div>
+
+      <div class="control-group">
+        <span style="font-family:var(--f-mono);font-size:11px;color:var(--text-dim);">SPEED:</span>
+        <div class="speed-group">
+          <button class="speed-btn" data-speed="0.5">0.5x</button>
+          <button class="speed-btn active" data-speed="1.0">1.0x</button>
+          <button class="speed-btn" data-speed="2.0">2.0x</button>
+          <button class="speed-btn" data-speed="4.0">4.0x</button>
+        </div>
+      </div>
+
+      <div class="custom-controls" id="customControlsContainer">
+        
+    <div class="custom-ctrl-item">
+      <span>INTENSITY:</span>
+      <input type="range" id="paramSlider" min="1" max="100" value="50" style="width:70px;">
+    </div>
+    
+      </div>
+    </div>
+  </main>
+
+  <!-- Telemetry HUD -->
+  <section class="telemetry-grid">
+    <div class="tele-card">
+      <div class="tele-label">CURRENT PHASE</div>
+      <div class="tele-val" id="hudPhase">Forward Pass Active</div>
+      <div class="tele-sub" id="hudPhaseSub">Forward Propagation</div>
+    </div>
+    <div class="tele-card">
+      <div class="tele-label">ACTIVE TENSOR SHAPE</div>
+      <div class="tele-val" id="hudTensorShape" style="color:var(--c-emerald);">[Batch: 8, Features: 128]</div>
+      <div class="tele-sub" id="hudTensorSub">Batch x Channels x Dims</div>
+    </div>
+    <div class="tele-card">
+      <div class="tele-label">COMPUTATIONAL FLOPs</div>
+      <div class="tele-val" id="hudFlops" style="color:var(--c-violet);">1.24 MFLOPs</div>
+      <div class="tele-sub">Theoretical Multiply-Adds</div>
+    </div>
+    <div class="tele-card">
+      <div class="tele-label">OUTPUT METRIC / LOSS</div>
+      <div class="tele-val" id="hudMetric" style="color:var(--c-amber);">Loss: 0.042</div>
+      <div class="tele-sub" id="hudMetricSub">Target Convergence</div>
+    </div>
+  </section>
+
+  <!-- Deep Dive Tabs -->
+  <section class="tabs-card">
+    <div class="tabs-nav">
+      <button class="tab-btn active" data-tab="tab-theory">ARCHITECTURE & THEORY</button>
+      <button class="tab-btn" data-tab="tab-math">MATHEMATICS & EQUATIONS</button>
+      <button class="tab-btn" data-tab="tab-code">PYTORCH IMPLEMENTATION</button>
+      <button class="tab-btn" data-tab="tab-trace">EXECUTION TRACE</button>
+    </div>
+
+    <!-- Tab 1: Architecture & Theory -->
+    <div class="tab-pane active" id="tab-theory">
+      <div class="content-section">
+        <h2 class="content-h2">1. Intuition & Architectural Overview</h2>
+        <p class="content-p">Imagine throwing a highly flexible, magnetic fishing net over a massive, chaotic pile of differently shaped metal objects.</p>
+        <p class="content-p">At first, the net just drapes randomly. But then you turn on the magnets.
+When a point on the net gets close to a heavy metal object, it snaps to it. Crucially, because it is a net, when one point snaps to an object, it pulls its neighboring strings along with it.</p>
+      </div>
+
+      <div class="content-section">
+        <h2 class="content-h2">2. Core Architectural Components</h2>
+        <ul class="content-list">
+          <li>**The Grid:** The network is usually a 2D grid of nodes (e.g., $10 \times 10$).</li><li>**The Weights:** Every node on the grid has a weight vector of the exact same dimension as the input data. (If inputting 50-dimensional DNA data, each node has a 50D weight vector).</li><li>**No Hidden Layers:** The input is connected directly to every node on the grid.</li><li>$r_c$ and $r_v$: The physical 2D coordinates of the nodes on the grid (e.g., node $c$ is at `[2, 5]` and node $v$ is at `[2, 6]`).</li>
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h2 class="content-h2">3. Advantages & Trade-Offs</h2>
+        <p class="content-p">High representational capacity and parameter efficiency, balanced against inductive bias constraints and hardware memory requirements.</p>
+      </div>
+    </div>
+
+    <!-- Tab 2: Mathematics & Equations -->
+    <div class="tab-pane" id="tab-math">
+      <div class="content-section">
+        <h2 class="content-h2">Mathematical Formulation & Equations</h2>
+        <p class="content-p">The following mathematical equations govern the forward pass, loss calculation, and backward pass dynamics visualised in the animation above:</p>
+        
+        <div class="math-box">
+          <div class="math-title">EQUATION 1</div>
+          <div>$$ c = \arg \min_v \left\| x(t) - W_v(t) \right\| $$</div>
+        </div>
+        
+        <div class="math-box">
+          <div class="math-title">EQUATION 2</div>
+          <div>$$ \theta(c, v, t) = \exp \left( - \frac{\| r_c - r_v \|^2}{2 \sigma^2(t)} \right) $$</div>
+        </div>
+        
+        <div class="math-box">
+          <div class="math-title">EQUATION 3</div>
+          <div>$$ W_v(t+1) = W_v(t) + \theta(c, v, t) \cdot \alpha(t) \cdot [x(t) - W_v(t)] $$</div>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- Tab 3: PyTorch Code -->
+    <div class="tab-pane" id="tab-code">
+      <div class="content-section">
+        <h2 class="content-h2">Repository Implementation</h2>
+        <p class="content-p">Source code extracted directly from the repository at <code>Code/Deep_Dives/12_SOM_Kohonen.py</code>. The visual simulation faithfully mirrors the tensor transformations coded below:</p>
+        <div class="code-container">
+          <div class="code-header">
+            <span>Code/Deep_Dives/12_SOM_Kohonen.py</span>
+            <span>PyTorch 2.x</span>
+          </div>
+          <div class="code-body">
+            <pre><code>&quot;&quot;&quot;
+<span class="code-num">12</span>. Self-Organizing Maps (SOM) / Kohonen Networks
+Deep Dive Implementation
+
+This file explicitly demonstrates unsupervised Competitive Learning.
+There is no backpropagation. We calculate the Euclidean distance to find the Best 
+Matching Unit (BMU), calculate the 2D neighborhood, and pull the weights toward the data.
+&quot;&quot;&quot;
+
+<span class="code-kw">import</span> torch
+<span class="code-kw">import</span> torch.nn <span class="code-kw">as</span> nn
+
+<span class="code-kw">class</span> <span class="code-fn">ExplicitSOM</span>(nn.Module):
+    &quot;&quot;&quot;A 2D Self-Organizing Map.&quot;&quot;&quot;
+    <span <span class="code-kw">class</span>="code-kw">def</span> <span class="code-fn">__init__</span>(<span class="code-kw">self</span>, map_size=(<span class="code-num">10</span>, <span class="code-num">10</span>), input_dim=<span class="code-num">3</span>):
+        <span class="code-kw">super</span>().<span class="code-fn">__init__</span>()
+        <span class="code-kw">self</span>.map_size = map_size
+        <span class="code-kw">self</span>.input_dim = input_dim
+        
+        <span class="code-kw">self</span>.num_nodes = map_size[<span class="code-num">0</span>] * map_size[<span class="code-num">1</span>]
+        
+        <span <span class="code-kw">class</span>="code-cmt"># Initialize Weights randomly</span>
+        <span <span class="code-kw">class</span>="code-cmt"># Shape: [Num_Nodes, Input_Dim]</span>
+        <span class="code-kw">self</span>.weights = nn.<span class="code-fn">Parameter</span>(torch.<span class="code-fn">randn</span>(<span class="code-kw">self</span>.num_nodes, input_dim), requires_grad=<span class="code-kw">False</span>)
+        
+        <span <span class="code-kw">class</span>="code-cmt"># Create a grid of physical 2D coordinates <span class="code-kw">for</span> the nodes</span>
+        <span <span class="code-kw">class</span>="code-cmt"># e.g., Node <span class="code-num">0</span> is at (<span class="code-num">0</span>,<span class="code-num">0</span>), Node <span class="code-num">1</span> is at (<span class="code-num">0</span>,<span class="code-num">1</span>), etc.</span>
+        x_coords, y_coords = torch.<span class="code-fn">meshgrid</span>(
+            torch.<span class="code-fn">arange</span>(map_size[<span class="code-num">0</span>]), 
+            torch.<span class="code-fn">arange</span>(map_size[<span class="code-num">1</span>]), 
+            indexing=&<span <span class="code-kw">class</span>="code-cmt">#x27;ij&#x27;</span>
+        )
+        <span class="code-kw">self</span>.locations = torch.<span class="code-fn">stack</span>([x_coords.<span class="code-fn">flatten</span>(), y_coords.<span class="code-fn">flatten</span>()], dim=<span class="code-num">1</span>).<span class="code-fn">float</span>()
+
+    <span <span class="code-kw">class</span>="code-kw">def</span> <span class="code-fn">find_bmu</span>(<span class="code-kw">self</span>, x):
+        &quot;&quot;&quot;Find the Best Matching Unit (the node whose weight is closest to input x)&quot;&quot;&quot;
+        <span <span class="code-kw">class</span>="code-cmt"># Expand x to match weight matrix: [<span class="code-num">1</span>, Input_Dim] -&gt; [Num_Nodes, Input_Dim]</span>
+        x_expanded = x.<span class="code-fn">expand</span>(<span class="code-kw">self</span>.num_nodes, -<span class="code-num">1</span>)
+        
+        <span <span class="code-kw">class</span>="code-cmt"># Calculate Euclidean Distance between x and ALL weights</span>
+        distances = torch.<span class="code-fn">sum</span>((x_expanded - <span class="code-kw">self</span>.weights) ** <span class="code-num">2</span>, dim=<span class="code-num">1</span>)
+        
+        <span <span class="code-kw">class</span>="code-cmt"># Find the index of the minimum distance</span>
+        bmu_index = torch.<span class="code-fn">argmin</span>(distances)
+        <span class="code-kw">return</span> bmu_index
+
+    <span <span class="code-kw">class</span>="code-kw">def</span> <span class="code-fn">update_weights</span>(<span class="code-kw">self</span>, x, bmu_index, current_radius, learning_rate):
+        &quot;&quot;&quot;Pull the BMU and its neighbors toward x.&quot;&quot;&quot;
+        <span <span class="code-kw">class</span>="code-cmt"># <span class="code-num">1</span>. Get the physical 2D location of the BMU</span>
+        bmu_loc = <span class="code-kw">self</span>.locations[bmu_index]
+        
+        <span <span class="code-kw">class</span>="code-cmt"># <span class="code-num">2</span>. Calculate physical distance <span class="code-kw">from</span> BMU to EVERY other node on the 2D grid</span>
+        <span <span class="code-kw">class</span>="code-cmt"># Shape: [Num_Nodes]</span>
+        dist_to_bmu_squared = torch.<span class="code-fn">sum</span>((<span class="code-kw">self</span>.locations - bmu_loc) ** <span class="code-num">2</span>, dim=<span class="code-num">1</span>)
+        
+        <span <span class="code-kw">class</span>="code-cmt"># <span class="code-num">3</span>. Calculate the Neighborhood Function Theta (Gaussian)</span>
+        <span <span class="code-kw">class</span>="code-cmt"># Nodes closer to the BMU get a value close to <span class="code-num">1</span>. Nodes far away get ~<span class="code-num">0</span>.</span>
+        theta = torch.<span class="code-fn">exp</span>(-dist_to_bmu_squared / (<span class="code-num">2</span> * (current_radius ** <span class="code-num">2</span>)))
+        
+        <span <span class="code-kw">class</span>="code-cmt"># Expand theta to match weight dimensions: [Num_Nodes] -&gt; [Num_Nodes, <span class="code-num">1</span>]</span>
+        theta = theta.<span class="code-fn">unsqueeze</span>(<span class="code-num">1</span>)
+        
+        <span <span class="code-kw">class</span>="code-cmt"># <span class="code-num">4</span>. The Kohonen Update Rule: W_new = W_old + Theta * LR * (x - W_old)</span>
+        <span <span class="code-kw">class</span>="code-cmt"># Difference between data point and current weights</span>
+        weight_delta = x.<span class="code-fn">unsqueeze</span>(<span class="code-num">0</span>) - <span class="code-kw">self</span>.weights 
+        
+        <span <span class="code-kw">class</span>="code-cmt"># Update weights (<span class="code-kw">in</span>-place)</span>
+        <span class="code-kw">self</span>.weights += theta * learning_rate * weight_delta
+
+
+<span class="code-kw">if</span> __name__ == &quot;__main__&quot;:
+    <span class="code-fn">print</span>(&quot;--- <span class="code-num">12</span>. Self-Organizing Map (SOM) ---&quot;)
+    
+    <span <span class="code-kw">class</span>="code-cmt"># E.g., Mapping 3D RGB Colors to a 10x10 2D Grid</span>
+    input_dim = <span class="code-num">3</span>
+    map_size = (<span class="code-num">10</span>, <span class="code-num">10</span>)
+    som = <span class="code-fn">ExplicitSOM</span>(map_size=map_size, input_dim=input_dim)
+    
+    <span <span class="code-kw">class</span>="code-cmt"># A single training step <span class="code-kw">with</span> a dummy data point (e.g. the color Red: [<span class="code-num">1</span>, <span class="code-num">0</span>, <span class="code-num">0</span>])</span>
+    data_point = torch.<span class="code-fn">tensor</span>([<span class="code-num">1.0</span>, <span class="code-num">0.0</span>, <span class="code-num">0.0</span>])
+    
+    <span <span class="code-kw">class</span>="code-cmt"># Training Parameters</span>
+    initial_radius = <span class="code-fn">max</span>(map_size) / <span class="code-num">2.0</span>
+    learning_rate = <span class="code-num">0.5</span>
+    
+    <span class="code-fn">print</span>(&quot;Finding Best Matching Unit (BMU)...&quot;)
+    bmu_idx = som.<span class="code-fn">find_bmu</span>(data_point)
+    bmu_location = som.locations[bmu_idx]
+    <span class="code-fn">print</span>(f&quot;BMU found at 2D grid coordinate: ({<span class="code-fn">int</span>(bmu_location[<span class="code-num">0</span>])}, {<span class="code-fn">int</span>(bmu_location[<span class="code-num">1</span>])})&quot;)
+    
+    <span class="code-fn">print</span>(&quot;Pulling magnetic mesh toward data point...&quot;)
+    som.<span class="code-fn">update_weights</span>(data_point, bmu_idx, initial_radius, learning_rate)
+    
+    <span class="code-fn">print</span>(&quot;Success: Unsupervised Competitive Learning applied successfully.&quot;)
+</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Execution Trace -->
+    <div class="tab-pane" id="tab-trace">
+      <div class="content-section">
+        <h2 class="content-h2">Layer-by-Layer Forward Execution Trace</h2>
+        <table class="trace-table">
+          <thead>
+            <tr>
+              <th>LAYER / STAGE</th>
+              <th>INPUT SHAPE</th>
+              <th>OPERATION</th>
+              <th>OUTPUT SHAPE</th>
+              <th>PARAM COUNT</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+    <tr>
+      <td style="color:var(--c-cyan);">01. Input Tensor</td>
+      <td>Raw Batch [B, D_in]</td>
+      <td>Feature Vector Ingestion & Normalization</td>
+      <td>[B, D_in]</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td style="color:var(--c-emerald);">02. Parameterized Transformation</td>
+      <td>[B, D_in]</td>
+      <td>Affine Weight Matrix Multiply (W @ X^T + b)</td>
+      <td>[B, D_hidden]</td>
+      <td>D_in x D_hidden + D_hidden</td>
+    </tr>
+    <tr>
+      <td style="color:var(--c-violet);">03. Non-Linear Activation</td>
+      <td>[B, D_hidden]</td>
+      <td>Element-wise Non-Linear Gating (ReLU / GeLU / Tanh)</td>
+      <td>[B, D_hidden]</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td style="color:var(--c-amber);">04. Output Layer</td>
+      <td>[B, D_hidden]</td>
+      <td>Projection to Classes / Decoded Logits</td>
+      <td>[B, D_out]</td>
+      <td>D_hidden x D_out + D_out</td>
+    </tr>
+    
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="sim-footer">
+    <span>NEURAL SIMS SUITE &bull; EVERYTHING CLAUDE CODE (ECC)</span>
+    <span>SOURCE: <a href="Reports/Deep_Dives/12_SOM_Kohonen.md" style="color:var(--c-cyan);text-decoration:none;">Reports/Deep_Dives/12_SOM_Kohonen.md</a> &bull; <a href="Code/Deep_Dives/12_SOM_Kohonen.py" style="color:var(--c-cyan);text-decoration:none;">Code/Deep_Dives/12_SOM_Kohonen.py</a></span>
+  </footer>
+</div>
+
+<!-- Tab Switching Script -->
+<script>
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const tabId = btn.getAttribute('data-tab');
+    document.getElementById(tabId).classList.add('active');
+  });
+});
+</script>
+
+<!-- Specialized Animation Engine Script -->
+<script>
+
+(() => {
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+  let isRunning = true;
+  let speed = 1.0;
+  let animTime = 0;
+
+  // 8x8 Kohonen grid
+  const gridSize = 8;
+  const grid = [];
+  for(let r=0; r<gridSize; r++) {
+    grid[r] = [];
+    for(let c=0; c<gridSize; c++) {
+      grid[r][c] = {
+        color: [Math.random(), Math.random(), Math.random()]
+      };
+    }
+  }
+
+  function resize() {
+    canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
+    canvas.height = canvas.parentElement.clientHeight * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function draw() {
+    const W = canvas.parentElement.clientWidth;
+    const H = canvas.parentElement.clientHeight;
+    ctx.clearRect(0, 0, W, H);
+
+    // Current random input vector
+    const inColor = [
+      (Math.sin(animTime * 0.7) + 1)/2,
+      (Math.cos(animTime * 0.9) + 1)/2,
+      (Math.sin(animTime * 1.3) + 1)/2
+    ];
+
+    // Find Best Matching Unit (BMU)
+    let bmuR = 0, bmuC = 0, minD = 999;
+    for(let r=0; r<gridSize; r++) {
+      for(let c=0; c<gridSize; c++) {
+        const gc = grid[r][c].color;
+        const d = Math.hypot(gc[0]-inColor[0], gc[1]-inColor[1], gc[2]-inColor[2]);
+        if(d < minD) { minD = d; bmuR = r; bmuC = c; }
+      }
+    }
+
+    // Update weights of BMU and neighbors toward input
+    if(isRunning) {
+      for(let r=0; r<gridSize; r++) {
+        for(let c=0; c<gridSize; c++) {
+          const dist = Math.hypot(r - bmuR, c - bmuC);
+          const influence = Math.exp(-(dist*dist) / 4.0) * 0.05 * speed;
+          for(let k=0; k<3; k++) {
+            grid[r][c].color[k] += (inColor[k] - grid[r][c].color[k]) * influence;
+          }
+        }
+      }
+    }
+
+    // Draw Input Color Sample on Left
+    const inX = 60;
+    const inY = H * 0.4;
+    ctx.fillStyle = `rgb(${Math.floor(inColor[0]*255)}, ${Math.floor(inColor[1]*255)}, ${Math.floor(inColor[2]*255)})`;
+    ctx.fillRect(inX, inY, 70, 70);
+    ctx.strokeStyle = '#fff';
+    ctx.strokeRect(inX, inY, 70, 70);
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px "Orbitron"';
+    ctx.textAlign = 'center';
+    ctx.fillText('INPUT x', inX + 35, inY - 10);
+
+    // Draw 8x8 SOM Grid
+    const cellSize = 36;
+    const gx = W * 0.4;
+    const gy = 60;
+
+    for(let r=0; r<gridSize; r++) {
+      for(let c=0; c<gridSize; c++) {
+        const cx = gx + c * cellSize;
+        const cy = gy + r * cellSize;
+        const rgb = grid[r][c].color;
+        ctx.fillStyle = `rgb(${Math.floor(rgb[0]*255)}, ${Math.floor(rgb[1]*255)}, ${Math.floor(rgb[2]*255)})`;
+        ctx.fillRect(cx, cy, cellSize-2, cellSize-2);
+
+        // Highlight BMU
+        if(r === bmuR && c === bmuC) {
+          ctx.strokeStyle = '#00ff9d';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(cx-1, cy-1, cellSize, cellSize);
+          ctx.fillStyle = '#fff';
+          ctx.font = '10px "Orbitron"';
+          ctx.fillText('BMU', cx + cellSize/2, cy + cellSize/2 + 3);
+        }
+      }
+    }
+
+    // Telemetry
+    document.getElementById('hudPhase').textContent = 'Best Matching Unit (BMU) Topological Update';
+    document.getElementById('hudTensorShape').textContent = '[Grid: 8x8, PrototypeDims: 3]';
+    document.getElementById('hudFlops').textContent = '192 Euclidean Distance Evals';
+    document.getElementById('hudMetric').textContent = `Quantization Error: ${minD.toFixed(4)}`;
+  }
+
+  function loop() {
+    if(isRunning) animTime += 0.02 * speed;
+    draw();
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  const btnPlay = document.getElementById('playPauseBtn');
+  btnPlay.addEventListener('click', () => {
+    isRunning = !isRunning;
+    btnPlay.textContent = isRunning ? '⏸ PAUSE' : '▶ PLAY';
+    btnPlay.classList.toggle('active', isRunning);
+  });
+  document.getElementById('stepBtn').addEventListener('click', () => { animTime += 0.4; draw(); });
+  document.getElementById('resetBtn').addEventListener('click', () => { animTime = 0; });
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      speed = parseFloat(btn.getAttribute('data-speed'));
+    });
+  });
+})();
+
+</script>
+
+</body>
+</html>

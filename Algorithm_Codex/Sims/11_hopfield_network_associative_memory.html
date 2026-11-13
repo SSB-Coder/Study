@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hopfield Network Associative Memory — Algorithm Codex</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0b0f19;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .header {
+      text-align: center;
+      max-width: 800px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #60a5fa;
+      margin-bottom: 8px;
+    }
+    .desc {
+      color: #94a3b8;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .nav-bar {
+      margin-top: 8px;
+      margin-bottom: 16px;
+    }
+    .nav-bar a {
+      color: #38bdf8;
+      text-decoration: none;
+      font-size: 0.85rem;
+      border: 1px solid #1e293b;
+      padding: 4px 12px;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+    .nav-bar a:hover {
+      background: #1e293b;
+    }
+    .sim-card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 1000px;
+      width: 100%;
+    }
+    canvas {
+      background: #030712;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      cursor: crosshair;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 16px;
+      width: 100%;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    button:hover { background: #1d4ed8; }
+    button.secondary {
+      background: #374151;
+    }
+    button.secondary:hover { background: #4b5563; }
+    .param-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+    input[type="range"] {
+      accent-color: #3b82f6;
+    }
+    .metrics-panel {
+      display: flex;
+      gap: 20px;
+      margin-top: 16px;
+      font-size: 0.9rem;
+      color: #a7f3d0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: #0f172a;
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: 1px solid #1e293b;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Hopfield Network Associative Memory</h1>
+    <p class="desc">Module K: Lyapunov energy descent restoring noisy, corrupted 8x8 pixel patterns into stored attractors.</p>
+    <div class="nav-bar"><a href="index.html">← Back to All Visualizers</a></div>
+  </div>
+
+  <div class="sim-card">
+    <canvas id="simCanvas" width="480" height="480"></canvas>
+    
+    <div class="controls">
+      
+<button id="btnStore">Store Pattern</button>
+<button id="btnCorrupt">Corrupt (Noise)</button>
+<button id="btnRecall">Asynchronous Recall Step</button>
+<button id="btnClear" class="secondary">Clear Grid</button>
+
+    </div>
+
+    <div class="metrics-panel" id="metricsPanel">
+      <span>Status: Ready</span>
+    </div>
+  </div>
+
+  <script>
+    
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const N = 8;
+const cellW = W / N, cellH = H / N;
+
+let state = new Array(N * N).fill(-1);
+let stored = [];
+let W_mat = Array.from({length: N * N}, () => new Array(N * N).fill(0));
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      let idx = r * N + c;
+      ctx.fillStyle = state[idx] === 1 ? '#38bdf8' : '#0f172a';
+      ctx.fillRect(c * cellW, r * cellH, cellW, cellH);
+      ctx.strokeStyle = '#1e293b';
+      ctx.strokeRect(c * cellW, r * cellH, cellW, cellH);
+    }
+  }
+}
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  let c = Math.floor((e.clientX - rect.left) / cellW);
+  let r = Math.floor((e.clientY - rect.top) / cellH);
+  let idx = r * N + c;
+  state[idx] = -state[idx];
+  draw();
+});
+
+document.getElementById('btnStore').onclick = () => {
+  stored.push([...state]);
+  // Hebbian outer product
+  let P = stored.length;
+  let total = N * N;
+  W_mat = Array.from({length: total}, () => new Array(total).fill(0));
+  for (let p of stored) {
+    for (let i = 0; i < total; i++) {
+      for (let j = 0; j < total; j++) {
+        if (i !== j) W_mat[i][j] += (p[i] * p[j]) / total;
+      }
+    }
+  }
+  document.getElementById('metricsPanel').innerHTML = 
+    `<span>Stored Patterns in Hopfield Network: ${stored.length}</span>`;
+};
+
+document.getElementById('btnCorrupt').onclick = () => {
+  // Flip 12 random bits
+  for (let k = 0; k < 12; k++) {
+    let idx = Math.floor(Math.random() * (N * N));
+    state[idx] = -state[idx];
+  }
+  draw();
+  document.getElementById('metricsPanel').innerHTML = `<span>Pattern Corrupted (Flipped 12 bits)</span>`;
+};
+
+document.getElementById('btnRecall').onclick = () => {
+  let total = N * N;
+  let changed = 0;
+  for (let i = 0; i < total; i++) {
+    let h = 0;
+    for (let j = 0; j < total; j++) {
+      h += W_mat[i][j] * state[j];
+    }
+    let nextS = h >= 0 ? 1 : -1;
+    if (nextS !== state[i]) changed++;
+    state[i] = nextS;
+  }
+  draw();
+  document.getElementById('metricsPanel').innerHTML = 
+    `<span>Recall Step Complete (Changed: ${changed} neurons)</span>`;
+};
+
+document.getElementById('btnClear').onclick = () => {
+  state.fill(-1);
+  draw();
+};
+
+draw();
+
+  </script>
+</body>
+</html>

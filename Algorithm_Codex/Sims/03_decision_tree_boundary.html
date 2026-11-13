@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CART Decision Tree Partitioning — Algorithm Codex</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0b0f19;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .header {
+      text-align: center;
+      max-width: 800px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #60a5fa;
+      margin-bottom: 8px;
+    }
+    .desc {
+      color: #94a3b8;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .nav-bar {
+      margin-top: 8px;
+      margin-bottom: 16px;
+    }
+    .nav-bar a {
+      color: #38bdf8;
+      text-decoration: none;
+      font-size: 0.85rem;
+      border: 1px solid #1e293b;
+      padding: 4px 12px;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+    .nav-bar a:hover {
+      background: #1e293b;
+    }
+    .sim-card {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 1000px;
+      width: 100%;
+    }
+    canvas {
+      background: #030712;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      cursor: crosshair;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 16px;
+      width: 100%;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    button:hover { background: #1d4ed8; }
+    button.secondary {
+      background: #374151;
+    }
+    button.secondary:hover { background: #4b5563; }
+    .param-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+    input[type="range"] {
+      accent-color: #3b82f6;
+    }
+    .metrics-panel {
+      display: flex;
+      gap: 20px;
+      margin-top: 16px;
+      font-size: 0.9rem;
+      color: #a7f3d0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: #0f172a;
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: 1px solid #1e293b;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>CART Decision Tree Partitioning</h1>
+    <p class="desc">Module B: Recursive axis-aligned orthogonal cuts minimizing Gini impurity on 2D datasets.</p>
+    <div class="nav-bar"><a href="index.html">← Back to All Visualizers</a></div>
+  </div>
+
+  <div class="sim-card">
+    <canvas id="simCanvas" width="650" height="420"></canvas>
+    
+    <div class="controls">
+      
+<button id="btnFit">Train CART Tree</button>
+<button id="btnRandom">Random 2D Data</button>
+<div class="param-group">
+  <label>Max Depth:</label>
+  <input type="range" id="sliderDepth" min="1" max="5" step="1" value="3">
+  <span id="lblDepth">3</span>
+</div>
+
+    </div>
+
+    <div class="metrics-panel" id="metricsPanel">
+      <span>Status: Ready</span>
+    </div>
+  </div>
+
+  <script>
+    
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+let points = [];
+let maxDepth = 3;
+let splits = [];
+
+function generateData() {
+  points = [];
+  for (let i = 0; i < 70; i++) {
+    let x = 40 + Math.random() * (W - 80);
+    let y = 40 + Math.random() * (H - 80);
+    // XOR-like target
+    let label = ((x > W/2 && y < H/2) || (x < W/2 && y > H/2)) ? 1 : 0;
+    if (Math.random() < 0.08) label = 1 - label; // Noise
+    points.push({x, y, label});
+  }
+  splits = [];
+  draw();
+}
+
+function gini(pts) {
+  if (pts.length === 0) return 0;
+  let p1 = pts.filter(p => p.label === 1).length / pts.length;
+  let p0 = 1 - p1;
+  return 1 - (p0 * p0 + p1 * p1);
+}
+
+function bestSplit(pts, box) {
+  let bestG = Infinity, bestAxis = null, bestVal = null;
+  for (let axis of ['x', 'y']) {
+    for (let p of pts) {
+      let val = p[axis];
+      let left = pts.filter(pt => pt[axis] < val);
+      let right = pts.filter(pt => pt[axis] >= val);
+      if (left.length === 0 || right.length === 0) continue;
+      let g = (left.length * gini(left) + right.length * gini(right)) / pts.length;
+      if (g < bestG) {
+        bestG = g; bestAxis = axis; bestVal = val;
+      }
+    }
+  }
+  return { axis: bestAxis, val: bestVal, g: bestG };
+}
+
+function buildTree(pts, box, depth) {
+  if (depth >= maxDepth || pts.length <= 4 || gini(pts) < 0.05) {
+    return;
+  }
+  let s = bestSplit(pts, box);
+  if (!s.axis) return;
+  splits.push({ axis: s.axis, val: s.val, box: {...box} });
+
+  if (s.axis === 'x') {
+    let leftPts = pts.filter(p => p.x < s.val);
+    let rightPts = pts.filter(p => p.x >= s.val);
+    buildTree(leftPts, { ...box, x2: s.val }, depth + 1);
+    buildTree(rightPts, { ...box, x1: s.val }, depth + 1);
+  } else {
+    let topPts = pts.filter(p => p.y < s.val);
+    let botPts = pts.filter(p => p.y >= s.val);
+    buildTree(topPts, { ...box, y2: s.val }, depth + 1);
+    buildTree(botPts, { ...box, y1: s.val }, depth + 1);
+  }
+}
+
+function fit() {
+  splits = [];
+  buildTree(points, { x1: 0, y1: 0, x2: W, y2: H }, 0);
+  document.getElementById('metricsPanel').innerHTML = 
+    `<span>Tree Depth: ${maxDepth}</span><span>Splits: ${splits.length}</span><span>Training Pts: ${points.length}</span>`;
+  draw();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw splits
+  ctx.lineWidth = 2;
+  for (let s of splits) {
+    ctx.strokeStyle = '#38bdf8';
+    ctx.beginPath();
+    if (s.axis === 'x') {
+      ctx.moveTo(s.val, s.box.y1); ctx.lineTo(s.val, s.box.y2);
+    } else {
+      ctx.moveTo(s.box.x1, s.val); ctx.lineTo(s.box.x2, s.val);
+    }
+    ctx.stroke();
+  }
+
+  // Draw points
+  for (let p of points) {
+    ctx.fillStyle = p.label === 1 ? '#3b82f6' : '#ef4444';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+}
+
+document.getElementById('btnFit').onclick = fit;
+document.getElementById('btnRandom').onclick = generateData;
+document.getElementById('sliderDepth').oninput = (e) => {
+  maxDepth = parseInt(e.target.value);
+  document.getElementById('lblDepth').innerText = maxDepth;
+  fit();
+};
+
+generateData();
+fit();
+
+  </script>
+</body>
+</html>

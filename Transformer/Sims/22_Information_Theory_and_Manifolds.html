@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>22. Information Theory, Manifolds &amp; The Information Bottleneck — Neural Network Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060913;
+  --bg-card: rgba(13, 19, 36, 0.85);
+  --bg-card-hover: rgba(18, 26, 49, 0.95);
+  --border: rgba(0, 229, 255, 0.18);
+  --border-glow: rgba(0, 229, 255, 0.45);
+  --c-cyan: #00e5ff;
+  --c-emerald: #00ff9d;
+  --c-violet: #a855f7;
+  --c-amber: #f59e0b;
+  --c-rose: #ff3366;
+  --c-blue: #3b82f6;
+  --text-main: #e2e8f5;
+  --text-dim: #8b9bb4;
+  --text-faint: #475569;
+  --f-title: 'Orbitron', monospace, sans-serif;
+  --f-body: 'Space Grotesk', system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: var(--f-body);
+  min-height: 100vh;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Background glow effects */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 900px 500px at 15% 10%, rgba(0, 229, 255, 0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 800px 600px at 85% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app-wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 24px 60px;
+}
+
+/* Top Navigation Bar */
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+  margin-bottom: 20px;
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-badge {
+  font-family: var(--f-title);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  background: rgba(0, 229, 255, 0.12);
+  color: var(--c-cyan);
+  border: 1px solid var(--border-glow);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+.brand-title {
+  font-family: var(--f-title);
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  color: #fff;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-family: var(--f-mono);
+  font-size: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.nav-btn:hover {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--c-cyan);
+  border-color: var(--border-glow);
+}
+.nav-btn.primary {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--c-cyan);
+  border-color: var(--border-glow);
+}
+
+/* Header Banner */
+.sim-header {
+  margin-bottom: 20px;
+}
+.sim-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.cat-pill {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: rgba(168, 85, 247, 0.15);
+  color: var(--c-violet);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+.tags-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tag-item {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.sim-h1 {
+  font-family: var(--f-title);
+  font-size: clamp(20px, 3.2vw, 32px);
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #fff;
+  line-height: 1.25;
+  margin-bottom: 8px;
+}
+.sim-h1 span {
+  color: var(--c-cyan);
+  text-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+}
+.sim-summary {
+  font-size: 14.5px;
+  color: var(--text-dim);
+  max-width: 900px;
+}
+
+/* Main Animation Stage Card */
+.stage-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  margin-bottom: 24px;
+}
+.stage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid var(--border);
+}
+.stage-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--c-emerald);
+}
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c-emerald);
+  box-shadow: 0 0 10px var(--c-emerald);
+  animation: pulse 1.8s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+.fps-counter {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* Canvas Viewport */
+.canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  background: #04060d;
+}
+#simCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Control Bar */
+.control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 18px;
+  background: rgba(7, 11, 22, 0.95);
+  border-top: 1px solid var(--border);
+}
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 16px;
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.ctrl-btn:hover {
+  background: rgba(0, 229, 255, 0.2);
+  border-color: var(--border-glow);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.25);
+}
+.ctrl-btn.active {
+  background: var(--c-cyan);
+  color: #000;
+  font-weight: 600;
+  border-color: var(--c-cyan);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.5);
+}
+.ctrl-btn.danger:hover {
+  background: rgba(255, 51, 102, 0.2);
+  border-color: var(--c-rose);
+  color: var(--c-rose);
+}
+.speed-group {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.speed-btn {
+  padding: 6px 11px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+}
+.speed-btn:last-child { border-right: none; }
+.speed-btn.active {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--c-cyan);
+  font-weight: 600;
+}
+.custom-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.custom-ctrl-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.custom-ctrl-item input[type="range"] {
+  accent-color: var(--c-cyan);
+  cursor: pointer;
+}
+.custom-ctrl-item select {
+  background: #0c1222;
+  border: 1px solid var(--border);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+}
+
+/* Telemetry Dashboard HUD */
+.telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.tele-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+.tele-label {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.tele-val {
+  font-family: var(--f-title);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--c-cyan);
+}
+.tele-sub {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+/* Tabs Section */
+.tabs-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.tabs-nav {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.35);
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: 12px 22px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--f-title);
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.tab-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.02);
+}
+.tab-btn.active {
+  color: var(--c-cyan);
+  border-bottom-color: var(--c-cyan);
+  background: rgba(0, 229, 255, 0.05);
+}
+.tab-pane {
+  display: none;
+  padding: 24px;
+}
+.tab-pane.active {
+  display: block;
+}
+
+/* Tab Content Typography */
+.content-section {
+  margin-bottom: 24px;
+}
+.content-h2 {
+  font-family: var(--f-title);
+  font-size: 16px;
+  color: var(--c-cyan);
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.content-h2::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  background: var(--c-cyan);
+  border-radius: 2px;
+}
+.content-p {
+  font-size: 14.5px;
+  color: #cbd5e1;
+  line-height: 1.75;
+  margin-bottom: 14px;
+}
+.content-list {
+  list-style: none;
+  margin-bottom: 16px;
+}
+.content-list li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 14px;
+  color: #cbd5e1;
+  margin-bottom: 8px;
+}
+.content-list li::before {
+  content: '▹';
+  position: absolute;
+  left: 0;
+  color: var(--c-cyan);
+}
+
+/* Math Box */
+.math-box {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-left: 4px solid var(--c-cyan);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 14px 0;
+  font-family: var(--f-mono);
+  font-size: 13.5px;
+  color: #e0f2fe;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+.math-title {
+  font-family: var(--f-title);
+  font-size: 11px;
+  color: var(--c-cyan);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+/* Code Box */
+.code-container {
+  position: relative;
+  background: #02040a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 14px 0;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.code-body {
+  padding: 16px;
+  overflow-x: auto;
+}
+.code-body pre {
+  font-family: var(--f-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: #c9d1e0;
+}
+.code-kw { color: #ff79c6; font-weight: 600; }
+.code-fn { color: #50fa7b; }
+.code-str { color: #f1fa8c; }
+.code-num { color: #ffb86c; }
+.code-cmt { color: #6272a4; font-style: italic; }
+.code-cls { color: #8be9fd; font-weight: 600; }
+
+/* Trace Table */
+.trace-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  margin: 14px 0;
+}
+.trace-table th {
+  text-align: left;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--c-cyan);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.trace-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+}
+.trace-table tr:hover td {
+  background: rgba(0, 229, 255, 0.04);
+}
+
+/* Footer */
+.sim-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+@media (max-width: 768px) {
+  .app-wrapper { padding: 12px 14px 40px; }
+  .canvas-wrap { height: 380px; }
+  .control-bar { flex-direction: column; align-items: stretch; }
+  .control-group { justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-wrapper">
+  <!-- Navigation Header -->
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <span class="brand-badge">DEEP DIVE 22</span>
+      <span class="brand-title">22. Information Theory, Manifolds &amp; The Information Bottleneck</span>
+    </div>
+    <div class="nav-links">
+      <a href="21_Active_Inference.html" class="nav-btn">◀ PREV</a>
+      <a href="index.html" class="nav-btn primary">ALL SIMS</a>
+      <a href="23_Systems_FlashAttention_and_Triton.html" class="nav-btn">NEXT ▶</a>
+    </div>
+  </nav>
+
+  <!-- Title & Description Header -->
+  <header class="sim-header">
+    <div class="sim-eyebrow">
+      <span class="cat-pill">Mathematical Foundations</span>
+      <div class="tags-list">
+        <span class="tag-item">#Information Theory</span><span class="tag-item">#Entropy</span><span class="tag-item">#Information Bottleneck</span><span class="tag-item">#Manifold Untangling</span>
+      </div>
+    </div>
+    <h1 class="sim-h1">22. Information <span>Theory, Manifolds &amp; The Information Bottleneck</span></h1>
+    <p class="sim-summary">Information plane trajectories I(X;T) vs I(T;Y), compression vs fitting phases during training, and progressive high-dimensional manifold untangling across layers.</p>
+  </header>
+
+  <!-- Simulation Stage Card -->
+  <main class="stage-card">
+    <div class="stage-header">
+      <div class="stage-status">
+        <div class="pulse-dot"></div>
+        <span id="liveStatus">ACTIVE SIMULATION</span>
+      </div>
+      <div class="fps-counter" id="fpsDisplay">60 FPS | LATENCY: 1.2ms</div>
+    </div>
+
+    <!-- Canvas -->
+    <div class="canvas-wrap">
+      <canvas id="simCanvas"></canvas>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="control-bar">
+      <div class="control-group">
+        <button id="playPauseBtn" class="ctrl-btn active">⏸ PAUSE</button>
+        <button id="stepBtn" class="ctrl-btn">⏯ STEP</button>
+        <button id="resetBtn" class="ctrl-btn danger">↺ RESET</button>
+      </div>
+
+      <div class="control-group">
+        <span style="font-family:var(--f-mono);font-size:11px;color:var(--text-dim);">SPEED:</span>
+        <div class="speed-group">
+          <button class="speed-btn" data-speed="0.5">0.5x</button>
+          <button class="speed-btn active" data-speed="1.0">1.0x</button>
+          <button class="speed-btn" data-speed="2.0">2.0x</button>
+          <button class="speed-btn" data-speed="4.0">4.0x</button>
+        </div>
+      </div>
+
+      <div class="custom-controls" id="customControlsContainer">
+        
+    <div class="custom-ctrl-item">
+      <span>INTENSITY:</span>
+      <input type="range" id="paramSlider" min="1" max="100" value="50" style="width:70px;">
+    </div>
+    
+      </div>
+    </div>
+  </main>
+
+  <!-- Telemetry HUD -->
+  <section class="telemetry-grid">
+    <div class="tele-card">
+      <div class="tele-label">CURRENT PHASE</div>
+      <div class="tele-val" id="hudPhase">Forward Pass Active</div>
+      <div class="tele-sub" id="hudPhaseSub">Forward Propagation</div>
+    </div>
+    <div class="tele-card">
+      <div class="tele-label">ACTIVE TENSOR SHAPE</div>
+      <div class="tele-val" id="hudTensorShape" style="color:var(--c-emerald);">[Batch: 8, Features: 128]</div>
+      <div class="tele-sub" id="hudTensorSub">Batch x Channels x Dims</div>
+    </div>
+    <div class="tele-card">
+      <div class="tele-label">COMPUTATIONAL FLOPs</div>
+      <div class="tele-val" id="hudFlops" style="color:var(--c-violet);">1.24 MFLOPs</div>
+      <div class="tele-sub">Theoretical Multiply-Adds</div>
+    </div>
+    <div class="tele-card">
+      <div class="tele-label">OUTPUT METRIC / LOSS</div>
+      <div class="tele-val" id="hudMetric" style="color:var(--c-amber);">Loss: 0.042</div>
+      <div class="tele-sub" id="hudMetricSub">Target Convergence</div>
+    </div>
+  </section>
+
+  <!-- Deep Dive Tabs -->
+  <section class="tabs-card">
+    <div class="tabs-nav">
+      <button class="tab-btn active" data-tab="tab-theory">ARCHITECTURE & THEORY</button>
+      <button class="tab-btn" data-tab="tab-math">MATHEMATICS & EQUATIONS</button>
+      <button class="tab-btn" data-tab="tab-code">PYTORCH IMPLEMENTATION</button>
+      <button class="tab-btn" data-tab="tab-trace">EXECUTION TRACE</button>
+    </div>
+
+    <!-- Tab 1: Architecture & Theory -->
+    <div class="tab-pane active" id="tab-theory">
+      <div class="content-section">
+        <h2 class="content-h2">1. Intuition & Architectural Overview</h2>
+        <p class="content-p">---</p>
+        <p class="content-p">Invented by Claude Shannon in 1948, Information Theory measures how much &quot;surprise&quot; is contained in a piece of data.</p>
+      </div>
+
+      <div class="content-section">
+        <h2 class="content-h2">2. Core Architectural Components</h2>
+        <ul class="content-list">
+          <li>Layer Transformations: Parameterized affine mapping and dimensional reshaping</li><li>Non-Linear Activation: Enforces non-linear feature separation across manifold</li><li>Residual Optimization: Direct gradient flow preserving signal fidelity</li>
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h2 class="content-h2">3. Advantages & Trade-Offs</h2>
+        <p class="content-p">High representational capacity and parameter efficiency, balanced against inductive bias constraints and hardware memory requirements.</p>
+      </div>
+    </div>
+
+    <!-- Tab 2: Mathematics & Equations -->
+    <div class="tab-pane" id="tab-math">
+      <div class="content-section">
+        <h2 class="content-h2">Mathematical Formulation & Equations</h2>
+        <p class="content-p">The following mathematical equations govern the forward pass, loss calculation, and backward pass dynamics visualised in the animation above:</p>
+        
+        <div class="math-box">
+          <div class="math-title">EQUATION 1</div>
+          <div>$$ H(P) = - \sum P(x) \log P(x) $$</div>
+        </div>
+        
+        <div class="math-box">
+          <div class="math-title">EQUATION 2</div>
+          <div>$$ D_{KL}(P || Q) = \sum P(x) \log \left(\frac{P(x)}{Q(x)}\right) $$</div>
+        </div>
+        
+        <div class="math-box">
+          <div class="math-title">EQUATION 3</div>
+          <div>$$ \text{Cross-Entropy} = H(P) + D_{KL}(P || Q) $$</div>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- Tab 3: PyTorch Code -->
+    <div class="tab-pane" id="tab-code">
+      <div class="content-section">
+        <h2 class="content-h2">Repository Implementation</h2>
+        <p class="content-p">Source code extracted directly from the repository at <code>Reports/Deep_Dives/00_The_Complete_Mathematics_of_Neural_Networks.md</code>. The visual simulation faithfully mirrors the tensor transformations coded below:</p>
+        <div class="code-container">
+          <div class="code-header">
+            <span>Reports/Deep_Dives/00_The_Complete_Mathematics_of_Neural_Networks.md</span>
+            <span>PyTorch 2.x</span>
+          </div>
+          <div class="code-body">
+            <pre><code><span <span class="code-kw">class</span>="code-cmt"># Deep Dive <span class="code-num">00</span>: The Complete Mathematics of Neural Networks</span>
+
+This document is the absolute foundational guide to the mathematics of AI. We will define every symbol, write out every equation, and walk through a **complete numerical example** of how a neural network calculates weights, biases, and learns <span class="code-kw">from</span> its mistakes.
+
+---
+
+<span <span class="code-kw">class</span>="code-cmt">## <span class="code-num">1</span>. The Universal Symbol Glossary</span>
+
+Before doing any math, you must understand the alphabet of Neural Networks.
+
+<span <span class="code-kw">class</span>="code-cmt">### Parameters (The &quot;Brain&quot; of the AI)</span>
+*   $W$ (**Weight Matrix**): The strength of the connection between two neurons. If $W$ is high, the AI pays a lot of attention to that input.
+*   $b$ (**Bias Vector**): A baseline number added to the result. It allows the neuron to shift its activation threshold left or right.
+
+<span <span class="code-kw">class</span>="code-cmt">### The Forward Pass (Data flowing In $\rightarrow$ Out)</span>
+*   $x$ (**Input Vector**): The raw data entering the network (e.g., pixel values, word embeddings).
+*   $z$ (**Pre-Activation**): The raw mathematical result of multiplying weights by inputs and adding bias. ($z = Wx + b$).
+*   $\sigma$ or $f$ (**Activation Function**): A mathematical curve applied to $z$ to introduce non-linearity (e.g., ReLU, Sigmoid).
+*   $a$ (**Post-Activation**): The final output of the neuron after passing through the activation function. ($a = \<span class="code-fn">sigma</span>(z)$).
+*   $\hat{y}$ (**Prediction**): The final guess made by the network (the $a$ of the very last layer).
+*   $y$ (**Ground Truth**): The actual, correct answer we want the network to guess.
+
+<span <span class="code-kw">class</span>="code-cmt">### The Backward Pass (Learning <span class="code-kw">from</span> mistakes)</span>
+*   $\mathcal{L}$ (**Loss**): A single number measuring how horribly wrong the prediction $\hat{y}$ was compared to the truth $y$.
+*   $\partial$ (**Partial Derivative**): Measures how sensitive the Loss is to a tiny change <span class="code-kw">in</span> a specific variable (e.g., $\frac{\partial \mathcal{L}}{\partial W}$).
+*   $\nabla$ (**Gradient**): A vector containing all the partial derivatives. It points <span class="code-kw">in</span> the direction that makes the Loss *increase* the fastest.
+*   $\alpha$ (**Learning Rate**): A tiny number (e.g., $<span class="code-num">0.01</span>$) that controls how big of a step the AI takes when updating its weights.
+
+---
+
+<span <span class="code-kw">class</span>="code-cmt">## <span class="code-num">2</span>. A Simple Neural Network: Full Numerical Example</span>
+
+Let&<span <span class="code-kw">class</span>="code-cmt">#x27;s build a tiny neural network <span class="code-kw">with</span> <span class="code-num">1</span> input neuron, <span class="code-num">1</span> hidden neuron, and <span class="code-num">1</span> output neuron. We want to teach it a simple rule: <span class="code-kw">if</span> the input is `<span class="code-num">2.0</span>`, the output should be `<span class="code-num">1.0</span>`.</span>
+
+<span <span class="code-kw">class</span>="code-cmt">### Step <span class="code-num">2.1</span>: The Setup (Initialization)</span>
+When a network is born, its parameters ($W$ and $b$) are completely random.
+*   **Input ($x$):** `<span class="code-num">2.0</span>`
+*   **Target Truth ($y$):** `<span class="code-num">1.0</span>`
+*   **Weight <span class="code-num">1</span> ($W_1$):** `<span class="code-num">0.5</span>` *(Randomly chosen)*
+*   **Bias <span class="code-num">1</span> ($b_1$):** `<span class="code-num">0.1</span>` *(Randomly chosen)*
+*   **Weight <span class="code-num">2</span> ($W_2$):** `-<span class="code-num">0.2</span>` *(Randomly chosen)*
+*   **Bias <span class="code-num">2</span> ($b_2$):** `<span class="code-num">0.3</span>` *(Randomly chosen)*
+
+<span <span class="code-kw">class</span>="code-cmt">### Step <span class="code-num">2.2</span>: The Forward Pass (Making a Guess)</span>
+The data flows forward through the network. The formula <span class="code-kw">for</span> a neuron is: **$z = W \cdot x + b$**
+
+**Layer <span class="code-num">1</span> (Hidden Layer):**
+<span class="code-num">1</span>.  Calculate pre-activation: $z_1 = (W_1 \cdot x) + b_1 = (<span class="code-num">0.5</span> \cdot <span class="code-num">2.0</span>) + <span class="code-num">0.1</span> = <span class="code-num">1.1</span>$
+<span class="code-num">2</span>.  Apply Activation Function (ReLU): $a_1 = \<span class="code-fn">max</span>(<span class="code-num">0</span>, z_1) = \<span class="code-fn">max</span>(<span class="code-num">0</span>, <span class="code-num">1.1</span>) = <span class="code-num">1.1</span>$
+
+**Layer <span class="code-num">2</span> (Output Layer):**
+<span class="code-num">1</span>.  Calculate pre-activation: $z_2 = (W_2 \cdot a_1) + b_2 = (-<span class="code-num">0.2</span> \cdot <span class="code-num">1.1</span>) + <span class="code-num">0.3</span> = -<span class="code-num">0.22</span> + <span class="code-num">0.3</span> = <span class="code-num">0.08</span>$
+<span class="code-num">2</span>.  Apply Activation Function (<span class="code-kw">None</span>/Linear <span class="code-kw">for</span> this example): $\hat{y} = z_2 = <span class="code-num">0.08</span>$
+
+**The AI&<span <span class="code-kw">class</span>="code-cmt">#x27;s Prediction:** $\hat{y} = <span class="code-num">0.08</span>$ (It is very wrong. It was supposed to guess $<span class="code-num">1.0</span>$).</span>
+
+<span <span class="code-kw">class</span>="code-cmt">### Step <span class="code-num">2.3</span>: Calculating the Loss (Measuring Error)</span>
+We use Mean Squared Error (MSE) to measure how wrong the network is.
+*   **Equation:** $\mathcal{L} = \frac{<span class="code-num">1</span>}{<span class="code-num">2</span>} (\hat{y} - y)^<span class="code-num">2</span>$
+*   **Calculation:** $\mathcal{L} = \frac{<span class="code-num">1</span>}{<span class="code-num">2</span>} (<span class="code-num">0.08</span> - <span class="code-num">1.0</span>)^<span class="code-num">2</span> = \frac{<span class="code-num">1</span>}{<span class="code-num">2</span>} (-<span class="code-num">0.92</span>)^<span class="code-num">2</span> = \frac{<span class="code-num">1</span>}{<span class="code-num">2</span>} (<span class="code-num">0.8464</span>) = <span class="code-num">0.4232</span>$
+
+The Loss is `<span class="code-num">0.4232</span>`. The AI&<span <span class="code-kw">class</span>="code-cmt">#x27;s goal is to make this number `<span class="code-num">0</span>`.</span>
+
+<span <span class="code-kw">class</span>="code-cmt">### Step <span class="code-num">2.4</span>: The Backward Pass (Backpropagation)</span>
+To fix the network, we must calculate the **Gradient**—how much the Loss changes <span class="code-kw">if</span> we wiggle each weight. We use the **Chain Rule** <span class="code-kw">from</span> Calculus.
+
+**Finding the gradient <span class="code-kw">for</span> $W_2$:**
+We want to find $\frac{\partial \mathcal{L}}{\partial W_2}$. The Chain Rule splits this into three parts:
+$\frac{\partial \mathcal{L}}{\partial W_2} = \frac{\partial \mathcal{L}}{\partial \hat{y}} \cdot \frac{\partial \hat{y}}{\partial z_2} \cdot \frac{\partial z_2}{\partial W_2}$
+
+Let&<span <span class="code-kw">class</span>="code-cmt">#x27;s calculate each piece:</span>
+<span class="code-num">1</span>.  $\frac{\partial \mathcal{L}}{\partial \hat{y}}$ (Derivative of $\frac{<span class="code-num">1</span>}{<span class="code-num">2</span>}(\hat{y}-y)^<span class="code-num">2</span>$): $= (\hat{y} - y) = (<span class="code-num">0.08</span> - <span class="code-num">1.0</span>) = -<span class="code-num">0.92</span>$
+<span class="code-num">2</span>.  $\frac{\partial \hat{y}}{\partial z_2}$ (Derivative of linear activation $\hat{y}=z_2$): $= <span class="code-num">1</span>$
+<span class="code-num">3</span>.  $\frac{\partial z_2}{\partial W_2}$ (Derivative of $W_2 \cdot a_1 + b_2$ <span class="code-kw">with</span> respect to $W_2$): $= a_1 = <span class="code-num">1.1</span>$
+
+Multiply them together:
+$\frac{\partial \mathcal{L}}{\partial W_2} = -<span class="code-num">0.92</span> \cdot <span class="code-num">1</span> \cdot <span class="code-num">1.1</span> = -<span class="code-num">1.012</span>$
+*(This means <span class="code-kw">if</span> we increase $W_2$, the Loss will drop rapidly).*
+
+**Finding the gradient <span class="code-kw">for</span> $b_2$:**
+$\frac{\partial \mathcal{L}}{\partial b_2} = \frac{\partial \mathcal{L}}{\partial \hat{y}} \cdot \frac{\partial \hat{y}}{\partial z_2} \cdot \frac{\partial z_2}{\partial b_2} = -<span class="code-num">0.92</span> \cdot <span class="code-num">1</span> \cdot <span class="code-num">1</span> = -<span class="code-num">0.92</span>$
+
+<span <span class="code-kw">class</span>="code-cmt">### Step <span class="code-num">2.5</span>: The Weight Update (Gradient Descent)</span>
+Now we actually change the weights to make the AI smarter.
+*   **Equation:** $W_{\text{new}} = W_{\text{old}} - (\alpha \cdot \text{Gradient})$
+*   Let&<span <span class="code-kw">class</span>="code-cmt">#x27;s use a Learning Rate ($\alpha$) of `<span class="code-num">0.1</span>`.</span>
+
+**Update $W_2$:**
+$W_{<span class="code-num">2</span>\text{\_new}} = -<span class="code-num">0.2</span> - (<span class="code-num">0.1</span> \cdot -<span class="code-num">1.012</span>) = -<span class="code-num">0.2</span> + <span class="code-num">0.1012</span> = -<span class="code-num">0.0988</span>$
+
+**Update $b_2$:**
+$b_{<span class="code-num">2</span>\text{\_new}} = <span class="code-num">0.3</span> - (<span class="code-num">0.1</span> \cdot -<span class="code-num">0.92</span>) = <span class="code-num">0.3</span> + <span class="code-num">0.092</span> = <span class="code-num">0.392</span>$
+
+If we run the exact same input (`<span class="code-num">2.0</span>`) through the network again <span class="code-kw">with</span> these new weights, the prediction $\hat{y}$ will be much closer to `<span class="code-num">1.0</span>`. The AI has learned.
+
+---
+
+<span <span class="code-kw">class</span>="code-cmt">## <span class="code-num">3</span>. The Mathematics of Complex Matrices</span>
+
+In reality, we don&<span <span class="code-kw">class</span>="code-cmt">#x27;t pass single numbers into neural networks. We pass massive grids of numbers (Matrices).</span>
+
+If our input $X$ is a batch of <span class="code-num">3</span> images, and each image has <span class="code-num">4</span> pixels, $X$ is a Matrix of shape `[<span class="code-num">3</span>, <span class="code-num">4</span>]`.
+If our hidden layer has <span class="code-num">5</span> neurons, the Weight matrix $W$ has shape `[<span class="code-num">4</span>, <span class="code-num">5</span>]`.
+
+The Forward Pass equation $Z = X \cdot W + b$ uses **Matrix Multiplication**:
+$$ \begin{bmatrix} x_{<span class="code-num">11</span>} &amp; x_{<span class="code-num">12</span>} &amp; x_{<span class="code-num">13</span>} &amp; x_{<span class="code-num">14</span>} \\ x_{<span class="code-num">21</span>} &amp; x_{<span class="code-num">22</span>} &amp; x_{<span class="code-num">23</span>} &amp; x_{<span class="code-num">24</span>} \\ x_{<span class="code-num">31</span>} &amp; x_{<span class="code-num">32</span>} &amp; x_{<span class="code-num">33</span>} &amp; x_{<span class="code-num">34</span>} \end{bmatrix} \times \begin{bmatrix} w_{<span class="code-num">11</span>} &amp; w_{<span class="code-num">12</span>} &amp; w_{<span class="code-num">13</span>} &amp; w_{<span class="code-num">14</span>} &amp; w_{<span class="code-num">15</span>} \\ w_{<span class="code-num">21</span>} &amp; w_{<span class="code-num">22</span>} &amp; w_{<span class="code-num">23</span>} &amp; w_{<span class="code-num">24</span>} &amp; w_{<span class="code-num">25</span>} \\ w_{<span class="code-num">31</span>} &amp; w_{<span class="code-num">32</span>} &amp; w_{<span class="code-num">33</span>} &amp; w_{<span class="code-num">34</span>} &amp; w_{<span class="code-num">35</span>} \\ w_{<span class="code-num">41</span>} &amp; w_{<span class="code-num">42</span>} &amp; w_{<span class="code-num">43</span>} &amp; w_{<span class="code-num">44</span>} &amp; w_{<span class="code-num">45</span>} \end{bmatrix} = \begin{bmatrix} z_{<span class="code-num">11</span>} &amp; \dots &amp; z_{<span class="code-num">15</span>} \\ \vdots &amp; \ddots &amp; \vdots \\ z_{<span class="code-num">31</span>} &amp; \dots &amp; z_{<span class="code-num">35</span>} \end{bmatrix} $$
+The result $Z$ has shape `[<span class="code-num">3</span>, <span class="code-num">5</span>]`. 
+
+&gt; [!TIP]
+&gt; **Matrix Matching Rule:** To multiply matrix A and matrix B, the inner dimensions must match. `[<span class="code-num">3</span>, <span class="code-num">4</span>] x [<span class="code-num">4</span>, <span class="code-num">5</span>]` works because the 4s match. The result is the outer dimensions: `[<span class="code-num">3</span>, <span class="code-num">5</span>]`.
+
+---
+
+<span <span class="code-kw">class</span>="code-cmt">## <span class="code-num">4</span>. The Mathematics of the Transformer</span>
+
+The Transformer uses the exact same Matrix Multiplication principles, but applies them <span class="code-kw">in</span> a highly specific architecture called **Attention**.
+
+<span <span class="code-kw">class</span>="code-cmt">### <span class="code-num">4.1</span> Creating Q, K, and V</span>
+An LLM turns a sentence like &quot;The cat sat&quot; into an embedding matrix $X$ of shape `[Sequence_Length, Embed_Dim]`. (e.g., `[<span class="code-num">3</span>, <span class="code-num">512</span>]`).
+
+The Transformer creates three separate weight matrices: $W_Q$, $W_K$, $W_V$. It multiplies $X$ by these weights to create Queries, Keys, and Values.
+*   $Q = X \cdot W_Q$ (What am I looking <span class="code-kw">for</span>?)
+*   $K = X \cdot W_K$ (What do I contain?)
+*   $V = X \cdot W_V$ (What is my actual underlying meaning?)
+
+<span <span class="code-kw">class</span>="code-cmt">### <span class="code-num">4.2</span> Scaled Dot-Product Attention (The Core Equation)</span>
+This is the equation that makes modern AI work:
+$$ \text{Attention}(Q, K, V) = \text{softmax}\<span class="code-fn">left</span>(\frac{Q \cdot K^T}{\sqrt{d_k}}\right) \cdot V $$
+
+**Step-by-Step Breakdown:**
+<span class="code-num">1</span>.  **$Q \cdot K^T$ (The Dot Product):** We multiply the Query matrix by the transposed Key matrix. If Word <span class="code-num">1</span>&<span <span class="code-kw">class</span>="code-cmt">#x27;s Query vector closely matches Word <span class="code-num">3</span>&#x27;s Key vector, the dot product will be a massive positive number. This creates a square &quot;Attention Score&quot; matrix of shape `[Seq_Len, Seq_Len]`.</span>
+<span class="code-num">2</span>.  **$\frac{<span class="code-num">1</span>}{\sqrt{d_k}}$ (The Scaling Factor):** If the embedding dimension is huge (e.g., <span class="code-num">4096</span>), dot products get massively large. Large numbers break the Softmax function (gradients vanish to zero). We divide the scores by the square root of the dimension to keep the variance stable at `<span class="code-num">1.0</span>`.
+<span class="code-num">3</span>.  **$\text{softmax}(\dots)$:** This forces every row <span class="code-kw">in</span> the Attention Score matrix to sum to exactly `<span class="code-num">1.0</span>`. Word <span class="code-num">1</span> might now assign `<span class="code-num">0.8</span>` attention to Word <span class="code-num">3</span>, `<span class="code-num">0.1</span>` to Word <span class="code-num">2</span>, and `<span class="code-num">0.1</span>` to itself. 
+<span class="code-num">4</span>.  **$\dots \cdot V$ (The Value Multiplication):** We multiply the percentage probabilities by the actual Value vectors. Word <span class="code-num">1</span>&<span <span class="code-kw">class</span>="code-cmt">#x27;s new embedding becomes a blend containing <span class="code-num">80</span>% of Word <span class="code-num">3</span>&#x27;s meaning, <span class="code-num">10</span>% of Word <span class="code-num">2</span>&#x27;s meaning, and <span class="code-num">10</span>% of its own meaning.</span>
+
+<span <span class="code-kw">class</span>="code-cmt">### <span class="code-num">4.3</span> Layer Normalization (LayerNorm)</span>
+Before passing the output to the next layer, the Transformer stabilizes the numbers using LayerNorm.
+$$ \text{LayerNorm}(x) = \gamma \frac{x - \mu}{\sqrt{\sigma^<span class="code-num">2</span> + \epsilon}} + \beta $$
+<span class="code-num">1</span>.  Calculate the Mean ($\mu$) of the vector.
+<span class="code-num">2</span>.  Calculate the Variance ($\sigma^<span class="code-num">2</span>$) of the vector.
+<span class="code-num">3</span>.  Subtract the mean and divide by the variance. This forces the vector to have a mean of `<span class="code-num">0</span>` and a spread of `<span class="code-num">1</span>`.
+<span class="code-num">4</span>.  Multiply by a learned weight $\gamma$ and add a learned bias $\beta$ so the network can shift the normalized data <span class="code-kw">if</span> it wants to.
+
+<span <span class="code-kw">class</span>="code-cmt">### <span class="code-num">4.4</span> The Final Output (Cross-Entropy)</span>
+At the very end of the network, the Transformer outputs a matrix of logits (raw scores) of shape `[Seq_Len, Vocab_Size]`.
+It uses the **Softmax** function to turn these scores into percentages. 
+The AI then uses the **Categorical Cross-Entropy Loss** to calculate how wrong it was compared to the actual next word <span class="code-kw">in</span> the training data:
+$$ \mathcal{L} = -\sum_{c=<span class="code-num">1</span>}^{\text{Vocab}} y_c \<span class="code-fn">log</span>(\hat{y}_c) $$
+Since $y_c$ is `<span class="code-num">1</span>` <span class="code-kw">for</span> the correct word and `<span class="code-num">0</span>` <span class="code-kw">for</span> all other words, this beautifully simplifies to just:
+$$ \mathcal{L} = -\<span class="code-fn">log</span>(\hat{y}_{\text{correct}}) $$
+The network then runs the exact same Backpropagation algorithm we did <span class="code-kw">in</span> Section <span class="code-num">2.4</span>, sending gradients backward through the softmax, the LayerNorm, the Attention matrix, and finally updating $W_Q, W_K, W_V$ to be slightly smarter <span class="code-kw">for</span> the next token.
+</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Execution Trace -->
+    <div class="tab-pane" id="tab-trace">
+      <div class="content-section">
+        <h2 class="content-h2">Layer-by-Layer Forward Execution Trace</h2>
+        <table class="trace-table">
+          <thead>
+            <tr>
+              <th>LAYER / STAGE</th>
+              <th>INPUT SHAPE</th>
+              <th>OPERATION</th>
+              <th>OUTPUT SHAPE</th>
+              <th>PARAM COUNT</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+    <tr>
+      <td style="color:var(--c-cyan);">01. Input Tensor</td>
+      <td>Raw Batch [B, D_in]</td>
+      <td>Feature Vector Ingestion & Normalization</td>
+      <td>[B, D_in]</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td style="color:var(--c-emerald);">02. Parameterized Transformation</td>
+      <td>[B, D_in]</td>
+      <td>Affine Weight Matrix Multiply (W @ X^T + b)</td>
+      <td>[B, D_hidden]</td>
+      <td>D_in x D_hidden + D_hidden</td>
+    </tr>
+    <tr>
+      <td style="color:var(--c-violet);">03. Non-Linear Activation</td>
+      <td>[B, D_hidden]</td>
+      <td>Element-wise Non-Linear Gating (ReLU / GeLU / Tanh)</td>
+      <td>[B, D_hidden]</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td style="color:var(--c-amber);">04. Output Layer</td>
+      <td>[B, D_hidden]</td>
+      <td>Projection to Classes / Decoded Logits</td>
+      <td>[B, D_out]</td>
+      <td>D_hidden x D_out + D_out</td>
+    </tr>
+    
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="sim-footer">
+    <span>NEURAL SIMS SUITE &bull; EVERYTHING CLAUDE CODE (ECC)</span>
+    <span>SOURCE: <a href="Reports/Deep_Dives/22_Information_Theory_and_Manifolds.md" style="color:var(--c-cyan);text-decoration:none;">Reports/Deep_Dives/22_Information_Theory_and_Manifolds.md</a> &bull; <a href="Reports/Deep_Dives/00_The_Complete_Mathematics_of_Neural_Networks.md" style="color:var(--c-cyan);text-decoration:none;">Reports/Deep_Dives/00_The_Complete_Mathematics_of_Neural_Networks.md</a></span>
+  </footer>
+</div>
+
+<!-- Tab Switching Script -->
+<script>
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const tabId = btn.getAttribute('data-tab');
+    document.getElementById(tabId).classList.add('active');
+  });
+});
+</script>
+
+<!-- Specialized Animation Engine Script -->
+<script>
+
+(() => {
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+  let isRunning = true;
+  let speed = 1.0;
+  let animTime = 0;
+
+  function resize() {
+    canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
+    canvas.height = canvas.parentElement.clientHeight * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function draw() {
+    const W = canvas.parentElement.clientWidth;
+    const H = canvas.parentElement.clientHeight;
+    ctx.clearRect(0, 0, W, H);
+
+    // Encoder (Left) -> Bottleneck (Center) -> Decoder (Right)
+    const xIn = W * 0.12;
+    const xLatent = W * 0.5;
+    const xOut = W * 0.88;
+
+    // Draw Funnel Trapezia for Encoder
+    ctx.fillStyle = 'rgba(0, 229, 255, 0.08)';
+    ctx.strokeStyle = '#00e5ff';
+    ctx.beginPath();
+    ctx.moveTo(xIn, H*0.2);
+    ctx.lineTo(xLatent - 60, H*0.38);
+    ctx.lineTo(xLatent - 60, H*0.62);
+    ctx.lineTo(xIn, H*0.8);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#00e5ff';
+    ctx.font = '11px "Orbitron"';
+    ctx.textAlign = 'center';
+    ctx.fillText('ENCODER q_θ(z|x)', (xIn + xLatent - 60)/2, H*0.5);
+
+    // Draw Expanding Trapezia for Decoder
+    ctx.fillStyle = 'rgba(0, 255, 157, 0.08)';
+    ctx.strokeStyle = '#00ff9d';
+    ctx.beginPath();
+    ctx.moveTo(xLatent + 60, H*0.38);
+    ctx.lineTo(xOut, H*0.2);
+    ctx.lineTo(xOut, H*0.8);
+    ctx.lineTo(xLatent + 60, H*0.62);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#00ff9d';
+    ctx.fillText('DECODER p_φ(x|z)', (xLatent + 60 + xOut)/2, H*0.5);
+
+    // 2D Latent Bottleneck Scatter Box
+    const boxR = 55;
+    ctx.fillStyle = '#060913';
+    ctx.fillRect(xLatent - boxR, H*0.5 - boxR, boxR*2, boxR*2);
+    ctx.strokeStyle = '#a855f7';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(xLatent - boxR, H*0.5 - boxR, boxR*2, boxR*2);
+
+    ctx.fillStyle = '#a855f7';
+    ctx.font = '10px "Orbitron"';
+    ctx.fillText('LATENT SPACE z', xLatent, H*0.5 - boxR - 10);
+
+    // Contour distribution
+    ctx.strokeStyle = 'rgba(168, 85, 247, 0.3)';
+    ctx.beginPath();
+    ctx.arc(xLatent, H*0.5, 36, 0, Math.PI*2);
+    ctx.stroke();
+
+    // Reparameterization Trick: z = μ + σ ⊙ ε
+    const muX = Math.sin(animTime * 0.8) * 18;
+    const muY = Math.cos(animTime * 0.8) * 14;
+    const epsX = (Math.sin(animTime * 3.7) * 8);
+    const epsY = (Math.cos(animTime * 4.1) * 8);
+    const zX = xLatent + muX + epsX;
+    const zY = H*0.5 + muY + epsY;
+
+    // Mean vector node
+    ctx.beginPath();
+    ctx.arc(xLatent + muX, H*0.5 + muY, 4, 0, Math.PI*2);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fill();
+
+    // Sampled z particle
+    ctx.beginPath();
+    ctx.arc(zX, zY, 6, 0, Math.PI*2);
+    ctx.fillStyle = '#00ff9d';
+    ctx.shadowColor = '#00ff9d';
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Reparameterization label
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px "JetBrains Mono"';
+    ctx.fillText('z = μ + σ ⊙ ε', xLatent, H*0.5 + boxR + 20);
+
+    // Input & Output Reconstruction comparison
+    ctx.fillStyle = '#8b9bb4';
+    ctx.font = '10px "Orbitron"';
+    ctx.fillText('INPUT x (784)', xIn, H*0.14);
+    ctx.fillText('RECON x̂ (784)', xOut, H*0.14);
+
+    // Telemetry
+    document.getElementById('hudPhase').textContent = 'z = μ(x) + σ(x) ⊙ ε';
+    document.getElementById('hudTensorShape').textContent = '[Batch: 16, LatentDim: 2, Dims: 784]';
+    document.getElementById('hudFlops').textContent = '1.42 MFLOPs';
+    const klLoss = (0.24 + 0.05 * Math.sin(animTime)).toFixed(3);
+    const reconLoss = (0.08 + 0.02 * Math.cos(animTime)).toFixed(3);
+    document.getElementById('hudMetric').textContent = `Recon Loss: ${reconLoss} | KL: ${klLoss}`;
+  }
+
+  function loop() {
+    if (isRunning) animTime += 0.03 * speed;
+    draw();
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  const btnPlay = document.getElementById('playPauseBtn');
+  btnPlay.addEventListener('click', () => {
+    isRunning = !isRunning;
+    btnPlay.textContent = isRunning ? '⏸ PAUSE' : '▶ PLAY';
+    btnPlay.classList.toggle('active', isRunning);
+  });
+  document.getElementById('stepBtn').addEventListener('click', () => { animTime += 0.5; draw(); });
+  document.getElementById('resetBtn').addEventListener('click', () => { animTime = 0; });
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      speed = parseFloat(btn.getAttribute('data-speed'));
+    });
+  });
+})();
+
+</script>
+
+</body>
+</html>

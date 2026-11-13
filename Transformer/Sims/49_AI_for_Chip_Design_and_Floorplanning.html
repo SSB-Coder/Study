@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>49. AI for Chip Design & Floorplanning — EDA Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060913;
+  --bg-card: rgba(13, 19, 36, 0.85);
+  --border: rgba(0, 229, 255, 0.18);
+  --border-glow: rgba(0, 229, 255, 0.45);
+  --c-cyan: #00e5ff;
+  --c-emerald: #00ff9d;
+  --c-violet: #a855f7;
+  --c-amber: #f59e0b;
+  --c-rose: #ff3366;
+  --text-main: #e2e8f5;
+  --text-dim: #8b9bb4;
+  --f-title: 'Orbitron', monospace, sans-serif;
+  --f-body: 'Space Grotesk', system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text-main); font-family: var(--f-body); min-height: 100vh; line-height: 1.6; }
+.app-wrapper { max-width: 1400px; margin: 0 auto; padding: 16px 24px 60px; }
+.top-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; backdrop-filter: blur(12px); margin-bottom: 20px;
+}
+.brand-badge {
+  font-family: var(--f-title); font-size: 11px; font-weight: 800; letter-spacing: 2px;
+  background: rgba(0, 229, 255, 0.12); color: var(--c-cyan); border: 1px solid var(--border-glow);
+  padding: 4px 10px; border-radius: 4px;
+}
+.nav-btn {
+  padding: 6px 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text-dim); font-family: var(--f-mono); font-size: 12px;
+  text-decoration: none; transition: all 0.2s;
+}
+.nav-btn:hover { background: rgba(0, 229, 255, 0.15); color: var(--c-cyan); }
+.sim-header { margin-bottom: 20px; }
+.sim-h1 { font-family: var(--f-title); font-size: clamp(22px, 3vw, 32px); color: #fff; margin-bottom: 6px; }
+.sim-h1 span { color: var(--c-cyan); text-shadow: 0 0 20px rgba(0, 229, 255, 0.4); }
+.stage-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); margin-bottom: 24px;
+}
+.stage-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 18px; background: rgba(0, 0, 0, 0.35); border-bottom: 1px solid var(--border);
+}
+.canvas-wrap { width: 100%; height: 460px; background: #04060e; position: relative; }
+canvas { width: 100%; height: 100%; display: block; }
+.control-bar {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 12px; padding: 12px 18px; background: rgba(7, 11, 22, 0.95); border-top: 1px solid var(--border);
+}
+.ctrl-group { display: flex; align-items: center; gap: 8px; }
+.btn {
+  padding: 8px 16px; font-family: var(--f-mono); font-size: 12px; font-weight: 600;
+  border-radius: 6px; cursor: pointer; border: 1px solid var(--border);
+  background: rgba(0, 229, 255, 0.1); color: var(--c-cyan); transition: all 0.2s;
+}
+.btn:hover { background: var(--c-cyan); color: #000; box-shadow: 0 0 12px var(--c-cyan); }
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;
+}
+.stat-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+.stat-lbl { font-family: var(--f-mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; }
+.stat-val { font-family: var(--f-title); font-size: 20px; color: var(--c-cyan); margin-top: 4px; }
+.info-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .info-section { grid-template-columns: 1fr; } }
+.info-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+.info-title { font-family: var(--f-title); font-size: 14px; color: var(--c-emerald); margin-bottom: 10px; }
+.formula-box {
+  background: rgba(0, 0, 0, 0.4); border-left: 3px solid var(--c-cyan);
+  padding: 10px 14px; font-family: var(--f-mono); font-size: 13px; color: #fff; margin: 10px 0; border-radius: 0 6px 6px 0;
+}
+</style>
+</head>
+<body>
+<div class="app-wrapper">
+  <nav class="top-nav">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span class="brand-badge">SIM 49</span>
+      <span class="brand-title">AI FOR CHIP DESIGN & EDA FLOORPLANNING</span>
+    </div>
+    <div>
+      <a href="index.html" class="nav-btn">◄ MASTER PORTAL</a>
+      <a href="../Code/Deep_Dives/49_GNN_Netlist_Floorplanning.py" class="nav-btn" target="_blank">VIEW PYTORCH CODE</a>
+    </div>
+  </nav>
+
+  <header class="sim-header">
+    <h1 class="sim-h1">Differentiable Placement & <span>Netlist GNNs</span></h1>
+    <p style="color:var(--text-dim); font-size:14px;">Interactive electronic design automation (EDA) floorplanning on a 1000&mu;m x 1000&mu;m silicon die: optimizing half-perimeter wirelength (HPWL) and resolving spatial macro overlaps in real time.</p>
+  </header>
+
+  <div class="stage-card">
+    <div class="stage-header">
+      <div style="display:flex; align-items:center; gap:8px; font-family:var(--f-mono); font-size:12px; color:var(--c-emerald);">
+        <span style="width:8px; height:8px; border-radius:50%; background:var(--c-emerald); box-shadow:0 0 8px var(--c-emerald);"></span>
+        DIFFERENTIABLE PLACEMENT ENGINE: ACTIVE
+      </div>
+      <div id="stepDisplay" style="font-family:var(--f-mono); font-size:12px; color:var(--text-dim);">Optimization Step: 0 / 100</div>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="simCanvas"></canvas>
+    </div>
+    <div class="control-bar">
+      <div class="ctrl-group">
+        <button id="btnOptimize" class="btn">START GRADIENT DESCENT</button>
+        <button id="btnRandomize" class="btn">RANDOMIZE FLOORPLAN</button>
+        <button id="btnToggleNets" class="btn">TOGGLE NET WIRES</button>
+      </div>
+      <div style="font-family:var(--f-mono); font-size:12px; color:var(--text-dim);">
+        Die Canvas: <span style="color:var(--c-cyan);">1000&mu;m &times; 1000&mu;m Silicon</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-lbl">Half-Perimeter Wirelength (HPWL)</div>
+      <div class="stat-val" id="dispWl">3,420 &mu;m</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Macro Overlap Area</div>
+      <div class="stat-val" id="dispOverlap" style="color:var(--c-rose);">18,400 &mu;m&sup2;</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Wire Routing Congestion</div>
+      <div class="stat-val" id="dispCongest" style="color:var(--c-amber);">High (Hotspot)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Timing Slack Status</div>
+      <div class="stat-val" id="dispTiming" style="color:var(--c-emerald);">Setup Met (+0.12ns)</div>
+    </div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-card">
+      <h3 class="info-title">Differentiable Log-Sum-Exp Wirelength</h3>
+      <p style="font-size:13px; color:var(--text-dim);">True wirelength min/max operations are non-differentiable. Modern AI chip placers approximate HPWL using smooth Log-Sum-Exp (LSE) functions so PyTorch can backpropagate directly into macro (x, y) coordinates:</p>
+      <div class="formula-box">LSE<sub>x</sub>(e) = &gamma; ln &sum; exp(x<sub>i</sub>/&gamma;) - &gamma; ln &sum; exp(-x<sub>i</sub>/&gamma;)</div>
+      <p style="font-size:13px; color:var(--text-dim);">Glowing cyan lines show the electrical net interconnects pulling macros together like springs along gradient lines.</p>
+    </div>
+    <div class="info-card">
+      <h3 class="info-title">Density Overlap Potential Field</h3>
+      <p style="font-size:13px; color:var(--text-dim);">If wirelength is optimized alone, all macros collapse onto a single point. To enforce manufacturability, a differentiable density penalty pushes overlapping blocks apart:</p>
+      <div class="formula-box">Penalty = &sum;<sub>i &ne; j</sub> ReLU( &Delta;x<sub>min</sub> - |x<sub>i</sub> - x<sub>j</sub>| ) &middot; ReLU( &Delta;y<sub>min</sub> - |y<sub>i</sub> - y<sub>j</sub>| )</div>
+      <p style="font-size:13px; color:var(--text-dim);">Watch the red overlap glow turn into clean neon emerald borders once physical collisions drop to 0.0 &mu;m&sup2;.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+let isOptimizing = false;
+let optStep = 0;
+let showNets = true;
+
+function resize() {
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// 6 Macro Blocks (SRAM, ALU, GPU Core)
+let macros = [
+  { id: 0, name: 'SRAM_0', w: 120, h: 120, x: 220, y: 150, color: '#38bdf8' },
+  { id: 1, name: 'ALU_CORE', w: 100, h: 140, x: 300, y: 220, color: '#a855f7' },
+  { id: 2, name: 'CACHE_L2', w: 140, h: 90, x: 420, y: 180, color: '#00ff9d' },
+  { id: 3, name: 'DMA_CTRL', w: 90, h: 90, x: 280, y: 310, color: '#f59e0b' },
+  { id: 4, name: 'SRAM_1', w: 130, h: 100, x: 500, y: 280, color: '#38bdf8' },
+  { id: 5, name: 'PCIE_IF', w: 100, h: 110, x: 450, y: 340, color: '#ec4899' }
+];
+
+const nets = [
+  [0, 1], [1, 2], [2, 3], [0, 3], [0, 4], [1, 4], [2, 5], [3, 5], [4, 5]
+];
+
+function computeStats() {
+  let totalWl = 0;
+  nets.forEach(([i, j]) => {
+    const m1 = macros[i], m2 = macros[j];
+    totalWl += Math.abs(m1.x - m2.x) + Math.abs(m1.y - m2.y);
+  });
+
+  let overlapArea = 0;
+  for (let i = 0; i < macros.length; i++) {
+    for (let j = i + 1; j < macros.length; j++) {
+      const m1 = macros[i], m2 = macros[j];
+      const dx = Math.abs(m1.x - m2.x);
+      const dy = Math.abs(m1.y - m2.y);
+      const minDx = (m1.w + m2.w) / 2;
+      const minDy = (m1.h + m2.h) / 2;
+      if (dx < minDx && dy < minDy) {
+        overlapArea += (minDx - dx) * (minDy - dy);
+      }
+    }
+  }
+
+  return { wl: Math.floor(totalWl * 1.8), overlap: Math.floor(overlapArea * 1.5) };
+}
+
+function optimizeStep() {
+  const lr = 1.8;
+
+  // 1. Attractive forces along Nets (Minimize Wirelength)
+  nets.forEach(([i, j]) => {
+    const m1 = macros[i], m2 = macros[j];
+    const dx = m2.x - m1.x;
+    const dy = m2.y - m1.y;
+    m1.x += dx * 0.015 * lr;
+    m1.y += dy * 0.015 * lr;
+    m2.x -= dx * 0.015 * lr;
+    m2.y -= dy * 0.015 * lr;
+  });
+
+  // 2. Repulsive forces for overlaps
+  for (let i = 0; i < macros.length; i++) {
+    for (let j = i + 1; j < macros.length; j++) {
+      const m1 = macros[i], m2 = macros[j];
+      const dx = m1.x - m2.x;
+      const dy = m1.y - m2.y;
+      const minDx = (m1.w + m2.w) / 2 + 10;
+      const minDy = (m1.h + m2.h) / 2 + 10;
+
+      if (Math.abs(dx) < minDx && Math.abs(dy) < minDy) {
+        const signX = dx >= 0 ? 1 : -1;
+        const signY = dy >= 0 ? 1 : -1;
+        const pushX = (minDx - Math.abs(dx)) * signX * 0.06 * lr;
+        const pushY = (minDy - Math.abs(dy)) * signY * 0.06 * lr;
+        m1.x += pushX; m1.y += pushY;
+        m2.x -= pushX; m2.y -= pushY;
+      }
+    }
+  }
+
+  // Die boundary constraints
+  const pad = 40;
+  macros.forEach(m => {
+    m.x = Math.max(pad + m.w / 2, Math.min(canvas.width - pad - m.w / 2, m.x));
+    m.y = Math.max(pad + m.h / 2, Math.min(canvas.height - pad - m.h / 2, m.y));
+  });
+
+  optStep++;
+  document.getElementById('stepDisplay').innerText = `Optimization Step: ${optStep} / 100`;
+
+  if (optStep >= 100) {
+    isOptimizing = false;
+    document.getElementById('btnOptimize').innerText = 'START GRADIENT DESCENT';
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const w = canvas.width, h = canvas.height;
+
+  // Draw Die Boundary (Silicon Chip Edge)
+  ctx.strokeStyle = '#00e5ff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(30, 30, w - 60, h - 60);
+
+  // Silicon Grid lines
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.05)';
+  ctx.lineWidth = 1;
+  for (let x = 30; x < w - 30; x += 40) {
+    ctx.beginPath(); ctx.moveTo(x, 30); ctx.lineTo(x, h - 30); ctx.stroke();
+  }
+  for (let y = 30; y < h - 30; y += 40) {
+    ctx.beginPath(); ctx.moveTo(30, y); ctx.lineTo(w - 30, y); ctx.stroke();
+  }
+
+  // Draw Electrical Nets (Hypergraph Wires)
+  if (showNets) {
+    nets.forEach(([i, j]) => {
+      const m1 = macros[i], m2 = macros[j];
+      ctx.beginPath();
+      ctx.moveTo(m1.x, m1.y);
+      ctx.lineTo(m2.x, m2.y);
+      ctx.strokeStyle = 'rgba(0, 229, 255, 0.25)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Pin connection dots
+      ctx.beginPath(); ctx.arc(m1.x, m1.y, 3, 0, Math.PI * 2); ctx.fillStyle = '#00e5ff'; ctx.fill();
+      ctx.beginPath(); ctx.arc(m2.x, m2.y, 3, 0, Math.PI * 2); ctx.fill();
+    });
+  }
+
+  // Draw Macro Blocks
+  macros.forEach(m => {
+    const rx = m.x - m.w / 2;
+    const ry = m.y - m.h / 2;
+
+    // Background fill
+    ctx.fillStyle = 'rgba(13, 19, 36, 0.9)';
+    ctx.fillRect(rx, ry, m.w, m.h);
+
+    // Border glow
+    ctx.strokeStyle = m.color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(rx, ry, m.w, m.h);
+
+    // Macro Label
+    ctx.font = 'bold 11px Orbitron';
+    ctx.fillStyle = m.color;
+    ctx.textAlign = 'center';
+    ctx.fillText(m.name, m.x, m.y - 6);
+
+    ctx.font = '10px JetBrains Mono';
+    ctx.fillStyle = '#8b9bb4';
+    ctx.fillText(`${m.w}x${m.h}μm`, m.x, m.y + 12);
+  });
+
+  // Calculate and update stats
+  const stats = computeStats();
+  document.getElementById('dispWl').innerText = `${stats.wl.toLocaleString()} μm`;
+  document.getElementById('dispOverlap').innerText = `${stats.overlap.toLocaleString()} μm²`;
+  document.getElementById('dispOverlap').style.color = stats.overlap === 0 ? '#00ff9d' : '#ff3366';
+  document.getElementById('dispCongest').innerText = stats.overlap === 0 ? 'Optimal (Routing Clear)' : 'High (Overlap Congestion)';
+  document.getElementById('dispCongest').style.color = stats.overlap === 0 ? '#00ff9d' : '#f59e0b';
+
+  if (isOptimizing) {
+    optimizeStep();
+  }
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+
+document.getElementById('btnOptimize').addEventListener('click', (e) => {
+  isOptimizing = !isOptimizing;
+  e.target.innerText = isOptimizing ? 'PAUSE OPTIMIZATION' : 'RESUME OPTIMIZATION';
+});
+
+document.getElementById('btnRandomize').addEventListener('click', () => {
+  optStep = 0;
+  macros.forEach(m => {
+    m.x = Math.random() * (canvas.width - 240) + 120;
+    m.y = Math.random() * (canvas.height - 240) + 120;
+  });
+  document.getElementById('stepDisplay').innerText = `Optimization Step: 0 / 100`;
+});
+
+document.getElementById('btnToggleNets').addEventListener('click', () => {
+  showNets = !showNets;
+});
+</script>
+</body>
+</html>

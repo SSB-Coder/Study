@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>48. The Evoformer (AlphaFold 2/3) — Structural Biology Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060913;
+  --bg-card: rgba(13, 19, 36, 0.85);
+  --border: rgba(0, 229, 255, 0.18);
+  --border-glow: rgba(0, 229, 255, 0.45);
+  --c-cyan: #00e5ff;
+  --c-emerald: #00ff9d;
+  --c-violet: #a855f7;
+  --c-amber: #f59e0b;
+  --c-rose: #ff3366;
+  --text-main: #e2e8f5;
+  --text-dim: #8b9bb4;
+  --f-title: 'Orbitron', monospace, sans-serif;
+  --f-body: 'Space Grotesk', system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text-main); font-family: var(--f-body); min-height: 100vh; line-height: 1.6; }
+.app-wrapper { max-width: 1400px; margin: 0 auto; padding: 16px 24px 60px; }
+.top-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; backdrop-filter: blur(12px); margin-bottom: 20px;
+}
+.brand-badge {
+  font-family: var(--f-title); font-size: 11px; font-weight: 800; letter-spacing: 2px;
+  background: rgba(0, 229, 255, 0.12); color: var(--c-cyan); border: 1px solid var(--border-glow);
+  padding: 4px 10px; border-radius: 4px;
+}
+.nav-btn {
+  padding: 6px 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text-dim); font-family: var(--f-mono); font-size: 12px;
+  text-decoration: none; transition: all 0.2s;
+}
+.nav-btn:hover { background: rgba(0, 229, 255, 0.15); color: var(--c-cyan); }
+.sim-header { margin-bottom: 20px; }
+.sim-h1 { font-family: var(--f-title); font-size: clamp(22px, 3vw, 32px); color: #fff; margin-bottom: 6px; }
+.sim-h1 span { color: var(--c-cyan); text-shadow: 0 0 20px rgba(0, 229, 255, 0.4); }
+.stage-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); margin-bottom: 24px;
+}
+.stage-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 18px; background: rgba(0, 0, 0, 0.35); border-bottom: 1px solid var(--border);
+}
+.canvas-wrap { width: 100%; height: 460px; background: #04060e; position: relative; }
+canvas { width: 100%; height: 100%; display: block; }
+.control-bar {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 12px; padding: 12px 18px; background: rgba(7, 11, 22, 0.95); border-top: 1px solid var(--border);
+}
+.ctrl-group { display: flex; align-items: center; gap: 8px; }
+.btn {
+  padding: 8px 16px; font-family: var(--f-mono); font-size: 12px; font-weight: 600;
+  border-radius: 6px; cursor: pointer; border: 1px solid var(--border);
+  background: rgba(0, 229, 255, 0.1); color: var(--c-cyan); transition: all 0.2s;
+}
+.btn:hover { background: var(--c-cyan); color: #000; box-shadow: 0 0 12px var(--c-cyan); }
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;
+}
+.stat-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+.stat-lbl { font-family: var(--f-mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; }
+.stat-val { font-family: var(--f-title); font-size: 20px; color: var(--c-cyan); margin-top: 4px; }
+.info-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .info-section { grid-template-columns: 1fr; } }
+.info-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+.info-title { font-family: var(--f-title); font-size: 14px; color: var(--c-emerald); margin-bottom: 10px; }
+.formula-box {
+  background: rgba(0, 0, 0, 0.4); border-left: 3px solid var(--c-cyan);
+  padding: 10px 14px; font-family: var(--f-mono); font-size: 13px; color: #fff; margin: 10px 0; border-radius: 0 6px 6px 0;
+}
+</style>
+</head>
+<body>
+<div class="app-wrapper">
+  <nav class="top-nav">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span class="brand-badge">SIM 48</span>
+      <span class="brand-title">THE EVOFORMER & STRUCTURAL BIOLOGY</span>
+    </div>
+    <div>
+      <a href="index.html" class="nav-btn">◄ MASTER PORTAL</a>
+      <a href="../Code/Deep_Dives/48_Triangular_Attention_Evoformer.py" class="nav-btn" target="_blank">VIEW PYTORCH CODE</a>
+    </div>
+  </nav>
+
+  <header class="sim-header">
+    <h1 class="sim-h1">AlphaFold 2/3: <span>Co-Evolution & Triangular Updates</span></h1>
+    <p style="color:var(--text-dim); font-size:14px;">Interactive dual-track simulation of AlphaFold's Evoformer: Outer Product Mean mapping genetic co-variation into 2D pair geometry, and Triangular Multiplicative Updates enforcing the 3D triangle inequality.</p>
+  </header>
+
+  <div class="stage-card">
+    <div class="stage-header">
+      <div style="display:flex; align-items:center; gap:8px; font-family:var(--f-mono); font-size:12px; color:var(--c-emerald);">
+        <span style="width:8px; height:8px; border-radius:50%; background:var(--c-emerald); box-shadow:0 0 8px var(--c-emerald);"></span>
+        DUAL CHANNEL COUPLING: MSA TRACK ⇄ PAIR TRACK
+      </div>
+      <div id="simCycleDisplay" style="font-family:var(--f-mono); font-size:12px; color:var(--text-dim);">Evoformer Pass: Block 12 / 48</div>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="simCanvas"></canvas>
+    </div>
+    <div class="control-bar">
+      <div class="ctrl-group">
+        <button id="btnPlay" class="btn">PAUSE</button>
+        <button id="btnMutate" class="btn">INJECT CO-MUTATION</button>
+        <button id="btnHighlightTriangle" class="btn">PULSE TRIANGLE (i, j, k)</button>
+      </div>
+      <div style="font-family:var(--f-mono); font-size:12px; color:var(--text-dim);">
+        Triangle Inequality Enforced: <span style="color:var(--c-emerald);">d_ik &le; d_ij + d_jk</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-lbl">Homologous MSA Sequences</div>
+      <div class="stat-val">128 Species</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Contact Probability (Res 4 & 11)</div>
+      <div class="stat-val" id="contactProb" style="color:var(--c-amber);">94.8% (Touching)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Triangle Geometric Consistency</div>
+      <div class="stat-val" style="color:var(--c-emerald);">100% Euclidean</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Predicted Structure Confidence</div>
+      <div class="stat-val" style="color:var(--c-cyan);">pLDDT: 92.4</div>
+    </div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-card">
+      <h3 class="info-title">The Outer Product Mean (MSA &rarr; Pair)</h3>
+      <p style="font-size:13px; color:var(--text-dim);">When amino acid residue 4 and residue 11 mutate together across evolutionary history (gold columns), the outer product of their MSA representations averages to a high-activation pulse that injects directly into the 2D pair matrix:</p>
+      <div class="formula-box">O<sub>ij</sub> = 1/S &sum; ( M<sub>si</sub> &otimes; M<sub>sj</sub> ) &rarr; Z<sub>ij</sub> &larr; Z<sub>ij</sub> + Linear(O<sub>ij</sub>)</div>
+      <p style="font-size:13px; color:var(--text-dim);">This turns millions of years of genetic history into an immediate physical contact prediction in 3D space.</p>
+    </div>
+    <div class="info-card">
+      <h3 class="info-title">Triangular Multiplicative Update</h3>
+      <p style="font-size:13px; color:var(--text-dim);">To enforce the Euclidean triangle inequality in 3D, the pair representation edge (i, j) aggregates information through all third bridging nodes k:</p>
+      <div class="formula-box">Z<sub>ij</sub> &larr; Z<sub>ij</sub> + &sum;<sub>k</sub> ( a<sub>ik</sub> &odot; b<sub>jk</sub> )</div>
+      <p style="font-size:13px; color:var(--text-dim);">The pulsating neon triangle demonstrates this 3-way composition. If edge (i, k) is 4Å and (k, j) is 3Å, edge (i, j) is mathematically prevented from predicting 15Å.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+let animId, isRunning = true;
+let pulseTri = true;
+let pulseProgress = 0;
+let blockStep = 12;
+
+function resize() {
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// Mock MSA Data: 8 species x 14 residues
+const residues = ['M', 'K', 'L', 'V', 'C', 'E', 'R', 'T', 'W', 'P', 'V', 'C', 'G', 'A'];
+const numSpecies = 8;
+const numRes = residues.length;
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const w = canvas.width;
+  const h = canvas.height;
+
+  // 2-Panel Layout: Left = MSA Alignment Matrix, Right = 2D Pair Representation Distance Map
+  const pW = (w - 60) / 2;
+  const pH = h - 60;
+  const topY = 40;
+
+  // 1. LEFT PANEL: Multiple Sequence Alignment (MSA)
+  ctx.save();
+  ctx.translate(20, topY);
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.2)';
+  ctx.strokeRect(0, 0, pW, pH);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+  ctx.fillRect(0, 0, pW, 26);
+  ctx.font = '11px Orbitron';
+  ctx.fillStyle = '#00e5ff';
+  ctx.fillText("EVOLUTIONARY MSA CHANNEL M [Species x Residues]", 10, 18);
+
+  const cellW = (pW - 30) / numRes;
+  const cellH = (pH - 50) / numSpecies;
+
+  for (let s = 0; s < numSpecies; s++) {
+    for (let r = 0; r < numRes; r++) {
+      const px = 20 + r * cellW;
+      const py = 40 + s * cellH;
+
+      // Co-mutation highlighted at residue 4 and 11
+      const isCoMut = (r === 4 || r === 11);
+      ctx.fillStyle = isCoMut ? 'rgba(245, 158, 11, 0.3)' : 'rgba(255, 255, 255, 0.04)';
+      ctx.fillRect(px, py, cellW - 2, cellH - 2);
+
+      ctx.font = '10px JetBrains Mono';
+      ctx.fillStyle = isCoMut ? '#f59e0b' : '#8b9bb4';
+      ctx.fillText(residues[r], px + cellW / 3, py + cellH / 1.5);
+    }
+  }
+
+  // Draw Co-Evolutionary Arc
+  const arcX1 = 20 + 4 * cellW + cellW / 2;
+  const arcX2 = 20 + 11 * cellW + cellW / 2;
+  const arcY = 40 + cellH * 4;
+  ctx.beginPath();
+  ctx.arc((arcX1 + arcX2) / 2, arcY, (arcX2 - arcX1) / 2, 0, Math.PI, true);
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.font = '10px Orbitron';
+  ctx.fillStyle = '#f59e0b';
+  ctx.fillText("CO-MUTATING PAIR", (arcX1 + arcX2) / 2 - 50, arcY - (arcX2 - arcX1) / 2 - 6);
+
+  ctx.restore();
+
+  // 2. RIGHT PANEL: Pair Representation Z & Triangular Update
+  ctx.save();
+  ctx.translate(40 + pW, topY);
+  ctx.strokeStyle = 'rgba(0, 255, 157, 0.2)';
+  ctx.strokeRect(0, 0, pW, pH);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+  ctx.fillRect(0, 0, pW, 26);
+  ctx.font = '11px Orbitron';
+  ctx.fillStyle = '#00ff9d';
+  ctx.fillText("GEOMETRIC PAIR CHANNEL Z [Residues x Residues]", 10, 18);
+
+  // 2D Distance Heatmap Grid
+  const pairCell = (Math.min(pW, pH) - 70) / numRes;
+  const startX = 35;
+  const startY = 45;
+
+  for (let i = 0; i < numRes; i++) {
+    for (let j = 0; j < numRes; j++) {
+      const px = startX + i * pairCell;
+      const py = startY + j * pairCell;
+
+      const dist = Math.abs(i - j);
+      let intensity = Math.max(0, 1 - dist / 8);
+      if ((i === 4 && j === 11) || (i === 11 && j === 4)) {
+        intensity = 0.95; // High contact probability
+      }
+
+      ctx.fillStyle = `rgba(0, 229, 255, ${intensity * 0.7})`;
+      ctx.fillRect(px, py, pairCell - 1, pairCell - 1);
+    }
+  }
+
+  // TRIANGULAR UPDATE ANIMATION: Node i=4, j=11, k=7
+  if (pulseTri) {
+    const nodeI = { x: startX + 4 * pairCell + pairCell / 2, y: startY + 4 * pairCell + pairCell / 2 };
+    const nodeJ = { x: startX + 11 * pairCell + pairCell / 2, y: startY + 11 * pairCell + pairCell / 2 };
+    const nodeK = { x: startX + 7 * pairCell + pairCell / 2, y: startY + 2 * pairCell + pairCell / 2 };
+
+    // Triangle Edges
+    ctx.beginPath();
+    ctx.moveTo(nodeI.x, nodeI.y);
+    ctx.lineTo(nodeK.x, nodeK.y);
+    ctx.lineTo(nodeJ.x, nodeJ.y);
+    ctx.closePath();
+    ctx.strokeStyle = `rgba(255, 51, 102, ${0.4 + 0.6 * Math.sin(pulseProgress)})`;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Vertices
+    [nodeI, nodeJ, nodeK].forEach((n, idx) => {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = idx === 2 ? '#ff3366' : '#00ff9d';
+      ctx.fill();
+    });
+
+    ctx.font = '10px JetBrains Mono';
+    ctx.fillStyle = '#ff3366';
+    ctx.fillText("Node k (bridging)", nodeK.x - 30, nodeK.y - 10);
+    ctx.fillStyle = '#00ff9d';
+    ctx.fillText("Z_ij Target", nodeI.x - 20, nodeI.y + 16);
+  }
+
+  ctx.restore();
+
+  if (isRunning) {
+    pulseProgress += 0.05;
+  }
+
+  animId = requestAnimationFrame(draw);
+}
+
+draw();
+
+document.getElementById('btnPlay').addEventListener('click', (e) => {
+  isRunning = !isRunning;
+  e.target.innerText = isRunning ? 'PAUSE' : 'RESUME';
+});
+document.getElementById('btnMutate').addEventListener('click', () => {
+  document.getElementById('contactProb').innerText = '98.9% (Locked Contact)';
+});
+document.getElementById('btnHighlightTriangle').addEventListener('click', () => {
+  pulseTri = !pulseTri;
+});
+</script>
+</body>
+</html>

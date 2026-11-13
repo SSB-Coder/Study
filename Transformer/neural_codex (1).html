@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NEURAL CODEX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#03030b;--bg2:#07071a;--bg3:#0c0c22;--bg4:#101032;
+  --c1:#00d9ff;--c2:#00ffaa;--c3:#a066ff;--c4:#ff8c00;--c5:#ff3e7a;
+  --c1a:rgba(0,217,255,.12);--c2a:rgba(0,255,170,.1);
+  --c3a:rgba(160,102,255,.12);--c4a:rgba(255,140,0,.1);
+  --bd:rgba(0,217,255,.1);--bd2:rgba(0,217,255,.35);
+  --t1:#dce8f5;--t2:#8fa4be;--t3:#48566a;
+  --f1:'Orbitron',monospace;--f2:'Rajdhani',sans-serif;
+  --f3:'IBM Plex Sans',sans-serif;--f4:'Share Tech Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--bg);color:var(--t1);font-family:var(--f3);overflow:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.02) 3px,rgba(0,0,0,.02) 4px);pointer-events:none;z-index:9999}
+
+/* ── LAYOUT ── */
+.wrap{display:flex;flex-direction:column;height:100vh}
+.header{display:flex;align-items:center;padding:0 16px;height:54px;background:var(--bg2);border-bottom:1px solid var(--bd);gap:12px;flex-shrink:0;z-index:10}
+.body{display:flex;flex:1;overflow:hidden}
+.sidebar{width:224px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--bd);overflow-y:auto;padding:10px 0 24px}
+.content{flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg);position:relative}
+
+/* ── HEADER ── */
+.logo{font-family:var(--f1);font-size:12px;font-weight:900;letter-spacing:4px;color:var(--c1);text-shadow:0 0 20px rgba(0,217,255,.6);white-space:nowrap}
+.logo span{color:var(--c2)}
+.hinfo{font-family:var(--f4);font-size:9px;color:var(--t3);letter-spacing:1.5px}
+.hrail{margin-left:auto;display:flex;gap:7px;align-items:center}
+.badge{font-family:var(--f4);font-size:9px;padding:3px 8px;border-radius:2px;letter-spacing:1px}
+.bc{background:var(--c1a);color:var(--c1);border:1px solid rgba(0,217,255,.25)}
+.bg2c{background:var(--c2a);color:var(--c2);border:1px solid rgba(0,255,170,.25)}
+.ham{background:none;border:1px solid var(--bd2);color:var(--c1);font-size:18px;padding:4px 9px;border-radius:3px;cursor:pointer;display:none;line-height:1;font-family:monospace}
+
+/* ── SIDEBAR ── */
+.sb-sec{padding:10px 16px 4px;font-family:var(--f4);font-size:9px;color:var(--t3);letter-spacing:2px;text-transform:uppercase;margin-top:6px}
+.ni{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:2px solid transparent;font-family:var(--f2);font-size:13px;font-weight:600;color:var(--t2);user-select:none;transition:background .15s,color .15s}
+.ni:hover,.ni.act{background:var(--c1a);color:var(--c1)}
+.ni.act{border-left-color:var(--c1)}
+.ni .ic{font-size:14px;width:20px;text-align:center}
+.ni .num{margin-left:auto;font-family:var(--f4);font-size:10px;color:var(--t3)}
+
+/* ── TAB PANELS ── */
+.panel{padding:24px 28px;max-width:1080px}
+
+/* ── TYPOGRAPHY ── */
+.stitle{font-family:var(--f1);font-size:18px;font-weight:700;color:var(--c1);letter-spacing:3px;text-shadow:0 0 24px rgba(0,217,255,.4);margin-bottom:4px}
+.ssub{font-family:var(--f4);font-size:10px;color:var(--t3);letter-spacing:2.5px;margin-bottom:22px;text-transform:uppercase}
+.h2{font-family:var(--f2);font-size:16px;font-weight:700;color:var(--c2);letter-spacing:.8px;margin:26px 0 10px;display:flex;align-items:center;gap:8px}
+.h2::before{content:'';width:3px;height:16px;background:var(--c2);border-radius:2px;flex-shrink:0}
+.h3{font-family:var(--f2);font-size:12px;font-weight:700;color:var(--c3);letter-spacing:1.5px;margin:14px 0 7px;text-transform:uppercase}
+p{font-size:13px;line-height:1.75;color:var(--t2);margin-bottom:10px}
+strong{color:var(--t1);font-weight:500}
+em{color:var(--c2);font-style:normal;font-weight:500}
+
+/* ── CARDS ── */
+.card{background:var(--bg3);border:1px solid var(--bd);border-radius:4px;padding:14px;margin-bottom:10px}
+.ct{font-family:var(--f2);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}
+.cc .ct{color:var(--c1)}.cg .ct{color:var(--c2)}.cp .ct{color:var(--c3)}.co .ct{color:var(--c4)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+
+/* ── CODE ── */
+pre{background:#01010e;border:1px solid rgba(0,217,255,.1);border-radius:4px;padding:14px;margin:8px 0;overflow-x:auto;position:relative}
+code{font-family:var(--f4);font-size:11px;line-height:1.65;color:#c8d8e8}
+.lang{position:absolute;top:7px;right:10px;font-family:var(--f4);font-size:9px;color:var(--t3);letter-spacing:1px}
+.kw{color:#ff79c6}.fn{color:#50fa7b}.st{color:#f1fa8c}.cm{color:#44546a}.ty{color:#bd93f9}.op{color:var(--c1)}.nm{color:#ffb86c}.pu{color:#7c8faa}
+
+/* ── TABLES ── */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+.tbl th{background:var(--bg4);font-family:var(--f2);font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:9px 12px;text-align:left;color:var(--c1);border-bottom:1px solid var(--bd2)}
+.tbl td{padding:8px 12px;border-bottom:1px solid var(--bd);color:var(--t2);vertical-align:top}
+.tbl tr:hover td{background:var(--bg3)}
+.tag{display:inline-block;padding:2px 7px;border-radius:2px;font-family:var(--f4);font-size:10px}
+.tc{background:var(--c1a);color:var(--c1)}.tg{background:var(--c2a);color:var(--c2)}.tpp{background:var(--c3a);color:var(--c3)}.to{background:var(--c4a);color:var(--c4)}.t5{background:rgba(255,62,122,.1);color:var(--c5)}
+
+/* ── INFO BOXES ── */
+.ibox{padding:11px 14px;border-radius:3px;margin:8px 0;font-size:12.5px;line-height:1.65;display:flex;gap:10px;align-items:flex-start}
+.ibox-ic{flex-shrink:0}
+.ibox.ic{background:var(--c1a);border:1px solid rgba(0,217,255,.2);color:var(--t2)}
+.ibox.ig{background:var(--c2a);border:1px solid rgba(0,255,170,.2);color:var(--t2)}
+.ibox.ip{background:var(--c3a);border:1px solid rgba(160,102,255,.2);color:var(--t2)}
+.ibox.io{background:var(--c4a);border:1px solid rgba(255,140,0,.2);color:var(--t2)}
+
+/* ── KG CANVAS ── */
+#kgc{width:100%;height:280px;display:block;background:#010110;border:1px solid var(--bd);border-radius:4px;margin:10px 0}
+
+/* ── TRIPLE ── */
+.triple{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:10px 0}
+.tpart{padding:8px 14px;border-radius:3px;font-family:var(--f2);font-weight:700;font-size:13px;text-align:center;min-width:100px}
+.tarr{padding:0 6px;color:var(--c1);font-size:18px}
+.tsub{font-size:9px;font-weight:400;opacity:.65;margin-top:2px;font-family:var(--f4);display:block}
+.ts{background:rgba(0,217,255,.1);border:1px solid rgba(0,217,255,.3);color:var(--c1)}
+.tp3{background:rgba(0,255,170,.1);border:1px solid rgba(0,255,170,.3);color:var(--c2)}
+.to2{background:rgba(160,102,255,.1);border:1px solid rgba(160,102,255,.3);color:var(--c3)}
+
+/* ── PIPELINE ── */
+.pipe{display:flex;align-items:stretch;overflow-x:auto;padding-bottom:4px;margin:12px 0;gap:1px}
+.pstep{flex:1;min-width:70px;text-align:center;padding:10px 6px;background:var(--bg3);border:1px solid var(--bd);border-radius:3px;position:relative}
+.pstep:not(:last-child)::after{content:'▶';position:absolute;right:-8px;top:50%;transform:translateY(-50%);color:var(--c1);font-size:10px;z-index:2;background:var(--bg);padding:1px 0}
+.picn{font-size:16px;margin-bottom:3px}
+.plbl{font-family:var(--f2);font-size:11px;font-weight:700;color:var(--t1)}
+.psub{font-family:var(--f4);font-size:8px;color:var(--t3);margin-top:2px;line-height:1.4}
+
+/* ── AGENTS ── */
+.atier{margin:8px 0;padding:12px;border-radius:4px;border-left:3px solid}
+.t-orch{border-color:var(--c1);background:rgba(0,217,255,.04)}
+.t-spec{border-color:var(--c2);background:rgba(0,255,170,.03)}
+.t-tool{border-color:var(--c3);background:rgba(160,102,255,.04)}
+.tlbl{font-family:var(--f4);font-size:9px;letter-spacing:2px;color:var(--t3);margin-bottom:8px;text-transform:uppercase}
+.agrid{display:flex;flex-wrap:wrap;gap:6px}
+.achip{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:3px;font-family:var(--f2);font-size:11px;font-weight:700;cursor:pointer;transition:transform .15s;border:1px solid}
+.achip:hover{transform:translateY(-2px);filter:brightness(1.15)}
+.ach-c{background:var(--c1a);color:var(--c1);border-color:rgba(0,217,255,.2)}
+.ach-g{background:var(--c2a);color:var(--c2);border-color:rgba(0,255,170,.2)}
+.ach-p{background:var(--c3a);color:var(--c3);border-color:rgba(160,102,255,.2)}
+.ach-o{background:var(--c4a);color:var(--c4);border-color:rgba(255,140,0,.2)}
+
+/* ── AGENT DETAIL ── */
+#adetail{margin-top:10px;background:var(--bg3);border:1px solid var(--bd2);border-radius:4px;padding:16px}
+.adtitle{font-family:var(--f1);font-size:12px;font-weight:700;letter-spacing:2px;margin-bottom:10px}
+.adgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ── ROADMAP ── */
+.rphase{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start}
+.rnum{width:36px;height:36px;flex-shrink:0;border-radius:50%;border:2px solid var(--c1);display:flex;align-items:center;justify-content:center;font-family:var(--f1);font-size:10px;font-weight:700;color:var(--c1);background:var(--bg3)}
+.rcont{flex:1;padding-top:2px}
+.rtitle{font-family:var(--f2);font-size:14px;font-weight:700;color:var(--t1);margin-bottom:3px}
+.rdesc{font-size:12.5px;color:var(--t2);line-height:1.65;margin-bottom:4px}
+.rtags{display:flex;flex-wrap:wrap;gap:5px}
+.rtag{font-family:var(--f4);font-size:9px;padding:2px 7px;border-radius:2px;background:var(--bg4);color:var(--t3);border:1px solid var(--bd)}
+
+/* ── WATERFALL ── */
+.pwfall{display:flex;flex-direction:column;gap:7px;margin:10px 0}
+.prow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:3px;border:1px solid var(--bd);background:var(--bg3);flex-wrap:wrap}
+.prank{font-family:var(--f1);font-size:10px;font-weight:700;color:var(--c1);width:22px;flex-shrink:0}
+.pname{font-family:var(--f2);font-size:13px;font-weight:700;color:var(--t1);min-width:120px}
+.ptags{display:flex;gap:5px;flex-wrap:wrap;margin-left:auto}
+
+/* ── OVERLAY ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:rgba(0,217,255,.18);border-radius:3px}
+
+/* ── MOBILE ── */
+@media(max-width:600px){
+  .ham{display:block}
+  .hinfo{display:none}
+  .sidebar{position:fixed;left:-240px;top:0;height:100vh;z-index:300;transition:left .25s ease;width:224px}
+  .sidebar.open{left:0}
+  .overlay.show{display:block}
+  .g2,.g3,.g4,.adgrid{grid-template-columns:1fr}
+  .panel{padding:14px}
+  .stitle{font-size:15px}
+}
+@media(min-width:601px){
+  .hinfo{display:block}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header class="header">
+    <button class="ham" id="hamBtn">&#9776;</button>
+    <div class="logo">NEURAL<span>CODEX</span></div>
+    <div class="hinfo">// KNOWLEDGE GRAPHS + MULTI-AGENT SYSTEMS</div>
+    <div class="hrail">
+      <span class="badge bc">v3.3</span>
+      <span class="badge bg2c">LORA</span>
+    </div>
+  </header>
+
+  <div class="body">
+
+    <!-- SIDEBAR -->
+    <div class="overlay" id="overlay"></div>
+    <nav class="sidebar" id="sidebar">
+      <div class="sb-sec">Core Concepts</div>
+      <div class="ni act" data-tab="t1"><span class="ic">🧠</span>KG Fundamentals<span class="num">01</span></div>
+      <div class="ni"     data-tab="t2"><span class="ic">🏗️</span>Build Your Stack<span class="num">02</span></div>
+      <div class="ni"     data-tab="t3"><span class="ic">🔍</span>GraphRAG &amp; Memory<span class="num">03</span></div>
+      <div class="sb-sec">Agent System</div>
+      <div class="ni"     data-tab="t4"><span class="ic">🤖</span>Agent Architecture<span class="num">04</span></div>
+      <div class="ni"     data-tab="t5"><span class="ic">🎤</span>Voice &amp; OS Brain<span class="num">05</span></div>
+      <div class="sb-sec">Implementation</div>
+      <div class="ni"     data-tab="t6"><span class="ic">📋</span>Blueprint<span class="num">06</span></div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="content" id="content">
+      <div id="t1" class="panel" style="display:block">
+        <div class="stitle">KNOWLEDGE GRAPHS</div>
+        <div class="ssub">// Semantic Networks · Triples · Ontologies · Property Graphs</div>
+        <canvas id="kgc"></canvas>
+        <div class="h2">What Is a Knowledge Graph?</div>
+        <p>A <strong>knowledge graph (KG)</strong> is a structured, semantically-rich network that encodes real-world knowledge as <em>entities</em> (nodes) and <em>relationships</em> (edges). Unlike flat tables, KGs store <strong>meaning</strong> — not just data. Google's Knowledge Graph, Wikidata, and DBpedia are landmark examples. For AI agents, a KG acts as a shared, traversable <strong>long-term memory</strong> enabling multi-hop reasoning: <em>"What tasks used Tool X in Session Y that also produced Concept Z?"</em> — impossible in a vector DB alone.</p>
+        <div class="ibox ic"><span class="ibox-ic">💡</span><span>A relational DB stores <em>data</em>. A vector DB stores <em>similarity</em>. A knowledge graph stores <em>meaning</em>. The ideal AI memory system is a hybrid of all three — exactly what Neo4j's vector index + LightRAG enable in L.O.R.A.</span></div>
+        
+        <div class="h2">The Triple: Atom of Knowledge</div>
+        <p>All KG content decomposes into atomic <strong>triples</strong> — the irreducible unit of a fact. Every piece of knowledge is: <em>something</em> has a <em>relationship</em> to <em>something else</em>.</p>
+        <div class="triple"><div class="tpart ts">Neo4j<span class="tsub">SUBJECT / NODE</span></div><div class="tarr">──▶</div><div class="tpart tp3">POWERS<span class="tsub">PREDICATE / EDGE</span></div><div class="tarr">──▶</div><div class="tpart to2">L.O.R.A. Memory<span class="tsub">OBJECT / NODE</span></div></div>
+        <div class="triple"><div class="tpart ts">Research Agent<span class="tsub">SUBJECT / NODE</span></div><div class="tarr">──▶</div><div class="tpart tp3">DISCOVERED<span class="tsub">PREDICATE / EDGE</span></div><div class="tarr">──▶</div><div class="tpart to2">Transformer Arch<span class="tsub">OBJECT / NODE</span></div></div>
+        <div class="triple"><div class="tpart ts">Task: Build API<span class="tsub">SUBJECT / NODE</span></div><div class="tarr">──▶</div><div class="tpart tp3">REQUIRES<span class="tsub">PREDICATE / EDGE</span></div><div class="tarr">──▶</div><div class="tpart to2">Skill: FastAPI<span class="tsub">OBJECT / NODE</span></div></div>
+        
+        <div class="h2">Core Anatomy</div>
+        <div class="g3">
+        <div class="card cc"><div class="ct">Nodes (Entities)</div><p style="font-size:12.5px;margin:0">Real-world objects, concepts, or events. Each has a <strong>label</strong> (its type) and <strong>properties</strong> (attributes).<br><code style="font-family:var(--f4);color:var(--c1);font-size:11px">(:Concept {name:"Transformer", domain:"DL"})</code></p></div>
+        <div class="card cg"><div class="ct">Edges (Relations)</div><p style="font-size:12.5px;margin:0">Directed, typed connections. Edges are <strong>first-class citizens</strong> with their own labels, directions, and properties.<br><code style="font-family:var(--f4);color:var(--c2);font-size:11px">-[:DISCOVERED {confidence:0.95}]-&gt;</code></p></div>
+        <div class="card cp"><div class="ct">Properties</div><p style="font-size:12.5px;margin:0">Key-value metadata on nodes <em>and</em> edges. Strings, numbers, dates, lists. Indexed for fast lookup. Never encode structural meaning in properties — use edges.</p></div>
+        </div>
+        
+        <div class="h2">RDF Triplestore vs Property Graph</div>
+        <table class="tbl">
+        <thead><tr><th>Feature</th><th>RDF Triplestore</th><th>Property Graph (Neo4j)</th><th>Winner</th></tr></thead>
+        <tbody>
+        <tr><td><strong>Query Language</strong></td><td>SPARQL</td><td>Cypher / GQL</td><td><span class="tag tg">Cypher (dev-friendly)</span></td></tr>
+        <tr><td><strong>Edge Properties</strong></td><td>Requires awkward reification</td><td>Native first-class support</td><td><span class="tag tg">Property Graph</span></td></tr>
+        <tr><td><strong>Vector Search</strong></td><td>Limited (some stores)</td><td>Native in Neo4j 5.x+</td><td><span class="tag tg">Property Graph</span></td></tr>
+        <tr><td><strong>Semantic Inference</strong></td><td>Full OWL/RDFS reasoning</td><td>Manual or plugin</td><td><span class="tag tc">RDF (pure semantics)</span></td></tr>
+        <tr><td><strong>Developer UX</strong></td><td>Steep (URIs, namespaces)</td><td>Intuitive, SQL-like</td><td><span class="tag tg">Property Graph</span></td></tr>
+        <tr><td><strong>LLM Codegen Support</strong></td><td>SPARQL rarely trained on</td><td>LLMs know Cypher well</td><td><span class="tag tg">Property Graph</span></td></tr>
+        <tr><td><strong>Best Tools</strong></td><td>Stardog, GraphDB, Jena</td><td>Neo4j, ArangoDB, FalkorDB</td><td>Neo4j for agents</td></tr>
+        </tbody>
+        </table>
+        <div class="ibox ig"><span class="ibox-ic">✅</span><span>For L.O.R.A. and all agentic systems: use <strong>Neo4j Property Graph + Cypher</strong>. Edge-property support is essential for storing confidence, timestamps, and agent IDs on relationships. LLMs can generate correct Cypher directly.</span></div>
+        
+        <div class="h2">Cypher vs SPARQL — Same Query, Two Worlds</div>
+        <div class="g2">
+        <div>
+        <div class="h3">Cypher (Neo4j) ✓ Recommended</div>
+        <pre><code><span class="cm">// Find concepts a research agent discovered</span>
+        <span class="cm">// in session sess_42 with high confidence</span>
+        <span class="kw">MATCH</span> <span class="pu">(</span>a<span class="pu">:</span><span class="ty">Agent</span> <span class="pu">{</span>name<span class="pu">:</span> <span class="st">"ResearchBot"</span><span class="pu">})</span>
+              <span class="pu">-[</span>r<span class="pu">:</span><span class="ty">DISCOVERED</span><span class="pu">]-&gt;</span>
+              <span class="pu">(</span>c<span class="pu">:</span><span class="ty">Concept</span><span class="pu">)</span>
+        <span class="kw">WHERE</span> r.session_id <span class="op">=</span> <span class="st">"sess_42"</span>
+          <span class="kw">AND</span> r.confidence <span class="op">&gt;</span> <span class="nm">0.8</span>
+        <span class="kw">RETURN</span> c.name, c.domain, r.confidence
+        <span class="kw">ORDER BY</span> r.confidence <span class="kw">DESC</span>
+        <span class="kw">LIMIT</span> <span class="nm">20</span><span class="lang">CYPHER</span></code></pre>
+        </div>
+        <div>
+        <div class="h3">SPARQL (RDF) — For Reference</div>
+        <pre><code><span class="cm"># Same query in SPARQL — far more verbose</span>
+        <span class="kw">PREFIX</span> lora<span class="pu">:</span> <span class="st">&lt;http://lora.ai/onto#&gt;</span>
+        <span class="kw">SELECT</span> ?name ?domain ?conf
+        <span class="kw">WHERE</span> {
+          lora<span class="pu">:</span>ResearchBot lora<span class="pu">:</span>discovered ?concept .
+          ?concept lora<span class="pu">:</span>name ?name ;
+                   lora<span class="pu">:</span>domain ?domain .
+          ?disc lora<span class="pu">:</span>agent lora<span class="pu">:</span>ResearchBot ;
+                lora<span class="pu">:</span>session <span class="st">"sess_42"</span> ;
+                lora<span class="pu">:</span>confidence ?conf .
+          FILTER(?conf &gt; 0.8)
+        }
+        ORDER BY DESC(?conf)<span class="lang">SPARQL</span></code></pre>
+        </div>
+        </div>
+        
+        <div class="h2">Four Types of Knowledge to Store in L.O.R.A.</div>
+        <div class="g2">
+        <div class="card cc"><div class="ct">Episodic Memory</div><p style="font-size:12.5px;margin:0">Events, sessions, tasks, agent actions, conversation history. <em>"Agent X ran Task Y at time T and produced Output Z."</em> Stored with timestamps and session IDs on edges.</p></div>
+        <div class="card cg"><div class="ct">Semantic Memory</div><p style="font-size:12.5px;margin:0">Facts and domain knowledge extracted from research. <em>"Transformers use attention. Attention is O(n²) in sequence length."</em> Extracted via LLM and stored as entity-relation triples.</p></div>
+        <div class="card cp"><div class="ct">Procedural Memory</div><p style="font-size:12.5px;margin:0">Code snippets, workflows, tested procedures. <em>"To deploy FastAPI with Docker, use this Dockerfile."</em> Stored with success/failure counts so agents learn what works.</p></div>
+        <div class="card co"><div class="ct">Agent State &amp; Plans</div><p style="font-size:12.5px;margin:0">Current goals, pending tasks, dependencies, capability maps. The Orchestrator reads this to plan. <em>"Task A depends on Task B. Code Agent has tools: python_exec, git, docker."</em></p></div>
+        </div>
+
+        <div class="h2">Ontologies — Giving Your KG a Schema</div>
+        <p>An <strong>ontology</strong> is a formal specification of the types of entities, relationships, and constraints in your knowledge domain. Without an ontology, your KG is a bag of random triples. With one, it becomes a <em>reasoned knowledge system</em>. For L.O.R.A., the ontology defines: what node labels exist, which edge types connect which node types, what properties are required vs optional, and which properties are unique (constraints). The ontology is your contract — agents write to it, queries rely on it.</p>
+        <div class="g3">
+        <div class="card cc"><div class="ct">TBox (Schema Layer)</div><p style="font-size:12px;margin:0">The "terminological box" — class definitions, property types, cardinality rules. Equivalent to a DB schema. In Neo4j: <code style="font-family:var(--f4);color:var(--c1);font-size:10px">CREATE CONSTRAINT FOR (c:Concept) REQUIRE c.name IS UNIQUE</code>. Define this before any data enters. Prevents duplicate nodes and enforces data integrity across all agents.</p></div>
+        <div class="card cg"><div class="ct">ABox (Instance Layer)</div><p style="font-size:12px;margin:0">The "assertional box" — actual data instances conforming to the TBox. Every node an agent creates is an ABox assertion. In RDF these are rigorously separated layers; in Neo4j you blend them pragmatically. All agent-written nodes, relationships, and properties live here.</p></div>
+        <div class="card cp"><div class="ct">RBox (Inference Rules)</div><p style="font-size:12px;margin:0">Role axioms — <em>"if A KNOWS B and B KNOWS C, infer A KNOWS C transitively."</em> In Neo4j, encode as Cypher inference queries or use APOC triggers to fire on write. Critical for agent capability inference: if Code Agent USES Docker and Docker RUNS Python, infer Code Agent CAN_EXECUTE Python.</p></div>
+        </div>
+        <div class="ibox ip"><span class="ibox-ic">🏗️</span><span>L.O.R.A. ontology principle: <strong>model the domain, not the implementation.</strong> Don't create <code style="font-family:var(--f4);color:var(--c3)">:APICall</code> nodes — create <code style="font-family:var(--f4);color:var(--c3)">:Action</code> nodes with a <code style="font-family:var(--f4);color:var(--c3)">type</code> property. Your ontology should stay stable even as agent capabilities grow. New agents just add new <code style="font-family:var(--f4);color:var(--c3)">:Agent</code> nodes and <code style="font-family:var(--f4);color:var(--c3)">:Tool</code> relationships — the schema never changes.</span></div>
+
+        <div class="h2">Graph Algorithms That Power Agent Intelligence</div>
+        <p>Raw graph storage is only the beginning. The real power comes from <strong>graph algorithms</strong> that extract structural intelligence invisible to SQL or vectors. Neo4j's Graph Data Science (GDS) library provides 65+ algorithms across centrality, community detection, pathfinding, and similarity categories. These transform L.O.R.A. from a data store into a reasoning engine.</p>
+        <table class="tbl">
+        <thead><tr><th>Algorithm</th><th>Category</th><th>L.O.R.A. Use Case</th><th>GDS Call</th></tr></thead>
+        <tbody>
+        <tr><td><strong>PageRank</strong></td><td><span class="tag tc">Centrality</span></td><td>Identify the most-referenced Concepts — the "pillars" of your knowledge base. High-PageRank nodes = foundational knowledge that agents should always consider when planning.</td><td><code style="font-family:var(--f4);font-size:10px">gds.pageRank.stream</code></td></tr>
+        <tr><td><strong>Louvain</strong></td><td><span class="tag tg">Community</span></td><td>Auto-cluster Concepts into topic communities without manual labels. Use community IDs to pre-filter retrieval: only search the relevant cluster. 10× faster queries on large KGs.</td><td><code style="font-family:var(--f4);font-size:10px">gds.louvain.stream</code></td></tr>
+        <tr><td><strong>Shortest Path (Dijkstra)</strong></td><td><span class="tag tpp">Pathfinding</span></td><td>How is "neural network" conceptually connected to "database optimization"? Multi-hop path reveals the chain of reasoning bridging two topics. Critical for multi-step agent planning.</td><td><code style="font-family:var(--f4);font-size:10px">gds.shortestPath.dijkstra</code></td></tr>
+        <tr><td><strong>Node Similarity</strong></td><td><span class="tag to">Similarity</span></td><td>Find agents with overlapping tool capabilities. Find concepts with similar relationship patterns using <em>structural</em> similarity — no text embedding needed. Identifies hidden duplicates.</td><td><code style="font-family:var(--f4);font-size:10px">gds.nodeSimilarity.stream</code></td></tr>
+        <tr><td><strong>Betweenness Centrality</strong></td><td><span class="tag tc">Centrality</span></td><td>Which Concepts are bridges between topic clusters? High betweenness = cross-domain connectors. These are the most valuable nodes for multi-domain reasoning queries.</td><td><code style="font-family:var(--f4);font-size:10px">gds.betweenness.stream</code></td></tr>
+        <tr><td><strong>Label Propagation</strong></td><td><span class="tag tg">Community</span></td><td>Propagate domain tags across the graph. If 80% of a node's neighbors are tagged "ML", auto-tag it "ML". Keeps ontology labels consistent without manual work as the KG grows.</td><td><code style="font-family:var(--f4);font-size:10px">gds.labelPropagation.stream</code></td></tr>
+        <tr><td><strong>K-Nearest Neighbors</strong></td><td><span class="tag to">Similarity</span></td><td>Graph-native KNN on node embeddings. Faster than brute-force vector search for large graphs. Pre-computes similarity edges so retrieval is a simple 1-hop traversal at query time.</td><td><code style="font-family:var(--f4);font-size:10px">gds.knn.stream</code></td></tr>
+        </tbody>
+        </table>
+
+        <div class="h2">Indexing Strategies — Making KG Queries Fast</div>
+        <p>A KG with millions of nodes is useless if queries take seconds. Neo4j offers four index types. In L.O.R.A. you use <em>all four</em> for different access patterns. Missing an index means a full node scan — catastrophic at scale.</p>
+        <div class="g2">
+        <div class="card cc"><div class="ct">B-Tree Index (Default)</div><p style="font-size:12px;margin:0">Auto-created by constraints; manually created with <code style="font-family:var(--f4);color:var(--c1);font-size:10px">CREATE INDEX FOR (n:Label) ON (n.property)</code>. Best for equality lookups, range queries, and ORDER BY. Use on: <code style="font-family:var(--f4);color:var(--c1);font-size:10px">name</code>, <code style="font-family:var(--f4);color:var(--c1);font-size:10px">id</code>, <code style="font-family:var(--f4);color:var(--c1);font-size:10px">status</code>, <code style="font-family:var(--f4);color:var(--c1);font-size:10px">created_at</code>. Essential for all MERGE-based upserts — without it, every MERGE does a full scan.</p></div>
+        <div class="card cg"><div class="ct">Vector Index (HNSW)</div><p style="font-size:12px;margin:0">Hierarchical Navigable Small World graph for approximate nearest neighbor search. Created with <code style="font-family:var(--f4);color:var(--c2);font-size:10px">CREATE VECTOR INDEX concept_emb FOR (n:Concept) ON (n.embedding) OPTIONS {indexConfig:{`vector.dimensions`:768, `vector.similarity_function`:'cosine'}}</code>. Requires all vectors to be the same dimension. Powers semantic retrieval.</p></div>
+        <div class="card cp"><div class="ct">Full-Text Index (Lucene)</div><p style="font-size:12px;margin:0">Lucene-backed BM25 text search. <code style="font-family:var(--f4);color:var(--c3);font-size:10px">CREATE FULLTEXT INDEX concept_text FOR (n:Concept) ON EACH [n.description, n.name]</code>. Use for exact keyword search when semantic search over-retrieves. Especially valuable for named-entity lookup: agent names, tool names, project names.</p></div>
+        <div class="card co"><div class="ct">Composite Index</div><p style="font-size:12px;margin:0">Index on multiple properties: <code style="font-family:var(--f4);color:var(--c4);font-size:10px">CREATE INDEX FOR (t:Task) ON (t.status, t.priority)</code>. Dramatically speeds up filtered queries like "all pending high-priority tasks." The left-most property must match for the index to be used — order matters.</p></div>
+        </div>
+
+        <div class="h2">KG vs Relational DB vs Vector DB — Decision Guide</div>
+        <table class="tbl">
+        <thead><tr><th>Query Pattern</th><th>Relational DB</th><th>Vector DB</th><th>Knowledge Graph</th></tr></thead>
+        <tbody>
+        <tr><td>"Does task T123 exist?"</td><td>✅ Primary key O(1)</td><td>❌ Not designed for this</td><td>✅ Node ID constraint O(1)</td></tr>
+        <tr><td>"What's semantically similar to this text?"</td><td>❌ No embedding support</td><td>✅ Native ANN search</td><td>✅ Vector index (hybrid)</td></tr>
+        <tr><td>"What did agent X produce in session Y?"</td><td>⚠️ 3+ JOINs, schema-bound</td><td>❌ No relational ops</td><td>✅ 1-hop graph traversal</td></tr>
+        <tr><td>"How is concept A related to concept Z in 4 hops?"</td><td>❌ Recursive CTEs, very slow</td><td>❌ Impossible</td><td>✅ Native variable-depth path</td></tr>
+        <tr><td>"Most connected concepts (PageRank)"</td><td>❌ COUNT(*) + sort, O(n)</td><td>❌ Not applicable</td><td>✅ GDS centrality, pre-indexed</td></tr>
+        <tr><td>"Store 100M rows of raw event logs"</td><td>✅ Optimized, partitioned</td><td>❌ Wrong tool</td><td>⚠️ Possible but costly</td></tr>
+        <tr><td>"Find all concepts mentioning 'attention'"</td><td>⚠️ LIKE scan or full-text ext</td><td>✅ Semantic nearest neighbors</td><td>✅ Full-text + vector hybrid</td></tr>
+        <tr><td>"Which tasks share 3+ common concepts?"</td><td>❌ Exponential JOIN complexity</td><td>❌ Not applicable</td><td>✅ Pattern matching in Cypher</td></tr>
+        </tbody>
+        </table>
+        <div class="ibox ig"><span class="ibox-ic">🏆</span><span><strong>L.O.R.A. uses all three in concert:</strong> PostgreSQL for high-volume raw event logs and structured agent telemetry (task timing, API call records). Neo4j for all knowledge relationships, hybrid vector+graph search, and reasoning. A fast local vector cache (Chroma or FAISS) as a write buffer — embeddings are generated locally, cached, then bulk-imported to Neo4j's vector index in batches to avoid per-write overhead.</span></div>
+
+        <div class="h2">History of Knowledge Graphs</div>
+        <p>Understanding the lineage of KGs clarifies why they're designed the way they are — and why they're the right substrate for AI agents in 2025.</p>
+        <div class="pwfall">
+        <div class="prow"><div class="prank" style="font-size:9px;width:44px">1960s</div><div class="pname">Semantic Networks</div><div style="font-size:12px;color:var(--t2)">Ross Quillian's associative memory models — nodes connected by typed arcs representing conceptual relationships. The conceptual ancestor of all KGs. No formal semantics, just intuitive graph structure for psychological modeling.</div></div>
+        <div class="prow"><div class="prank" style="font-size:9px;width:44px">1984</div><div class="pname">CYC Project</div><div style="font-size:12px;color:var(--t2)">Doug Lenat's attempt to encode all common-sense human knowledge. 1.5M assertions, 500k concepts, 30 years of work. Too rigid and brittle for modern AI — but proved machine-readable world knowledge is possible and valuable.</div></div>
+        <div class="prow"><div class="prank" style="font-size:9px;width:44px">2001</div><div class="pname">Semantic Web / OWL</div><div style="font-size:12px;color:var(--t2)">Tim Berners-Lee's vision: RDF + OWL + SPARQL for a web of linked, machine-readable data. Technically powerful with formal reasoning but developer-hostile (URIs everywhere, namespace management). Gave us Wikidata, DBpedia, LinkedGeoData.</div></div>
+        <div class="prow"><div class="prank" style="font-size:9px;width:44px">2010</div><div class="pname">Freebase &amp; Property Graphs</div><div style="font-size:12px;color:var(--t2)">Google acquired Freebase (2010), Wikidata launched (2012) as community successor — now 110M+ items. Simultaneously, Neo4j's property graph model gained traction: edges as first-class citizens with properties, Cypher query language, developer-friendly.</div></div>
+        <div class="prow"><div class="prank" style="font-size:9px;width:44px">2012</div><div class="pname">Google Knowledge Graph</div><div style="font-size:12px;color:var(--t2)">The "Knowledge Graph" brand goes mainstream. Powers Google's entity cards and answer boxes. 500B+ facts. Spawned the entire industry term. Built on property graph principles with custom engineering at Google scale.</div></div>
+        <div class="prow"><div class="prank" style="font-size:9px;width:44px">2020</div><div class="pname">Enterprise KGs</div><div style="font-size:12px;color:var(--t2)">JP Morgan, Airbnb, LinkedIn, Uber adopt KGs for product recommendations, fraud detection, knowledge management. KGs prove their value in production at scale — not just research projects.</div></div>
+        <div class="prow"><div class="prank" style="font-size:9px;width:44px">2024+</div><div class="pname">LLM + KG Fusion Era</div><div style="font-size:12px;color:var(--t2)">GraphRAG (Microsoft), LightRAG, KG²RAG, HippoRAG emerge. LLMs extract KG triples from unstructured text at scale. KGs ground LLMs with verifiable, structured facts. Neo4j adds native vector indexes. The era of agentic KG systems — exactly what L.O.R.A. is built on.</div></div>
+        </div>
+      </div>
+
+      <div id="t2" class="panel" style="display:none">
+        <div class="stitle">BUILD YOUR STACK</div>
+        <div class="ssub">// Neo4j · LLM Extraction · Hybrid Retrieval · Python</div>
+        
+        <div class="h2">The Full KG Construction Pipeline</div>
+        <div class="pipe">
+        <div class="pstep"><div class="picn">📄</div><div class="plbl">Input</div><div class="psub">Text / URL / PDF</div></div>
+        <div class="pstep"><div class="picn">🧹</div><div class="plbl">Chunk</div><div class="psub">300–600 token windows</div></div>
+        <div class="pstep"><div class="picn">🤖</div><div class="plbl">LLM Extract</div><div class="psub">Entities + Relations</div></div>
+        <div class="pstep"><div class="picn">🔗</div><div class="plbl">Canonicalize</div><div class="psub">Merge dupes, normalize</div></div>
+        <div class="pstep"><div class="picn">🗄️</div><div class="plbl">Store</div><div class="psub">Neo4j + vector index</div></div>
+        <div class="pstep"><div class="picn">🔍</div><div class="plbl">Retrieve</div><div class="psub">Graph + vector hybrid</div></div>
+        <div class="pstep"><div class="picn">🧠</div><div class="plbl">Augment LLM</div><div class="psub">Inject as context</div></div>
+        </div>
+        
+        <div class="h2">Step 1 — Infrastructure (Docker)</div>
+        <pre><code><span class="cm"># docker-compose.yml — Neo4j Community Edition</span>
+        <span class="nm">version</span><span class="pu">:</span> <span class="st">'3.8'</span>
+        <span class="nm">services</span><span class="pu">:</span>
+          <span class="nm">neo4j</span><span class="pu">:</span>
+            <span class="nm">image</span><span class="pu">:</span> <span class="st">neo4j:5.20-community</span>
+            <span class="nm">ports</span><span class="pu">:</span> <span class="pu">[</span><span class="st">"7474:7474"</span><span class="pu">,</span> <span class="st">"7687:7687"</span><span class="pu">]</span>
+            <span class="nm">environment</span><span class="pu">:</span>
+              <span class="nm">NEO4J_AUTH</span><span class="pu">:</span> <span class="st">neo4j/lorapassword</span>
+              <span class="nm">NEO4J_PLUGINS</span><span class="pu">:</span> <span class="st">'["apoc","graph-data-science"]'</span>
+              <span class="nm">NEO4J_dbms_memory_heap_max__size</span><span class="pu">:</span> <span class="st">2G</span>
+            <span class="nm">volumes</span><span class="pu">:</span> <span class="pu">[</span><span class="st">"./data/neo4j:/data"</span><span class="pu">]</span><span class="lang">YAML</span></code></pre>
+        
+        <div class="h2">Step 2 — Python KG Client</div>
+        <pre><code><span class="cm"># core/kg_client.py</span>
+        <span class="kw">from</span> neo4j <span class="kw">import</span> <span class="ty">GraphDatabase</span>
+        <span class="kw">from</span> typing <span class="kw">import</span> List, Dict
+        
+        <span class="kw">class</span> <span class="ty">KGClient</span><span class="pu">:</span>
+            <span class="kw">def</span> <span class="fn">__init__</span><span class="pu">(</span>self, uri<span class="pu">=</span><span class="st">"bolt://localhost:7687"</span>,
+                         user<span class="pu">=</span><span class="st">"neo4j"</span>, pwd<span class="pu">=</span><span class="st">"lorapassword"</span><span class="pu">):</span>
+                self.driver <span class="op">=</span> <span class="ty">GraphDatabase</span>.driver<span class="pu">(</span>uri, auth<span class="pu">=(</span>user, pwd<span class="pu">))</span>
+        
+            <span class="kw">def</span> <span class="fn">upsert_entity</span><span class="pu">(</span>self, label<span class="pu">:</span> str, props<span class="pu">:</span> dict<span class="pu">)</span><span class="pu">:</span>
+                <span class="kw">with</span> self.driver.session<span class="pu">()</span> <span class="kw">as</span> s<span class="pu">:</span>
+                    s.run<span class="pu">(</span><span class="st">f"""MERGE (e:{label} {{name: $name}})
+                        SET e += $props, e.updated_at = timestamp()"""</span><span class="pu">,</span>
+                        name<span class="pu">=</span>props<span class="pu">[</span><span class="st">'name'</span><span class="pu">]</span>, props<span class="pu">=</span>props<span class="pu">)</span>
+        
+            <span class="kw">def</span> <span class="fn">upsert_relation</span><span class="pu">(</span>self, subj<span class="pu">:</span> str, pred<span class="pu">:</span> str,
+                                 obj<span class="pu">:</span> str, props<span class="pu">:</span> dict <span class="op">=</span> <span class="pu">{}</span><span class="pu">)</span><span class="pu">:</span>
+                <span class="kw">with</span> self.driver.session<span class="pu">()</span> <span class="kw">as</span> s<span class="pu">:</span>
+                    s.run<span class="pu">(</span><span class="st">f"""MATCH (s {{name:$s}}),(o {{name:$o}})
+                        MERGE (s)-[r:{pred.upper()}]->(o)
+                        SET r += $props"""</span><span class="pu">,</span>
+                        s<span class="pu">=</span>subj, o<span class="pu">=</span>obj, props<span class="pu">=</span>props<span class="pu">)</span>
+        
+            <span class="kw">def</span> <span class="fn">vector_search</span><span class="pu">(</span>self, embedding<span class="pu">:</span> List<span class="pu">[</span>float<span class="pu">]</span>,
+                              top_k<span class="pu">:</span> int <span class="op">=</span> <span class="nm">5</span>, index<span class="pu">=</span><span class="st">"concept_embeddings"</span><span class="pu">)</span><span class="pu">:</span>
+                <span class="kw">with</span> self.driver.session<span class="pu">()</span> <span class="kw">as</span> s<span class="pu">:</span>
+                    result <span class="op">=</span> s.run<span class="pu">(</span><span class="st">"""CALL db.index.vector.queryNodes(
+                        $idx, $k, $emb) YIELD node, score
+                        RETURN node.name, node.description, score"""</span><span class="pu">,</span>
+                        idx<span class="pu">=</span>index, k<span class="pu">=</span>top_k, emb<span class="pu">=</span>embedding<span class="pu">)</span>
+                    <span class="kw">return</span> <span class="pu">[</span>dict<span class="pu">(</span>r<span class="pu">)</span> <span class="kw">for</span> r <span class="kw">in</span> result<span class="pu">]</span>
+        
+            <span class="kw">def</span> <span class="fn">neighborhood</span><span class="pu">(</span>self, name<span class="pu">:</span> str, depth<span class="pu">:</span> int <span class="op">=</span> <span class="nm">2</span><span class="pu">)</span><span class="pu">:</span>
+                <span class="cm">"""Multi-hop neighborhood for graph context"""</span>
+                <span class="kw">with</span> self.driver.session<span class="pu">()</span> <span class="kw">as</span> s<span class="pu">:</span>
+                    <span class="kw">return</span> s.run<span class="pu">(</span>
+                        <span class="st">"MATCH p=(n {name:$n})-[*1..$d]-(m) RETURN p LIMIT 50"</span><span class="pu">,</span>
+                        n<span class="pu">=</span>name, d<span class="pu">=</span>depth<span class="pu">)</span>.data<span class="pu">()</span><span class="lang">PYTHON</span></code></pre>
+        
+        <div class="h2">Step 3 — L.O.R.A. Schema (Cypher)</div>
+        <pre><code><span class="cm">// scripts/bootstrap_schema.cypher — Run once at startup</span>
+        
+        <span class="cm">// Constraints (uniqueness + auto-index)</span>
+        <span class="kw">CREATE CONSTRAINT IF NOT EXISTS FOR</span> <span class="pu">(</span>c<span class="pu">:</span><span class="ty">Concept</span><span class="pu">)</span>  <span class="kw">REQUIRE</span> c.name <span class="kw">IS UNIQUE</span><span class="pu">;</span>
+        <span class="kw">CREATE CONSTRAINT IF NOT EXISTS FOR</span> <span class="pu">(</span>t<span class="pu">:</span><span class="ty">Task</span><span class="pu">)</span>    <span class="kw">REQUIRE</span> t.id   <span class="kw">IS UNIQUE</span><span class="pu">;</span>
+        <span class="kw">CREATE CONSTRAINT IF NOT EXISTS FOR</span> <span class="pu">(</span>a<span class="pu">:</span><span class="ty">Agent</span><span class="pu">)</span>   <span class="kw">REQUIRE</span> a.name <span class="kw">IS UNIQUE</span><span class="pu">;</span>
+        <span class="kw">CREATE CONSTRAINT IF NOT EXISTS FOR</span> <span class="pu">(</span>d<span class="pu">:</span><span class="ty">Document</span><span class="pu">)</span><span class="kw">REQUIRE</span> d.id   <span class="kw">IS UNIQUE</span><span class="pu">;</span>
+        
+        <span class="cm">// Vector indexes (768-dim, cosine similarity)</span>
+        <span class="kw">CREATE VECTOR INDEX</span> concept_embeddings <span class="kw">IF NOT EXISTS</span>
+          <span class="kw">FOR</span> <span class="pu">(</span>c<span class="pu">:</span><span class="ty">Concept</span><span class="pu">)</span> <span class="kw">ON</span> <span class="pu">(</span>c.embedding<span class="pu">)</span>
+          <span class="kw">OPTIONS</span> <span class="pu">{</span>indexConfig<span class="pu">:{</span>
+            <span class="st">`vector.dimensions`</span><span class="pu">:</span><span class="nm">768</span><span class="pu">,</span>
+            <span class="st">`vector.similarity_function`</span><span class="pu">:</span><span class="st">'cosine'</span><span class="pu">}}</span><span class="pu">;</span>
+        <span class="kw">CREATE VECTOR INDEX</span> doc_embeddings <span class="kw">IF NOT EXISTS</span>
+          <span class="kw">FOR</span> <span class="pu">(</span>d<span class="pu">:</span><span class="ty">Document</span><span class="pu">)</span> <span class="kw">ON</span> <span class="pu">(</span>d.embedding<span class="pu">)</span>
+          <span class="kw">OPTIONS</span> <span class="pu">{</span>indexConfig<span class="pu">:{</span>
+            <span class="st">`vector.dimensions`</span><span class="pu">:</span><span class="nm">768</span><span class="pu">,</span>
+            <span class="st">`vector.similarity_function`</span><span class="pu">:</span><span class="st">'cosine'</span><span class="pu">}}</span><span class="pu">;</span>
+        
+        <span class="cm">// ── NODE TYPES ────────────────────────────────────
+        // :Concept    {name, description, domain, embedding}
+        // :Task       {id, title, status, priority, created_at}
+        // :Agent      {name, role, capabilities[], model}
+        // :Tool       {name, type, api_endpoint, description}
+        // :Document   {id, title, url, source, embedding}
+        // :CodeSnippet{id, language, code, description, runs_ok}
+        // :Session    {id, start_time, end_time, summary}
+        // :Memory     {id, content, importance, decay_rate}
+        // :Project    {name, description, status, goals[]}
+        
+        // ── EDGE TYPES ────────────────────────────────────
+        // (Agent)-[:EXECUTED]->(Task)           {started_at, ended_at}
+        // (Task)-[:PRODUCED]->(Document|Code)   {quality_score}
+        // (Agent)-[:DISCOVERED]->(Concept)      {confidence, session_id}
+        // (Concept)-[:RELATES_TO]->(Concept)    {relation_type, weight}
+        // (Task)-[:REQUIRES]->(Concept|Tool)
+        // (Task)-[:DEPENDS_ON]->(Task)
+        // (Agent)-[:USES]->(Tool)
+        // (Document)-[:CONTAINS]->(Concept)
+        // (Session)-[:INCLUDES]->(Task)</span><span class="lang">CYPHER</span></code></pre>
+        
+        <div class="h2">Step 4 — LLM Entity Extraction</div>
+        <pre><code><span class="cm"># core/extractor.py — LLM-powered KG extraction</span>
+        <span class="kw">import</span> json
+        <span class="kw">from</span> groq <span class="kw">import</span> <span class="ty">Groq</span>
+        
+        <span class="ty">PROMPT</span> <span class="op">=</span> <span class="st">"""Extract entities and relationships from the text.
+        Return ONLY valid JSON — no markdown, no preamble:
+        {
+          "entities": [
+            {"name":"str","type":"Concept|Task|Tool|Agent",
+             "description":"brief description"}
+          ],
+          "relations": [
+            {"subject":"name","predicate":"RELATION_TYPE",
+             "object":"name","confidence":0.9}
+          ]
+        }
+        Predicates must be UPPER_SNAKE_CASE.
+        Text: {text}"""</span>
+        
+        <span class="kw">def</span> <span class="fn">extract_graph</span><span class="pu">(</span>text<span class="pu">:</span> str, client<span class="pu">:</span> <span class="ty">Groq</span><span class="pu">)</span> <span class="op">-&gt;</span> dict<span class="pu">:</span>
+            resp <span class="op">=</span> client.chat.completions.create<span class="pu">(</span>
+                model<span class="pu">=</span><span class="st">"llama-3.3-70b-versatile"</span><span class="pu">,</span>
+                messages<span class="pu">=[{</span><span class="st">"role"</span><span class="pu">:</span><span class="st">"user"</span><span class="pu">,</span>
+                            <span class="st">"content"</span><span class="pu">:</span><span class="ty">PROMPT</span>.format<span class="pu">(</span>text<span class="pu">=</span>text<span class="pu">)}]</span><span class="pu">,</span>
+                response_format<span class="pu">={</span><span class="st">"type"</span><span class="pu">:</span><span class="st">"json_object"</span><span class="pu">}</span>
+            <span class="pu">)</span>
+            <span class="kw">return</span> json.loads<span class="pu">(</span>resp.choices<span class="pu">[</span><span class="nm">0</span><span class="pu">]</span>.message.content<span class="pu">)</span>
+        
+        <span class="kw">def</span> <span class="fn">ingest_text</span><span class="pu">(</span>text<span class="pu">:</span> str, kg, embed_fn, llm<span class="pu">)</span> <span class="op">-&gt;</span> int<span class="pu">:</span>
+            <span class="cm">"""Chunk → extract → embed → store. Returns entity count."""</span>
+            chunks <span class="op">=</span> <span class="pu">[</span>text<span class="pu">[</span>i<span class="pu">:</span>i<span class="op">+</span><span class="nm">1000</span><span class="pu">]</span> <span class="kw">for</span> i <span class="kw">in</span> range<span class="pu">(</span><span class="nm">0</span>, len<span class="pu">(</span>text<span class="pu">)</span>, <span class="nm">800</span><span class="pu">)]</span>
+            total <span class="op">=</span> <span class="nm">0</span>
+            <span class="kw">for</span> chunk <span class="kw">in</span> chunks<span class="pu">:</span>
+                data <span class="op">=</span> extract_graph<span class="pu">(</span>chunk, llm<span class="pu">)</span>
+                <span class="kw">for</span> ent <span class="kw">in</span> data<span class="pu">[</span><span class="st">'entities'</span><span class="pu">]</span><span class="pu">:</span>
+                    ent<span class="pu">[</span><span class="st">'embedding'</span><span class="pu">]</span> <span class="op">=</span> embed_fn<span class="pu">(</span>ent<span class="pu">[</span><span class="st">'description'</span><span class="pu">]</span><span class="pu">)</span>
+                    kg.upsert_entity<span class="pu">(</span>ent<span class="pu">[</span><span class="st">'type'</span><span class="pu">]</span>, ent<span class="pu">)</span>
+                <span class="kw">for</span> rel <span class="kw">in</span> data<span class="pu">[</span><span class="st">'relations'</span><span class="pu">]</span><span class="pu">:</span>
+                    kg.upsert_relation<span class="pu">(</span>
+                        rel<span class="pu">[</span><span class="st">'subject'</span><span class="pu">]</span>, rel<span class="pu">[</span><span class="st">'predicate'</span><span class="pu">]</span>,
+                        rel<span class="pu">[</span><span class="st">'object'</span><span class="pu">]</span>, <span class="pu">{</span><span class="st">'confidence'</span><span class="pu">:</span>rel<span class="pu">[</span><span class="st">'confidence'</span><span class="pu">]})</span>
+                total <span class="op">+=</span> len<span class="pu">(</span>data<span class="pu">[</span><span class="st">'entities'</span><span class="pu">]</span><span class="pu">)</span>
+            <span class="kw">return</span> total<span class="lang">PYTHON</span></code></pre>
+        <div class="ibox ip"><span class="ibox-ic">⚡</span><span><strong>Embedding tip:</strong> Use <code style="font-family:var(--f4);color:var(--c3)">nomic-embed-text</code> via Ollama for 100% local 768-dim embeddings. Or use Google's <code style="font-family:var(--f4);color:var(--c3)">text-embedding-004</code> (free tier, 768-dim). Both match Neo4j's vector index dimension.</span></div>
+        <div class="h2">Step 5 — Hybrid Retrieval in Practice</div>
+        <p>Pure vector search misses graph structure. Pure graph traversal misses semantic similarity. <strong>Hybrid retrieval</strong> combines both in a single query pass — the secret behind L.O.R.A.'s retrieval quality. The key insight: vector search finds the entry nodes, graph traversal expands from them into contextually connected knowledge.</p>
+        <pre><code><span class="cm"># core/hybrid_retrieval.py — The retrieval core of L.O.R.A.</span>
+<span class="kw">class</span> <span class="ty">HybridRetriever</span><span class="pu">:</span>
+    <span class="kw">def</span> <span class="fn">retrieve</span><span class="pu">(</span>self, query<span class="pu">:</span> str, depth<span class="pu">:</span> int <span class="op">=</span> <span class="nm">2</span>, k<span class="pu">:</span> int <span class="op">=</span> <span class="nm">5</span><span class="pu">)</span> <span class="op">-></span> dict<span class="pu">:</span>
+        <span class="cm"># Step 1: embed the query</span>
+        emb <span class="op">=</span> self.embed<span class="pu">(</span>query<span class="pu">)</span>
+
+        <span class="cm"># Step 2: vector ANN — find top-k semantically similar nodes</span>
+        vec_hits <span class="op">=</span> self.kg.vector_search<span class="pu">(</span>emb, top_k<span class="pu">=</span>k<span class="pu">)</span>
+
+        <span class="cm"># Step 3: full-text BM25 — catch exact keyword matches</span>
+        txt_hits <span class="op">=</span> self.kg.fulltext_search<span class="pu">(</span>query, top_k<span class="pu">=</span>k<span class="pu">)</span>
+
+        <span class="cm"># Step 4: graph expansion — walk depth hops from entry nodes</span>
+        seeds <span class="op">=</span> <span class="pu">{</span>h<span class="pu">[</span><span class="st">"node.name"</span><span class="pu">]</span> <span class="kw">for</span> h <span class="kw">in</span> vec_hits <span class="op">+</span> txt_hits<span class="pu">}</span>
+        graph_ctx <span class="op">=</span> <span class="pu">[]</span>
+        <span class="kw">for</span> seed <span class="kw">in</span> list<span class="pu">(</span>seeds<span class="pu">)[:</span><span class="nm">3</span><span class="pu">]:</span>  <span class="cm"># expand top 3 seeds only</span>
+            graph_ctx<span class="pu">.</span>extend<span class="pu">(</span>self.kg.neighborhood<span class="pu">(</span>seed, depth<span class="pu">=</span>depth<span class="pu">))</span>
+
+        <span class="cm"># Step 5: rerank by relevance score</span>
+        all_nodes <span class="op">=</span> self<span class="pu">.</span>_deduplicate<span class="pu">(</span>vec_hits <span class="op">+</span> txt_hits <span class="op">+</span> graph_ctx<span class="pu">)</span>
+        <span class="kw">return</span> self<span class="pu">.</span>_rerank<span class="pu">(</span>all_nodes, query, emb<span class="pu">)</span>
+
+    <span class="kw">def</span> <span class="fn">fulltext_search</span><span class="pu">(</span>self, query<span class="pu">:</span> str, top_k<span class="pu">:</span> int <span class="op">=</span> <span class="nm">5</span><span class="pu">)</span><span class="pu">:</span>
+        <span class="kw">with</span> self.driver.session<span class="pu">()</span> <span class="kw">as</span> s<span class="pu">:</span>
+            <span class="kw">return</span> s.run<span class="pu">(</span><span class="st">"""CALL db.index.fulltext.queryNodes(
+                'concept_text', $q) YIELD node, score
+                RETURN node.name, node.description, score
+                ORDER BY score DESC LIMIT $k"""</span><span class="pu">,</span>
+                q<span class="pu">=</span>query, k<span class="pu">=</span>top_k<span class="pu">)</span>.data<span class="pu">()</span><span class="lang">PYTHON</span></code></pre>
+
+        <div class="h2">Step 6 — Embedding Model Selection</div>
+        <p>Your embedding model is a foundational choice — you can't easily change it later without re-embedding every node. The model determines your vector dimension (must match the Neo4j vector index), your semantic quality, and your inference speed/cost. L.O.R.A. recommends 768-dim models for the ideal balance of quality and speed.</p>
+        <table class="tbl">
+        <thead><tr><th>Model</th><th>Dim</th><th>Cost</th><th>Speed</th><th>Quality</th><th>Recommended For</th></tr></thead>
+        <tbody>
+        <tr><td><strong>nomic-embed-text (Ollama)</strong></td><td>768</td><td><span class="tag tg">FREE — Local</span></td><td>~5ms GPU / ~50ms CPU</td><td>⭐⭐⭐⭐</td><td>L.O.R.A. default. 100% local, no rate limits, perfect for agent loops.</td></tr>
+        <tr><td><strong>text-embedding-3-small (OpenAI)</strong></td><td>1536</td><td><span class="tag to">$0.02/1M tokens</span></td><td>~100ms API</td><td>⭐⭐⭐⭐⭐</td><td>When quality is paramount. Use for final production KGs, not agent loops.</td></tr>
+        <tr><td><strong>text-embedding-004 (Google)</strong></td><td>768</td><td><span class="tag tg">FREE tier 15k/min</span></td><td>~80ms API</td><td>⭐⭐⭐⭐</td><td>Best free API option. 768-dim matches Neo4j index. Good fallback for nomic.</td></tr>
+        <tr><td><strong>mxbai-embed-large (Ollama)</strong></td><td>1024</td><td><span class="tag tg">FREE — Local</span></td><td>~8ms GPU</td><td>⭐⭐⭐⭐⭐</td><td>Best local quality, MTEB top performer. Use if GPU available. Needs 1024-dim index.</td></tr>
+        <tr><td><strong>all-MiniLM-L6-v2 (sentence-transformers)</strong></td><td>384</td><td><span class="tag tg">FREE — Local</span></td><td>~2ms CPU</span></td><td>⭐⭐⭐</td><td>Ultra-fast CPU inference. Good for real-time agent retrieval on low-spec machines.</td></tr>
+        </tbody>
+        </table>
+        <div class="ibox io"><span class="ibox-ic">⚠️</span><span><strong>Critical:</strong> Your Neo4j vector index dimension is set at creation and <em>cannot be changed</em>. If you create it with <code style="font-family:var(--f4);color:var(--c4)">vector.dimensions:768</code> but later switch to a 1536-dim model, you must drop and recreate the index and re-embed every node. Choose your embedding model <em>before</em> initializing your KG schema.</span></div>
+
+        <div class="h2">Step 7 — Entity Canonicalization</div>
+        <p>Raw LLM extraction produces noisy, inconsistent entity names: "React.js", "ReactJS", "React Framework", "React" all refer to the same thing. Without canonicalization, your KG fragments into disconnected duplicate nodes. <strong>Canonicalization</strong> is the process of merging these into a single authoritative node.</p>
+        <pre><code><span class="cm"># core/canonicalizer.py — Merge duplicate entities</span>
+<span class="kw">class</span> <span class="ty">EntityCanonicalizer</span><span class="pu">:</span>
+    <span class="kw">def</span> <span class="fn">__init__</span><span class="pu">(</span>self, kg, embed_fn, llm, threshold<span class="pu">=</span><span class="nm">0.92</span><span class="pu">)</span><span class="pu">:</span>
+        self.kg <span class="op">=</span> kg
+        self.embed <span class="op">=</span> embed_fn
+        self.llm <span class="op">=</span> llm
+        self.threshold <span class="op">=</span> threshold  <span class="cm"># cosine sim above this = same entity</span>
+
+    <span class="kw">def</span> <span class="fn">resolve</span><span class="pu">(</span>self, name<span class="pu">:</span> str, label<span class="pu">:</span> str<span class="pu">)</span> <span class="op">-></span> str<span class="pu">:</span>
+        <span class="cm">"""Returns canonical name — existing or new."""</span>
+        emb <span class="op">=</span> self.embed<span class="pu">(</span>name<span class="pu">)</span>
+        candidates <span class="op">=</span> self.kg.vector_search<span class="pu">(</span>emb, top_k<span class="pu">=</span><span class="nm">3</span>, label<span class="pu">=</span>label<span class="pu">)</span>
+
+        <span class="kw">for</span> c <span class="kw">in</span> candidates<span class="pu">:</span>
+            <span class="kw">if</span> c<span class="pu">[</span><span class="st">"score"</span><span class="pu">]</span> <span class="op">></span> self.threshold<span class="pu">:</span>
+                <span class="cm"># High confidence: same entity, return canonical name</span>
+                <span class="kw">return</span> c<span class="pu">[</span><span class="st">"node.name"</span><span class="pu">]</span>
+            <span class="kw">elif</span> c<span class="pu">[</span><span class="st">"score"</span><span class="pu">]</span> <span class="op">></span> <span class="nm">0.80</span><span class="pu">:</span>
+                <span class="cm"># Ambiguous: ask LLM to adjudicate</span>
+                verdict <span class="op">=</span> self.llm.are_same_entity<span class="pu">(</span>name, c<span class="pu">[</span><span class="st">"node.name"</span><span class="pu">]</span><span class="pu">)</span>
+                <span class="kw">if</span> verdict<span class="pu">:</span>
+                    <span class="kw">return</span> c<span class="pu">[</span><span class="st">"node.name"</span><span class="pu">]</span>  <span class="cm"># merge into existing</span>
+
+        <span class="kw">return</span> name  <span class="cm"># genuinely new entity</span>
+
+    <span class="kw">def</span> <span class="fn">merge_duplicates</span><span class="pu">(</span>self<span class="pu">)</span><span class="pu">:</span>
+        <span class="cm">"""Cypher: redirect all edges from alias to canonical, delete alias."""</span>
+        <span class="kw">with</span> self.kg.driver.session<span class="pu">()</span> <span class="kw">as</span> s<span class="pu">:</span>
+            s.run<span class="pu">(</span><span class="st">"""MATCH (alias:Concept)-[:ALIAS_OF]->(canon:Concept)
+                CALL apoc.refactor.mergeNodes([canon, alias],
+                    {properties:'discard', mergeRels:true})
+                YIELD node RETURN node.name"""</span><span class="pu">)</span><span class="lang">PYTHON</span></code></pre>
+
+        <div class="h2">Step 8 — Memory Decay &amp; Importance Scoring</div>
+        <p>Not all knowledge should persist forever. A KG that only grows eventually becomes noisy — old, irrelevant facts crowd out recent ones. L.O.R.A. implements a <strong>memory decay</strong> system inspired by human cognitive models: important, frequently-accessed memories persist; rarely-accessed, low-confidence ones fade. Decay runs as a background job.</p>
+        <div class="g2">
+        <div class="card cc"><div class="ct">Importance Score Formula</div><p style="font-size:12px;margin:0">Each node gets a dynamic importance score:<br><code style="font-family:var(--f4);color:var(--c1);font-size:10px">importance = (access_count * 0.4) + (recency_score * 0.3) + (centrality * 0.2) + (confidence * 0.1)</code><br>This runs on a cron schedule. Nodes below threshold get their edges pruned first, then the node itself if isolated.</p></div>
+        <div class="card cg"><div class="ct">Decay Function</div><p style="font-size:12px;margin:0">Exponential decay with half-life configurable per node type: <code style="font-family:var(--f4);color:var(--c2);font-size:10px">score *= e^(-λt)</code>. Session nodes decay fastest (λ=0.1, 7-day half-life). Concept nodes decay slowly (λ=0.01, 69-day half-life). Pinned nodes never decay. Critical for preventing KG bloat.</p></div>
+        </div>
+        <pre><code><span class="cm"># core/memory_manager.py — Decay scheduler</span>
+<span class="kw">import</span> math
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timedelta
+
+<span class="kw">class</span> <span class="ty">MemoryManager</span><span class="pu">:</span>
+    <span class="ty">DECAY_RATES</span> <span class="op">=</span> <span class="pu">{</span>
+        <span class="st">"Session"</span>  <span class="pu">:</span> <span class="nm">0.10</span><span class="pu">,</span>  <span class="cm"># half-life ~7 days</span>
+        <span class="st">"Task"</span>     <span class="pu">:</span> <span class="nm">0.03</span><span class="pu">,</span>  <span class="cm"># half-life ~23 days</span>
+        <span class="st">"Concept"</span>  <span class="pu">:</span> <span class="nm">0.01</span><span class="pu">,</span>  <span class="cm"># half-life ~69 days</span>
+        <span class="st">"Document"</span> <span class="pu">:</span> <span class="nm">0.005</span><span class="pu">,</span> <span class="cm"># half-life ~138 days</span>
+        <span class="st">"CodeSnippet"</span><span class="pu">:</span><span class="nm">0.002</span>  <span class="cm"># ~346 days — code persists</span>
+    <span class="pu">}</span>
+
+    <span class="kw">def</span> <span class="fn">run_decay_cycle</span><span class="pu">(</span>self<span class="pu">)</span><span class="pu">:</span>
+        <span class="kw">for</span> label, lam <span class="kw">in</span> self.<span class="ty">DECAY_RATES</span>.items<span class="pu">()</span><span class="pu">:</span>
+            <span class="kw">with</span> self.kg.driver.session<span class="pu">()</span> <span class="kw">as</span> s<span class="pu">:</span>
+                s.run<span class="pu">(</span><span class="st">f"""MATCH (n:{label})
+                    WHERE n.pinned IS NULL
+                    SET n.importance = n.importance * exp(-$lam *
+                        duration.inDays(n.last_accessed, date()).days)
+                    WITH n WHERE n.importance < 0.05
+                    DETACH DELETE n"""</span><span class="pu">,</span> lam<span class="pu">=</span>lam<span class="pu">)</span><span class="lang">PYTHON</span></code></pre>
+        <div class="ibox ig"><span class="ibox-ic">🔒</span><span><strong>Pinning critical nodes:</strong> Set <code style="font-family:var(--f4);color:var(--c2)">n.pinned = true</code> on any node you never want decayed — your core ontology concepts, the agent registry, active project nodes. The decay function skips all pinned nodes. Use <code style="font-family:var(--f4);color:var(--c2)">MATCH (n:Concept {name:"Transformer"}) SET n.pinned=true</code> to protect foundational knowledge.</span></div>
+
+      </div>
+
+      <div id="t3" class="panel" style="display:none">
+        <div class="stitle">GRAPHRAG &amp; MEMORY</div>
+        <div class="ssub">// LightRAG · NotebookLM Alternative · Web Research → KG</div>
+        
+        <div class="h2">RAG Evolution — Why Graph Changes Everything</div>
+        <table class="tbl">
+        <thead><tr><th>Approach</th><th>Index</th><th>Multi-hop</th><th>Token Cost</th><th>Update</th><th>Verdict</th></tr></thead>
+        <tbody>
+        <tr><td><strong>Naive RAG</strong></td><td>Vector chunks</td><td>❌ None</td><td><span class="tag tg">Cheap</span></td><td><span class="tag tg">Instant</span></td><td>Simple Q&amp;A only</td></tr>
+        <tr><td><strong>MS GraphRAG</strong></td><td>Communities + summaries</td><td>✅ Global themes</td><td><span class="tag" style="background:rgba(255,62,122,.1);color:var(--c5);border:1px solid rgba(255,62,122,.2)">10× expensive</span></td><td>Full rebuild</td><td>Heavy, costly</td></tr>
+        <tr><td><strong>LightRAG</strong></td><td>Entity graph + vectors</td><td>✅ Local + Global</td><td><span class="tag tg">Low (1×)</span></td><td><span class="tag tg">Incremental</span></td><td><strong>✓ L.O.R.A. pick</strong></td></tr>
+        <tr><td><strong>KG²RAG</strong></td><td>Structured KG + reranker</td><td>✅ Excellent</td><td>Medium</td><td>Medium</td><td>Domain expert use</td></tr>
+        </tbody>
+        </table>
+        <div class="ibox ic"><span class="ibox-ic">📊</span><span>LightRAG is <strong>10× cheaper</strong> than GraphRAG and supports <strong>incremental inserts</strong> — just call <code style="font-family:var(--f4);color:var(--c1)">rag.ainsert(text)</code> for new documents. GraphRAG requires a full graph rebuild. LightRAG is the clear choice for a growing, live knowledge base.</span></div>
+        
+        <div class="h2">LightRAG Pipeline</div>
+        <div class="pipe">
+        <div class="pstep"><div class="picn">📥</div><div class="plbl">Ingest</div><div class="psub">Raw text docs</div></div>
+        <div class="pstep"><div class="picn">🔬</div><div class="plbl">LLM Extract</div><div class="psub">Entities + rels + descriptions</div></div>
+        <div class="pstep"><div class="picn">🕸️</div><div class="plbl">Build KG</div><div class="psub">Property graph with descriptions</div></div>
+        <div class="pstep"><div class="picn">📐</div><div class="plbl">Embed</div><div class="psub">Vector index on entities &amp; rels</div></div>
+        <div class="pstep"><div class="picn">🎯</div><div class="plbl">Dual Retrieve</div><div class="psub">Low-level: exact facts<br>High-level: themes</div></div>
+        <div class="pstep"><div class="picn">💬</div><div class="plbl">Generate</div><div class="psub">LLM answers with merged context</div></div>
+        </div>
+        
+        <div class="h2">LightRAG Setup — NotebookLM Alternative</div>
+        <pre><code><span class="cm"># pip install lightrag-hku</span>
+        <span class="cm"># rag/lightrag_setup.py</span>
+        <span class="kw">from</span> lightrag <span class="kw">import</span> <span class="ty">LightRAG</span>, <span class="ty">QueryParam</span>
+        <span class="kw">from</span> lightrag.llm.openai <span class="kw">import</span> openai_complete_if_cache, openai_embed
+        <span class="kw">from</span> functools <span class="kw">import</span> partial
+        <span class="kw">import</span> os, asyncio
+        
+        <span class="ty">GROQ_BASE</span> <span class="op">=</span> <span class="st">"https://api.groq.com/openai/v1"</span>
+        
+        <span class="kw">async def</span> <span class="fn">groq_llm</span><span class="pu">(</span>prompt, system_prompt<span class="pu">=</span><span class="kw">None</span>, history_messages<span class="pu">=</span><span class="pu">[]</span>, **kw<span class="pu">)</span><span class="pu">:</span>
+            <span class="kw">return await</span> openai_complete_if_cache<span class="pu">(</span>
+                <span class="st">"llama-3.3-70b-versatile"</span><span class="pu">,</span> prompt<span class="pu">,</span>
+                system_prompt<span class="pu">=</span>system_prompt<span class="pu">,</span>
+                history_messages<span class="pu">=</span>history_messages<span class="pu">,</span>
+                base_url<span class="pu">=</span><span class="ty">GROQ_BASE</span><span class="pu">,</span>
+                api_key<span class="pu">=</span>os.getenv<span class="pu">(</span><span class="st">"GROQ_API_KEY"</span><span class="pu">)</span><span class="pu">,</span> **kw<span class="pu">)</span>
+        
+        <span class="kw">async def</span> <span class="fn">build_research_rag</span><span class="pu">(</span>work_dir<span class="pu">:</span> str<span class="pu">)</span><span class="pu">:</span>
+            <span class="kw">return</span> <span class="ty">LightRAG</span><span class="pu">(</span>
+                working_dir<span class="pu">=</span>work_dir<span class="pu">,</span>
+                llm_model_func<span class="pu">=</span>groq_llm<span class="pu">,</span>
+                embedding_func<span class="pu">=</span>partial<span class="pu">(</span>openai_embed<span class="pu">,</span>
+                    model<span class="pu">=</span><span class="st">"text-embedding-3-small"</span><span class="pu">,</span>
+                    api_key<span class="pu">=</span>os.getenv<span class="pu">(</span><span class="st">"OPENAI_API_KEY"</span><span class="pu">))</span>
+            <span class="pu">)</span>
+        
+        <span class="kw">async def</span> <span class="fn">query</span><span class="pu">(</span>rag<span class="pu">,</span> question<span class="pu">:</span> str<span class="pu">,</span> mode<span class="pu">:</span> str <span class="op">=</span> <span class="st">"hybrid"</span><span class="pu">)</span><span class="pu">:</span>
+            <span class="cm">"""
+            mode: 'naive'  → plain vector (fastest, weakest)
+                  'local'  → entity-centric, specific facts
+                  'global' → community-level, broad themes
+                  'hybrid' → BEST: local + global combined ← use this
+            """</span>
+            <span class="kw">return await</span> rag.aquery<span class="pu">(</span>question, param<span class="pu">=</span><span class="ty">QueryParam</span><span class="pu">(</span>mode<span class="pu">=</span>mode<span class="pu">))</span><span class="lang">PYTHON</span></code></pre>
+        
+        <div class="h2">Web Research → KG Pipeline</div>
+        <pre><code><span class="cm"># rag/web_to_kg.py — Full web research pipeline</span>
+        <span class="kw">from</span> playwright.async_api <span class="kw">import</span> async_playwright
+        <span class="kw">from</span> bs4 <span class="kw">import</span> <span class="ty">BeautifulSoup</span>
+        
+        <span class="kw">class</span> <span class="ty">WebResearcher</span><span class="pu">:</span>
+            <span class="kw">def</span> <span class="fn">__init__</span><span class="pu">(</span>self, rag, kg_client<span class="pu">)</span><span class="pu">:</span>
+                self.rag <span class="op">=</span> rag          <span class="cm"># LightRAG instance</span>
+                self.kg  <span class="op">=</span> kg_client    <span class="cm"># Neo4j direct client</span>
+        
+            <span class="kw">async def</span> <span class="fn">research</span><span class="pu">(</span>self, topic<span class="pu">:</span> str, urls<span class="pu">:</span> list<span class="pu">)</span><span class="pu">:</span>
+                <span class="cm">"""Crawl URLs, extract text, build KG"""</span>
+                <span class="kw">async with</span> async_playwright<span class="pu">()</span> <span class="kw">as</span> pw<span class="pu">:</span>
+                    browser <span class="op">=</span> <span class="kw">await</span> pw.chromium.launch<span class="pu">()</span>
+                    page    <span class="op">=</span> <span class="kw">await</span> browser.new_page<span class="pu">()</span>
+                    <span class="kw">for</span> url <span class="kw">in</span> urls<span class="pu">:</span>
+                        <span class="kw">try</span><span class="pu">:</span>
+                            <span class="kw">await</span> page.goto<span class="pu">(</span>url, timeout<span class="pu">=</span><span class="nm">12000</span><span class="pu">)</span>
+                            html <span class="op">=</span> <span class="kw">await</span> page.content<span class="pu">()</span>
+                            soup <span class="op">=</span> <span class="ty">BeautifulSoup</span><span class="pu">(</span>html, <span class="st">'html.parser'</span><span class="pu">)</span>
+                            <span class="cm"># Remove boilerplate</span>
+                            <span class="kw">for</span> tag <span class="kw">in</span> soup<span class="pu">([</span><span class="st">'script'</span><span class="pu">,</span><span class="st">'style'</span><span class="pu">,</span><span class="st">'nav'</span><span class="pu">,</span><span class="st">'footer'</span><span class="pu">]</span><span class="pu">)</span><span class="pu">:</span>
+                                tag.decompose<span class="pu">()</span>
+                            text <span class="op">=</span> soup.get_text<span class="pu">(</span>separator<span class="pu">=</span><span class="st">' '</span>, strip<span class="pu">=</span><span class="kw">True</span><span class="pu">)</span>
+                            <span class="kw">await</span> self.rag.ainsert<span class="pu">(</span>text<span class="pu">[:</span><span class="nm">8000</span><span class="pu">]</span><span class="pu">)</span>
+                        <span class="kw">except</span> <span class="ty">Exception</span> <span class="kw">as</span> e<span class="pu">:</span>
+                            print<span class="pu">(</span><span class="st">f"Skip {url}: {e}"</span><span class="pu">)</span>
+                    <span class="kw">await</span> browser.close<span class="pu">()</span>
+        
+                <span class="cm"># Store research summary node in Neo4j</span>
+                self.kg.upsert_entity<span class="pu">(</span><span class="st">"Document"</span><span class="pu">,</span> <span class="pu">{</span>
+                    <span class="st">"name"</span><span class="pu">:</span> <span class="st">f"Research: {topic}"</span><span class="pu">,</span>
+                    <span class="st">"sources"</span><span class="pu">:</span> urls<span class="pu">,</span>
+                    <span class="st">"status"</span><span class="pu">:</span> <span class="st">"ingested"</span>
+                <span class="pu">})</span>
+                <span class="kw">return await</span> self.rag.aquery<span class="pu">(</span>
+                    <span class="st">f"Summarize key findings about {topic}"</span><span class="pu">,</span>
+                    param<span class="pu">=</span><span class="ty">QueryParam</span><span class="pu">(</span>mode<span class="pu">=</span><span class="st">"global"</span><span class="pu">))</span><span class="lang">PYTHON</span></code></pre>
+        
+        <div class="h2">The Four Retrieval Modes</div>
+        <div class="g4">
+        <div class="card cc"><div class="ct">Naive</div><p style="font-size:12px;margin:0">Pure vector on raw chunks. Fastest, but loses cross-document reasoning. Good for direct fact lookups.</p></div>
+        <div class="card cg"><div class="ct">Local</div><p style="font-size:12px;margin:0">Entity + 1-2 hop neighbors. Gets specific facts about a named thing. <em>"What is the attention mechanism?"</em></p></div>
+        <div class="card cp"><div class="ct">Global</div><p style="font-size:12px;margin:0">Community summaries. Broad thematic understanding. <em>"What are the main trends in LLM research?"</em></p></div>
+        <div class="card co"><div class="ct">Hybrid ✓</div><p style="font-size:12px;margin:0">Local + Global fused. Best accuracy, moderate cost. Use as the <strong>default</strong> for L.O.R.A. queries.</p></div>
+        </div>
+        <div class="h2">NotebookLM vs L.O.R.A. — Feature Comparison</div>
+        <p>Google's NotebookLM is a phenomenal product — but it's a closed, cloud-only, single-user tool that doesn't let agents <em>write</em> to the knowledge base. L.O.R.A. is designed to be the open-source, self-hosted, agent-writeable alternative that goes far beyond what NotebookLM can do.</p>
+        <table class="tbl">
+        <thead><tr><th>Feature</th><th>NotebookLM</th><th>L.O.R.A. (This System)</th></tr></thead>
+        <tbody>
+        <tr><td><strong>Knowledge Storage</strong></td><td>Flat document chunks, vector index</td><td><span class="tag tg">Graph KG + vector + full-text hybrid</span></td></tr>
+        <tr><td><strong>Multi-hop Reasoning</strong></td><td>❌ Chunk retrieval only</td><td><span class="tag tg">✅ Graph path traversal, Cypher queries</span></td></tr>
+        <tr><td><strong>Agent Writes to KG</strong></td><td>❌ Read-only for queries</td><td><span class="tag tg">✅ All agents write entities &amp; relations</span></td></tr>
+        <tr><td><strong>Internet Research</strong></td><td>❌ Manual document upload only</td><td><span class="tag tg">✅ Playwright auto-crawl, web-to-KG pipeline</span></td></tr>
+        <tr><td><strong>Voice Commands</strong></td><td>❌ No voice interface</td><td><span class="tag tg">✅ Whisper STT + "Hey LORA" wake word</span></td></tr>
+        <tr><td><strong>Code Execution</strong></td><td>❌ No code execution</td><td><span class="tag tg">✅ Sandboxed Docker, Python/shell</span></td></tr>
+        <tr><td><strong>OS Integration</strong></td><td>❌ Browser-only</td><td><span class="tag tg">✅ psutil, clipboard, file watch, screen capture</span></td></tr>
+        <tr><td><strong>Privacy</strong></td><td>⚠️ Google cloud, data sharing</td><td><span class="tag tg">✅ 100% local option with Ollama</span></td></tr>
+        <tr><td><strong>Memory Across Sessions</strong></td><td>⚠️ Per-notebook only</td><td><span class="tag tg">✅ Persistent Neo4j KG, cross-session memory</span></td></tr>
+        <tr><td><strong>Cost</strong></td><td>Google One subscription</td><td><span class="tag tg">FREE — Neo4j CE + Groq/Gemini free tiers</span></td></tr>
+        <tr><td><strong>Multi-Agent Orchestration</strong></td><td>❌ Single AI assistant</td><td><span class="tag tg">✅ 10+ specialized agents, task DAG execution</span></td></tr>
+        <tr><td><strong>Source</strong></td><td>Closed source, Google</td><td><span class="tag tg">Open source, self-hosted</span></td></tr>
+        </tbody>
+        </table>
+
+        <div class="h2">Knowledge Graph RAG — How the Retrieval Chain Works</div>
+        <p>When an agent or the Orchestrator sends a query to L.O.R.A.'s memory system, it goes through a precise multi-stage retrieval chain. Understanding this chain is essential for debugging retrieval quality and tuning performance.</p>
+        <div class="pipe">
+        <div class="pstep"><div class="picn">❓</div><div class="plbl">Query In</div><div class="psub">Natural language or structured request from agent</div></div>
+        <div class="pstep"><div class="picn">🔢</div><div class="plbl">Embed</div><div class="psub">nomic-embed-text → 768-dim vector</div></div>
+        <div class="pstep"><div class="picn">🎯</div><div class="plbl">ANN Search</div><div class="psub">Top-k cosine similarity in Neo4j HNSW index</div></div>
+        <div class="pstep"><div class="picn">📝</div><div class="plbl">BM25 Search</div><div class="psub">Lucene full-text, catches exact names</div></div>
+        <div class="pstep"><div class="picn">🕸️</div><div class="plbl">Graph Expand</div><div class="psub">Walk 2 hops from seed nodes</div></div>
+        <div class="pstep"><div class="picn">📊</div><div class="plbl">Rerank</div><div class="psub">Score by relevance + recency + importance</div></div>
+        <div class="pstep"><div class="picn">📦</div><div class="plbl">Context Pack</div><div class="psub">Serialize to LLM prompt, token budget managed</div></div>
+        <div class="pstep"><div class="picn">🤖</div><div class="plbl">LLM Generate</div><div class="psub">Answer grounded in KG facts</div></div>
+        </div>
+
+        <div class="h2">Community Detection for Topic Clustering</div>
+        <p>As your KG grows, you need a way to partition it into meaningful sub-graphs so retrieval doesn't search everything. <strong>Community detection</strong> automatically finds dense clusters of highly-connected concepts — these become your "topic partitions." L.O.R.A. runs Louvain community detection weekly and stores community IDs on nodes, so agents can pre-filter by community before vector search.</p>
+        <pre><code><span class="cm"># core/community_manager.py — Topic clustering</span>
+<span class="kw">class</span> <span class="ty">CommunityManager</span><span class="pu">:</span>
+    <span class="kw">def</span> <span class="fn">detect_and_store</span><span class="pu">(</span>self<span class="pu">)</span><span class="pu">:</span>
+        <span class="cm">"""Run Louvain, write community IDs back to KG."""</span>
+        <span class="kw">with</span> self.driver.session<span class="pu">()</span> <span class="kw">as</span> s<span class="pu">:</span>
+            <span class="cm"># Project graph into GDS memory</span>
+            s.run<span class="pu">(</span><span class="st">"""CALL gds.graph.project('kg_proj',
+                'Concept',
+                {RELATES_TO: {orientation:'UNDIRECTED'}})"""</span><span class="pu">)</span>
+
+            <span class="cm"># Run Louvain, write communities back</span>
+            s.run<span class="pu">(</span><span class="st">"""CALL gds.louvain.write('kg_proj',
+                {writeProperty: 'community_id'})
+                YIELD communityCount, modularity"""</span><span class="pu">)</span>
+
+            <span class="cm"># Generate LLM summary for each community</span>
+            comms <span class="op">=</span> s.run<span class="pu">(</span><span class="st">"""MATCH (n:Concept)
+                RETURN n.community_id AS cid,
+                       collect(n.name)[..10] AS names
+                ORDER BY cid"""</span><span class="pu">)</span>.data<span class="pu">()</span>
+
+            <span class="kw">for</span> c <span class="kw">in</span> comms<span class="pu">:</span>
+                label <span class="op">=</span> self.llm.label_community<span class="pu">(</span>c<span class="pu">[</span><span class="st">"names"</span><span class="pu">]</span><span class="pu">)</span>
+                s.run<span class="pu">(</span><span class="st">"""MATCH (n:Concept {community_id:$cid})
+                    SET n.community_label = $label"""</span><span class="pu">,</span>
+                    cid<span class="pu">=</span>c<span class="pu">[</span><span class="st">"cid"</span><span class="pu">]</span>, label<span class="pu">=</span>label<span class="pu">)</span>
+
+    <span class="kw">def</span> <span class="fn">search_in_community</span><span class="pu">(</span>self, query_emb, community_label<span class="pu">:</span> str<span class="pu">)</span><span class="pu">:</span>
+        <span class="cm">"""Partition-aware retrieval — 10x faster on large KGs."""</span>
+        <span class="kw">with</span> self.driver.session<span class="pu">()</span> <span class="kw">as</span> s<span class="pu">:</span>
+            <span class="kw">return</span> s.run<span class="pu">(</span><span class="st">"""MATCH (n:Concept {community_label:$lbl})
+                CALL db.index.vector.queryNodes('concept_embeddings', 5, $emb)
+                    YIELD node, score WHERE node = n
+                RETURN n.name, score ORDER BY score DESC"""</span><span class="pu">,</span>
+                lbl<span class="pu">=</span>community_label, emb<span class="pu">=</span>query_emb<span class="pu">)</span>.data<span class="pu">()</span><span class="lang">PYTHON</span></code></pre>
+
+        <div class="h2">KG-Grounded Generation — Preventing Hallucination</div>
+        <p>Standard LLMs hallucinate because they generate from parametric memory alone. When L.O.R.A. answers a query, it <strong>grounds</strong> the LLM's response in explicit KG facts. The retrieved nodes and relationships are injected into the prompt as structured context, and the LLM is instructed to cite node names. This makes answers verifiable and auditable.</p>
+        <pre><code><span class="cm"># core/grounded_generator.py</span>
+<span class="ty">GROUNDED_PROMPT</span> <span class="op">=</span> <span class="st">"""You are L.O.R.A., an AI assistant with access to a verified knowledge graph.
+Answer the question using ONLY the provided KG context.
+If the answer is not in the context, say "Not in knowledge base."
+Do NOT add information from general training.
+Cite the node names you used in [brackets].
+
+KG Context:
+{context}
+
+Question: {question}"""</span>
+
+<span class="kw">async def</span> <span class="fn">grounded_answer</span><span class="pu">(</span>question<span class="pu">:</span> str, retriever, llm<span class="pu">)</span> <span class="op">-></span> dict<span class="pu">:</span>
+    ctx_nodes <span class="op">=</span> retriever.retrieve<span class="pu">(</span>question, depth<span class="pu">=</span><span class="nm">2</span>, k<span class="pu">=</span><span class="nm">8</span><span class="pu">)</span>
+    ctx_text  <span class="op">=</span> format_for_prompt<span class="pu">(</span>ctx_nodes<span class="pu">)</span>
+    answer    <span class="op">=</span> <span class="kw">await</span> llm.complete<span class="pu">(</span>
+        system<span class="pu">=</span><span class="ty">GROUNDED_PROMPT</span>.format<span class="pu">(</span>context<span class="pu">=</span>ctx_text, question<span class="pu">=</span>question<span class="pu">),</span>
+        user<span class="pu">=</span>question<span class="pu">)</span>
+    <span class="kw">return</span> <span class="pu">{</span><span class="st">"answer"</span><span class="pu">:</span> answer, <span class="st">"sources"</span><span class="pu">:</span> <span class="pu">[</span>n<span class="pu">[</span><span class="st">"name"</span><span class="pu">]</span> <span class="kw">for</span> n <span class="kw">in</span> ctx_nodes<span class="pu">]</span><span class="pu">}</span><span class="lang">PYTHON</span></code></pre>
+        <div class="ibox ip"><span class="ibox-ic">🧪</span><span><strong>Measuring retrieval quality:</strong> Track <em>context precision</em> (are retrieved nodes actually relevant?) and <em>context recall</em> (are all relevant nodes retrieved?). Log both as KG nodes — <code style="font-family:var(--f4);color:var(--c3)">:RetrievalEval</code> — so the Analysis Agent can identify which queries have poor recall and suggest schema improvements.</span></div>
+
+      </div>
+
+      <div id="t4" class="panel" style="display:none">
+        <div class="stitle">MULTI-AGENT ARCHITECTURE</div>
+        <div class="ssub">// Orchestration · Specialization · KG-Backed Memory</div>
+        
+        <div class="h2">3-Tier Hierarchy</div>
+        <div class="atier t-orch">
+          <div class="tlbl">TIER 1 — ORCHESTRATION (the brain)</div>
+          <div class="agrid">
+            <div class="achip ach-c" data-agent="orchestrator">🎯 Orchestrator</div>
+          </div>
+        </div>
+        <div class="atier t-spec">
+          <div class="tlbl">TIER 2 — SPECIALIZED AGENTS (click any for details)</div>
+          <div class="agrid">
+            <div class="achip ach-g" data-agent="research">🔍 Research</div>
+            <div class="achip ach-g" data-agent="code">💻 Code</div>
+            <div class="achip ach-g" data-agent="docker">🐳 Docker</div>
+            <div class="achip ach-g" data-agent="database">🗄️ Database</div>
+            <div class="achip ach-g" data-agent="git">🌿 Git</div>
+            <div class="achip ach-g" data-agent="file">📁 File</div>
+            <div class="achip ach-g" data-agent="os">🖥️ OS Brain</div>
+            <div class="achip ach-g" data-agent="memory">🧠 Memory</div>
+            <div class="achip ach-g" data-agent="analysis">📊 Analysis</div>
+            <div class="achip ach-g" data-agent="reasoning">🔮 Reasoning</div>
+          </div>
+        </div>
+        <div class="atier t-tool">
+          <div class="tlbl">TIER 3 — TOOLS (called by agents)</div>
+          <div class="agrid">
+            <div class="achip ach-p">🌐 Playwright</div>
+            <div class="achip ach-p">🐍 Python Exec</div>
+            <div class="achip ach-p">🗃️ Neo4j Driver</div>
+            <div class="achip ach-p">📦 Docker SDK</div>
+            <div class="achip ach-p">🔧 Shell/Bash</div>
+            <div class="achip ach-p">📄 File System</div>
+            <div class="achip ach-p">🔑 API Clients</div>
+            <div class="achip ach-p">📌 Git CLI</div>
+            <div class="achip ach-p">🖼️ Vision LLM</div>
+          </div>
+        </div>
+        
+        <div id="adetail" style="display:none">
+          <div class="adtitle" id="ad-title">AGENT</div>
+          <div class="adgrid">
+            <div>
+              <div class="h3">Role</div>
+              <p id="ad-role" style="font-size:13px;margin-bottom:10px"></p>
+              <div class="h3">Tools</div>
+              <div id="ad-tools" class="agrid" style="margin-top:6px"></div>
+            </div>
+            <div>
+              <div class="h3">KG Interactions</div>
+              <p id="ad-kg" style="font-size:13px;margin-bottom:10px"></p>
+              <div class="h3">Model Assignment</div>
+              <p id="ad-model" style="font-size:13px"></p>
+            </div>
+          </div>
+          <pre id="ad-code" style="margin-top:12px"><code id="ad-code-inner"></code></pre>
+        </div>
+        
+        <div class="h2">Orchestrator — Core Logic</div>
+        <pre><code><span class="cm"># core/orchestrator.py</span>
+        <span class="kw">import</span> json
+        
+        <span class="kw">class</span> <span class="ty">Orchestrator</span><span class="pu">:</span>
+            <span class="ty">SYSTEM</span> <span class="op">=</span> <span class="st">"""You are L.O.R.A. Orchestrator.
+        Agents: research, code, docker, database, git, file, os, memory, analysis, reasoning.
+        For each task respond ONLY with JSON:
+        {
+          "plan": "brief reasoning",
+          "steps": [
+            {"agent":"name","task":"instruction","priority":1,"depends_on":[]}
+          ]
+        }"""</span>
+        
+            <span class="kw">def</span> <span class="fn">__init__</span><span class="pu">(</span>self, agents<span class="pu">:</span> dict, kg, llm<span class="pu">)</span><span class="pu">:</span>
+                self.agents <span class="op">=</span> agents
+                self.kg     <span class="op">=</span> kg
+                self.llm    <span class="op">=</span> llm
+        
+            <span class="kw">async def</span> <span class="fn">handle</span><span class="pu">(</span>self, user_input<span class="pu">:</span> str<span class="pu">)</span> <span class="op">-&gt;</span> str<span class="pu">:</span>
+                <span class="cm"># 1. Pull relevant KG context</span>
+                ctx <span class="op">=</span> self.kg.vector_search<span class="pu">(</span>self.embed<span class="pu">(</span>user_input<span class="pu">)</span>, top_k<span class="pu">=</span><span class="nm">5</span><span class="pu">)</span>
+        
+                <span class="cm"># 2. LLM plans a DAG of agent steps</span>
+                raw <span class="op">=</span> <span class="kw">await</span> self.llm.complete<span class="pu">(</span>
+                    system<span class="pu">=</span>self.<span class="ty">SYSTEM</span><span class="pu">,</span>
+                    user<span class="pu">=</span><span class="st">f"KG context:{ctx}
+        Task:{user_input}"</span><span class="pu">)</span>
+                plan <span class="op">=</span> json.loads<span class="pu">(</span>raw<span class="pu">)</span>
+        
+                <span class="cm"># 3. Execute in priority order</span>
+                results <span class="op">=</span> <span class="pu">{}</span>
+                <span class="kw">for</span> step <span class="kw">in</span> sorted<span class="pu">(</span>plan<span class="pu">[</span><span class="st">'steps'</span><span class="pu">]</span>, key<span class="pu">=</span><span class="kw">lambda</span> s<span class="pu">:</span>s<span class="pu">[</span><span class="st">'priority'</span><span class="pu">]</span><span class="pu">)</span><span class="pu">:</span>
+                    agent <span class="op">=</span> self.agents<span class="pu">[</span>step<span class="pu">[</span><span class="st">'agent'</span><span class="pu">]</span><span class="pu">]</span>
+                    deps  <span class="op">=</span> <span class="pu">{</span>k<span class="pu">:</span>results<span class="pu">[</span>k<span class="pu">]</span> <span class="kw">for</span> k <span class="kw">in</span> step.get<span class="pu">(</span><span class="st">'depends_on'</span><span class="pu">,</span><span class="pu">[]</span><span class="pu">)</span><span class="pu">}</span>
+                    results<span class="pu">[</span>step<span class="pu">[</span><span class="st">'agent'</span><span class="pu">]</span><span class="pu">]</span> <span class="op">=</span> <span class="kw">await</span> agent.run<span class="pu">(</span>step<span class="pu">[</span><span class="st">'task'</span><span class="pu">]</span>, context<span class="pu">=</span>deps<span class="pu">)</span>
+        
+                <span class="cm"># 4. Log session to KG + synthesize reply</span>
+                <span class="kw">await</span> self.log_session<span class="pu">(</span>user_input, plan, results<span class="pu">)</span>
+                <span class="kw">return await</span> self.synthesize<span class="pu">(</span>user_input, results<span class="pu">)</span><span class="lang">PYTHON</span></code></pre>
+        
+        <div class="h2">Provider Waterfall — Free Tier Strategy</div>
+        <div class="pwfall">
+        <div class="prow"><div class="prank">1</div><div class="pname">Groq</div><div style="font-size:12px;color:var(--t2)">Llama 3.3-70b, Mixtral. ~250 tok/s. Free: 30 req/min, 14.4k req/day</div><div class="ptags"><span class="tag tc">FAST</span><span class="tag tg">FREE</span></div></div>
+        <div class="prow"><div class="prank">2</div><div class="pname">Google AI Studio</div><div style="font-size:12px;color:var(--t2)">Gemini 2.0 Flash, 1.5 Pro. 1M token context. Free: 15 req/min</div><div class="ptags"><span class="tag tc">LONG CTX</span><span class="tag tg">FREE</span></div></div>
+        <div class="prow"><div class="prank">3</div><div class="pname">Cerebras</div><div style="font-size:12px;color:var(--t2)">Llama 3.3-70b on wafer chips. Up to 1800 tok/s for burst tasks</div><div class="ptags"><span class="tag tc">ULTRA FAST</span><span class="tag tg">FREE TIER</span></div></div>
+        <div class="prow"><div class="prank">4</div><div class="pname">OpenRouter</div><div style="font-size:12px;color:var(--t2)">200+ models. Claude, GPT-4, Mistral, Deepseek. Pay-as-you-go fallback</div><div class="ptags"><span class="tag to">PAID</span></div></div>
+        <div class="prow"><div class="prank">5</div><div class="pname">Ollama (local)</div><div style="font-size:12px;color:var(--t2)">Qwen2.5:14b, Mistral-7b, Gemma. No rate limits, full privacy, works offline</div><div class="ptags"><span class="tag tg">LOCAL</span><span class="tag tg">FREE</span></div></div>
+        </div>
+        <pre><code><span class="cm"># core/llm_router.py — Automatic waterfall</span>
+        <span class="kw">class</span> <span class="ty">LLMRouter</span><span class="pu">:</span>
+            <span class="ty">CHAIN</span> <span class="op">=</span> <span class="pu">[</span>
+                <span class="pu">{</span><span class="st">"name"</span><span class="pu">:</span><span class="st">"groq"</span><span class="pu">,</span>    <span class="st">"model"</span><span class="pu">:</span><span class="st">"llama-3.3-70b-versatile"</span><span class="pu">}</span><span class="pu">,</span>
+                <span class="pu">{</span><span class="st">"name"</span><span class="pu">:</span><span class="st">"gemini"</span><span class="pu">,</span>  <span class="st">"model"</span><span class="pu">:</span><span class="st">"gemini-2.0-flash"</span><span class="pu">}</span><span class="pu">,</span>
+                <span class="pu">{</span><span class="st">"name"</span><span class="pu">:</span><span class="st">"cerebras"</span><span class="pu">,</span><span class="st">"model"</span><span class="pu">:</span><span class="st">"llama3.3-70b"</span><span class="pu">}</span><span class="pu">,</span>
+                <span class="pu">{</span><span class="st">"name"</span><span class="pu">:</span><span class="st">"ollama"</span><span class="pu">,</span>  <span class="st">"model"</span><span class="pu">:</span><span class="st">"qwen2.5:14b"</span><span class="pu">}</span>
+            <span class="pu">]</span>
+            <span class="kw">async def</span> <span class="fn">complete</span><span class="pu">(</span>self, system<span class="pu">:</span> str, user<span class="pu">:</span> str<span class="pu">)</span> <span class="op">-&gt;</span> str<span class="pu">:</span>
+                <span class="kw">for</span> p <span class="kw">in</span> self.<span class="ty">CHAIN</span><span class="pu">:</span>
+                    <span class="kw">try</span><span class="pu">:</span>
+                        <span class="kw">return await</span> self._call<span class="pu">(</span>p, system, user<span class="pu">)</span>
+                    <span class="kw">except</span> <span class="ty">Exception</span><span class="pu">:</span>
+                        <span class="kw">continue</span>  <span class="cm"># cascade to next provider</span>
+                <span class="kw">raise</span> <span class="ty">RuntimeError</span><span class="pu">(</span><span class="st">"All LLM providers exhausted"</span><span class="pu">)</span><span class="lang">PYTHON</span></code></pre>
+        <div class="h2">Agent Communication Protocol</div>
+        <p>Agents in L.O.R.A. don't communicate through message queues or direct function calls — they communicate via the <strong>Knowledge Graph</strong>. This is the most important architectural decision: the KG is not just storage, it's the <em>communication bus</em>. When Agent A finishes a task, it writes a node to the KG. Agent B reads that node as context. No shared state, no race conditions, full auditability.</p>
+        <div class="g2">
+        <div class="card cc"><div class="ct">Write Protocol (Agent → KG)</div><p style="font-size:12px;margin:0">Every agent action writes a structured result node:<br><code style="font-family:var(--f4);color:var(--c1);font-size:10px">MERGE (r:Result {id:$id}) SET r.agent=$agent, r.output=$out, r.status="done", r.ts=timestamp()</code><br>This is the agent's "return value" — durable, queryable, cross-session.</p></div>
+        <div class="card cg"><div class="ct">Read Protocol (KG → Agent)</div><p style="font-size:12px;margin:0">Before any task, agents pull relevant context:<br><code style="font-family:var(--f4);color:var(--c2);font-size:10px">MATCH (t:Task {id:$id})-[:DEPENDS_ON]->(dep) MATCH (dep)-[:PRODUCED]->(r:Result) RETURN r.output</code><br>Dependency outputs are always available — even if produced in a previous session.</p></div>
+        </div>
+
+        <div class="h2">Inter-Agent Task Dependency Graph (DAG)</div>
+        <p>The Orchestrator doesn't just assign tasks sequentially — it builds a <strong>Directed Acyclic Graph (DAG)</strong> of task dependencies. Tasks with no dependencies run in parallel. Tasks that depend on prior outputs wait. This is how L.O.R.A. achieves concurrency without race conditions — the KG enforces the ordering.</p>
+        <pre><code><span class="cm"># core/dag_executor.py — Parallel DAG execution</span>
+<span class="kw">import</span> asyncio
+<span class="kw">from</span> collections <span class="kw">import</span> defaultdict
+
+<span class="kw">class</span> <span class="ty">DAGExecutor</span><span class="pu">:</span>
+    <span class="kw">async def</span> <span class="fn">execute</span><span class="pu">(</span>self, steps<span class="pu">:</span> list, agents<span class="pu">:</span> dict<span class="pu">)</span> <span class="op">-></span> dict<span class="pu">:</span>
+        <span class="cm"># Build dependency map</span>
+        deps <span class="op">=</span> <span class="pu">{</span>s<span class="pu">[</span><span class="st">"id"</span><span class="pu">]</span><span class="pu">:</span> set<span class="pu">(</span>s.get<span class="pu">(</span><span class="st">"depends_on"</span><span class="pu">,</span> <span class="pu">[]</span><span class="pu">))</span> <span class="kw">for</span> s <span class="kw">in</span> steps<span class="pu">}</span>
+        completed <span class="op">=</span> <span class="pu">{}</span>
+
+        <span class="kw">while</span> len<span class="pu">(</span>completed<span class="pu">)</span> <span class="op"><</span> len<span class="pu">(</span>steps<span class="pu">)</span><span class="pu">:</span>
+            <span class="cm"># Find steps whose all dependencies are done</span>
+            ready <span class="op">=</span> <span class="pu">[</span>s <span class="kw">for</span> s <span class="kw">in</span> steps
+                      <span class="kw">if</span> s<span class="pu">[</span><span class="st">"id"</span><span class="pu">]</span> <span class="kw">not in</span> completed
+                      <span class="kw">and</span> deps<span class="pu">[</span>s<span class="pu">[</span><span class="st">"id"</span><span class="pu">]</span><span class="pu">]</span>.issubset<span class="pu">(</span>completed<span class="pu">)</span><span class="pu">]</span>
+
+            <span class="cm"># Run ready steps in parallel</span>
+            tasks <span class="op">=</span> <span class="pu">[</span>agents<span class="pu">[</span>s<span class="pu">[</span><span class="st">"agent"</span><span class="pu">]</span><span class="pu">]</span>.run<span class="pu">(</span>s<span class="pu">[</span><span class="st">"task"</span><span class="pu">]</span>,
+                context<span class="pu">={</span>d<span class="pu">:</span>completed<span class="pu">[</span>d<span class="pu">]</span> <span class="kw">for</span> d <span class="kw">in</span> deps<span class="pu">[</span>s<span class="pu">[</span><span class="st">"id"</span><span class="pu">]</span><span class="pu">]</span><span class="pu">}</span><span class="pu">)</span>
+                <span class="kw">for</span> s <span class="kw">in</span> ready<span class="pu">]</span>
+
+            results <span class="op">=</span> <span class="kw">await</span> asyncio.gather<span class="pu">(</span><span class="op">*</span>tasks<span class="pu">)</span>
+            <span class="kw">for</span> step, result <span class="kw">in</span> zip<span class="pu">(</span>ready, results<span class="pu">)</span><span class="pu">:</span>
+                completed<span class="pu">[</span>step<span class="pu">[</span><span class="st">"id"</span><span class="pu">]</span><span class="pu">]</span> <span class="op">=</span> result
+                self.kg.write_result<span class="pu">(</span>step, result<span class="pu">)</span>  <span class="cm"># persist to KG</span>
+
+        <span class="kw">return</span> completed<span class="lang">PYTHON</span></code></pre>
+
+        <div class="h2">Agent Design Patterns</div>
+        <p>Each specialized agent in L.O.R.A. follows a consistent design pattern that makes them composable, testable, and KG-aware. Every agent inherits from <code style="font-family:var(--f4);color:var(--c1);font-size:11px">BaseAgent</code> which wires in the KG client, LLM router, and logging hooks automatically.</p>
+        <pre><code><span class="cm"># agents/base_agent.py — All agents inherit this</span>
+<span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">import</span> time, uuid
+
+<span class="kw">class</span> <span class="ty">BaseAgent</span><span class="pu">(</span>ABC<span class="pu">)</span><span class="pu">:</span>
+    <span class="kw">def</span> <span class="fn">__init__</span><span class="pu">(</span>self, kg, llm, name<span class="pu">:</span> str<span class="pu">)</span><span class="pu">:</span>
+        self.kg   <span class="op">=</span> kg    <span class="cm"># KGClient — read/write Neo4j</span>
+        self.llm  <span class="op">=</span> llm   <span class="cm"># LLMRouter — waterfall providers</span>
+        self.name <span class="op">=</span> name  <span class="cm"># Unique agent identifier</span>
+        self._register<span class="pu">()</span>  <span class="cm"># Write self to KG agent registry</span>
+
+    <span class="kw">def</span> <span class="fn">_register</span><span class="pu">(</span>self<span class="pu">)</span><span class="pu">:</span>
+        self.kg.upsert_entity<span class="pu">(</span><span class="st">"Agent"</span><span class="pu">,</span> <span class="pu">{</span>
+            <span class="st">"name"</span><span class="pu">:</span> self.name<span class="pu">,</span>
+            <span class="st">"capabilities"</span><span class="pu">:</span> self.capabilities<span class="pu">()</span><span class="pu">,</span>
+            <span class="st">"status"</span><span class="pu">:</span> <span class="st">"online"</span><span class="pu">,</span>
+            <span class="st">"last_seen"</span><span class="pu">:</span> int<span class="pu">(</span>time.time<span class="pu">()</span><span class="pu">)</span>
+        <span class="pu">}</span><span class="pu">)</span>
+
+    <span class="kw">async def</span> <span class="fn">run</span><span class="pu">(</span>self, task<span class="pu">:</span> str, context<span class="pu">:</span> dict <span class="op">=</span> <span class="pu">{}</span><span class="pu">)</span> <span class="op">-></span> str<span class="pu">:</span>
+        task_id <span class="op">=</span> str<span class="pu">(</span>uuid.uuid4<span class="pu">())</span>
+        self.kg.upsert_entity<span class="pu">(</span><span class="st">"Task"</span><span class="pu">,</span> <span class="pu">{</span>
+            <span class="st">"id"</span><span class="pu">:</span> task_id<span class="pu">,</span> <span class="st">"title"</span><span class="pu">:</span> task<span class="pu">[:</span><span class="nm">120</span><span class="pu">]</span><span class="pu">,</span>
+            <span class="st">"status"</span><span class="pu">:</span> <span class="st">"running"</span><span class="pu">,</span> <span class="st">"agent"</span><span class="pu">:</span> self.name
+        <span class="pu">}</span><span class="pu">)</span>
+        <span class="kw">try</span><span class="pu">:</span>
+            result <span class="op">=</span> <span class="kw">await</span> self._execute<span class="pu">(</span>task, context<span class="pu">)</span>
+            self.kg.upsert_relation<span class="pu">(</span>self.name<span class="pu">,</span> <span class="st">"EXECUTED"</span><span class="pu">,</span> task_id<span class="pu">,</span>
+                <span class="pu">{</span><span class="st">"status"</span><span class="pu">:</span> <span class="st">"success"</span>, <span class="st">"ended_at"</span><span class="pu">:</span> int<span class="pu">(</span>time.time<span class="pu">())</span><span class="pu">}</span><span class="pu">)</span>
+            <span class="kw">return</span> result
+        <span class="kw">except</span> <span class="ty">Exception</span> <span class="kw">as</span> e<span class="pu">:</span>
+            self.kg.upsert_relation<span class="pu">(</span>self.name<span class="pu">,</span> <span class="st">"EXECUTED"</span><span class="pu">,</span> task_id<span class="pu">,</span>
+                <span class="pu">{</span><span class="st">"status"</span><span class="pu">:</span> <span class="st">"failed"</span>, <span class="st">"error"</span><span class="pu">:</span> str<span class="pu">(</span>e<span class="pu">)</span><span class="pu">}</span><span class="pu">)</span>
+            <span class="kw">raise</span>
+
+    <span class="pu">@</span>abstractmethod
+    <span class="kw">async def</span> <span class="fn">_execute</span><span class="pu">(</span>self, task<span class="pu">:</span> str, context<span class="pu">:</span> dict<span class="pu">)</span> <span class="op">-></span> str<span class="pu">:</span>
+        <span class="pu">...</span>
+
+    <span class="pu">@</span>abstractmethod
+    <span class="kw">def</span> <span class="fn">capabilities</span><span class="pu">(</span>self<span class="pu">)</span> <span class="op">-></span> list<span class="pu">[</span>str<span class="pu">]</span><span class="pu">:</span>
+        <span class="pu">...</span><span class="lang">PYTHON</span></code></pre>
+
+        <div class="h2">Agent Capability Matrix</div>
+        <table class="tbl">
+        <thead><tr><th>Agent</th><th>KG Reads</th><th>KG Writes</th><th>External I/O</th><th>Model</th><th>Max Concurrency</th></tr></thead>
+        <tbody>
+        <tr><td><strong>🎯 Orchestrator</strong></td><td>Vector search, task deps</td><td>Session, Task, plan traces</td><td>None — internal only</td><td><span class="tag tc">Groq 70b</span></td><td>1 (coordinator)</td></tr>
+        <tr><td><strong>🔍 Research</strong></td><td>Existing Document nodes</td><td>Document, Concept, CONTAINS</td><td>Playwright web crawl</td><td><span class="tag tg">Gemini Flash</span></td><td>3 parallel URLs</td></tr>
+        <tr><td><strong>💻 Code</strong></td><td>CodeSnippet vector search</td><td>CodeSnippet, PRODUCED</td><td>Docker sandbox exec</td><td><span class="tag tc">Groq 70b</span></td><td>2 containers</td></tr>
+        <tr><td><strong>🐳 Docker</strong></td><td>Container nodes</td><td>Container, BUILD_FROM</td><td>Docker daemon socket</td><td><span class="tag tg">Groq 8b</span></td><td>5 containers</td></tr>
+        <tr><td><strong>🗄️ Database</strong></td><td>Full read, schema introspect</td><td>Full write</td><td>Neo4j bolt driver</td><td><span class="tag tc">Groq 70b</span></td><td>10 concurrent queries</td></tr>
+        <tr><td><strong>🌿 Git</strong></td><td>Commit, Branch nodes</td><td>Commit, Branch, MODIFIED</td><td>GitHub/GitLab API + local git</td><td><span class="tag tg">Gemini Flash</span></td><td>1 per repo</td></tr>
+        <tr><td><strong>📁 File</strong></td><td>Document nodes (dedup)</td><td>Document + CONTAINS edges</td><td>File system, PyMuPDF, watchdog</td><td><span class="tag tc">Groq 8b</span></td><td>Unlimited (I/O bound)</td></tr>
+        <tr><td><strong>🖥️ OS Brain</strong></td><td>SystemState nodes</td><td>SystemState, OS events</td><td>psutil, subprocess, mss</td><td><span class="tag tpp">Ollama local</span></td><td>1 (system access)</td></tr>
+        <tr><td><strong>🧠 Memory</strong></td><td>Full CRUD</td><td>Full CRUD + decay</td><td>None — KG only</td><td><span class="tag tc">Groq 8b</span></td><td>20 (pure queries)</td></tr>
+        <tr><td><strong>📊 Analysis</strong></td><td>Task/Session telemetry</td><td>AnalysisReport nodes</td><td>pandas, matplotlib, plotly</td><td><span class="tag tg">Gemini Flash</span></td><td>3 analyses</td></tr>
+        <tr><td><strong>🔮 Reasoning</strong></td><td>Deep multi-hop traversal</td><td>Inference edges</td><td>None — KG + LLM only</td><td><span class="tag tg">Gemini Flash</span></td><td>2 (LLM-heavy)</td></tr>
+        </tbody>
+        </table>
+
+      </div>
+
+      <div id="t5" class="panel" style="display:none">
+        <div class="stitle">VOICE &amp; OS BRAIN</div>
+        <div class="ssub">// Whisper · Kokoro · Silero VAD · System Integration</div>
+        
+        <div class="h2">Full Voice Pipeline</div>
+        <div class="pipe">
+        <div class="pstep"><div class="picn">🎙️</div><div class="plbl">Microphone</div><div class="psub">sounddevice / PyAudio</div></div>
+        <div class="pstep"><div class="picn">🔇</div><div class="plbl">VAD</div><div class="psub">silero-vad — silence filter</div></div>
+        <div class="pstep"><div class="picn">🌊</div><div class="plbl">Wake Word</div><div class="psub">openwakeword "Hey LORA"</div></div>
+        <div class="pstep"><div class="picn">👂</div><div class="plbl">STT</div><div class="psub">faster-whisper base.en INT8</div></div>
+        <div class="pstep"><div class="picn">🎯</div><div class="plbl">Orchestrator</div><div class="psub">LLM routes to agents</div></div>
+        <div class="pstep"><div class="picn">🗣️</div><div class="plbl">TTS</div><div class="psub">Kokoro 82M — natural voice</div></div>
+        <div class="pstep"><div class="picn">🔊</div><div class="plbl">Speaker</div><div class="psub">sounddevice stream</div></div>
+        </div>
+        
+        <div class="h2">Component Stack — Local, Free, Private</div>
+        <div class="g2">
+        <div class="card cc"><div class="ct">STT — faster-whisper</div>
+        <p style="font-size:12.5px;margin-bottom:6px">OpenAI Whisper rebuilt with CTranslate2. 4× faster, INT8 quantization. <strong>base.en</strong>: 74MB, ~50ms latency. <strong>small.en</strong>: 244MB, ~100ms, higher accuracy. Has VAD built in.</p>
+        <pre style="margin:0;padding:8px"><code style="font-size:10.5px">pip install faster-whisper</code></pre></div>
+        <div class="card cg"><div class="ct">TTS — Kokoro (hexgrad)</div>
+        <p style="font-size:12.5px;margin-bottom:6px">Apache 2.0, 82M params, near-human quality. 57 voices, 9 languages. CPU-capable (slow), GPU-fast. Best free local TTS in 2025.</p>
+        <pre style="margin:0;padding:8px"><code style="font-size:10.5px">pip install kokoro soundfile</code></pre></div>
+        <div class="card cp"><div class="ct">VAD — silero-vad</div>
+        <p style="font-size:12.5px;margin-bottom:6px">2MB PyTorch model. Prevents Whisper from transcribing silence (which generates hallucinated text). Essential for always-on listening loops.</p>
+        <pre style="margin:0;padding:8px"><code style="font-size:10.5px">pip install silero-vad</code></pre></div>
+        <div class="card co"><div class="ct">Wake Word — openwakeword</div>
+        <p style="font-size:12.5px;margin-bottom:6px">Free, local, trainable. Detects "Hey LORA" without GPU. Activates pipeline only when needed — saves resources and avoids accidental triggers.</p>
+        <pre style="margin:0;padding:8px"><code style="font-size:10.5px">pip install openwakeword</code></pre></div>
+        </div>
+        
+        <div class="h2">Voice Pipeline Implementation</div>
+        <pre><code><span class="cm"># voice/pipeline.py</span>
+        <span class="kw">from</span> faster_whisper <span class="kw">import</span> <span class="ty">WhisperModel</span>
+        <span class="kw">from</span> kokoro <span class="kw">import</span> <span class="ty">KPipeline</span>
+        <span class="kw">import</span> numpy <span class="kw">as</span> np
+        <span class="kw">import</span> sounddevice <span class="kw">as</span> sd
+        <span class="kw">import</span> asyncio
+        
+        <span class="kw">class</span> <span class="ty">VoicePipeline</span><span class="pu">:</span>
+            <span class="kw">def</span> <span class="fn">__init__</span><span class="pu">(</span>self, orchestrator<span class="pu">)</span><span class="pu">:</span>
+                self.orch <span class="op">=</span> orchestrator
+                self.stt  <span class="op">=</span> <span class="ty">WhisperModel</span><span class="pu">(</span><span class="st">"base.en"</span>, compute_type<span class="pu">=</span><span class="st">"int8"</span><span class="pu">)</span>
+                self.tts  <span class="op">=</span> <span class="ty">KPipeline</span><span class="pu">(</span>lang_code<span class="pu">=</span><span class="st">'a'</span><span class="pu">)</span>   <span class="cm"># 'a'=American English</span>
+                self.sr   <span class="op">=</span> <span class="nm">16000</span>
+                self.wake <span class="op">=</span> <span class="st">"lora"</span>
+        
+            <span class="kw">def</span> <span class="fn">record</span><span class="pu">(</span>self, secs<span class="pu">=</span><span class="nm">4</span><span class="pu">)</span> <span class="op">-&gt;</span> np.ndarray<span class="pu">:</span>
+                audio <span class="op">=</span> sd.rec<span class="pu">(</span>int<span class="pu">(</span>secs <span class="op">*</span> self.sr<span class="pu">)</span><span class="pu">,</span>
+                                samplerate<span class="pu">=</span>self.sr<span class="pu">,</span>
+                                channels<span class="pu">=</span><span class="nm">1</span>, dtype<span class="pu">=</span><span class="st">'float32'</span><span class="pu">)</span>
+                sd.wait<span class="pu">()</span>
+                <span class="kw">return</span> audio.flatten<span class="pu">()</span>
+        
+            <span class="kw">def</span> <span class="fn">transcribe</span><span class="pu">(</span>self, audio<span class="pu">:</span> np.ndarray<span class="pu">)</span> <span class="op">-&gt;</span> str<span class="pu">:</span>
+                segs, _ <span class="op">=</span> self.stt.transcribe<span class="pu">(</span>
+                    audio, beam_size<span class="pu">=</span><span class="nm">5</span><span class="pu">,</span>
+                    vad_filter<span class="pu">=</span><span class="kw">True</span><span class="pu">,</span>      <span class="cm"># silero VAD baked in</span>
+                    vad_parameters<span class="pu">=</span>dict<span class="pu">(</span>min_silence_duration_ms<span class="pu">=</span><span class="nm">500</span><span class="pu">)</span>
+                <span class="pu">)</span>
+                <span class="kw">return</span> <span class="st">" "</span>.join<span class="pu">(</span>s.text.strip<span class="pu">()</span> <span class="kw">for</span> s <span class="kw">in</span> segs<span class="pu">)</span>
+        
+            <span class="kw">def</span> <span class="fn">speak</span><span class="pu">(</span>self, text<span class="pu">:</span> str, voice<span class="pu">=</span><span class="st">"af_bella"</span><span class="pu">)</span><span class="pu">:</span>
+                <span class="kw">for</span> samples, sr, _ <span class="kw">in</span> self.tts<span class="pu">(</span>text, voice<span class="pu">=</span>voice<span class="pu">)</span><span class="pu">:</span>
+                    sd.play<span class="pu">(</span>samples, sr<span class="pu">)</span>
+                    sd.wait<span class="pu">()</span>
+        
+            <span class="kw">async def</span> <span class="fn">run_loop</span><span class="pu">(</span>self<span class="pu">)</span><span class="pu">:</span>
+                print<span class="pu">(</span><span class="st">"🎙️ L.O.R.A. listening for wake word..."</span><span class="pu">)</span>
+                <span class="kw">while</span> <span class="kw">True</span><span class="pu">:</span>
+                    audio <span class="op">=</span> self.record<span class="pu">(</span><span class="nm">2</span><span class="pu">)</span>                   <span class="cm"># short poll</span>
+                    text  <span class="op">=</span> self.transcribe<span class="pu">(</span>audio<span class="pu">)</span>.lower<span class="pu">()</span>
+        
+                    <span class="kw">if</span> self.wake <span class="kw">in</span> text<span class="pu">:</span>
+                        self.speak<span class="pu">(</span><span class="st">"Yes?"</span><span class="pu">)</span>
+                        cmd <span class="op">=</span> self.transcribe<span class="pu">(</span>self.record<span class="pu">(</span><span class="nm">7</span><span class="pu">)</span><span class="pu">)</span>
+                        <span class="kw">if</span> cmd.strip<span class="pu">()</span><span class="pu">:</span>
+                            resp <span class="op">=</span> <span class="kw">await</span> self.orch.handle<span class="pu">(</span>cmd<span class="pu">)</span>
+                            self.speak<span class="pu">(</span>resp<span class="pu">)</span>
+        
+                    <span class="kw">await</span> asyncio.sleep<span class="pu">(</span><span class="nm">0.05</span><span class="pu">)</span><span class="lang">PYTHON</span></code></pre>
+        
+        <div class="h2">OS Brain — System Integration Capabilities</div>
+        <div class="g3">
+        <div class="card cc"><div class="ct">Process Control</div><p style="font-size:12px;margin:0"><code style="font-family:var(--f4);font-size:10px;color:var(--c1)">psutil</code> — list, monitor, kill processes. Read CPU/RAM/disk. <em>"Kill Chrome, it's at 90% CPU."</em></p></div>
+        <div class="card cg"><div class="ct">File Watching</div><p style="font-size:12px;margin:0"><code style="font-family:var(--f4);font-size:10px;color:var(--c2)">watchdog</code> — monitor dirs for changes, auto-ingest new files into KG. React to project changes automatically.</p></div>
+        <div class="card cp"><div class="ct">Clipboard</div><p style="font-size:12px;margin:0"><code style="font-family:var(--f4);font-size:10px;color:var(--c3)">pyperclip</code> — read/write system clipboard. <em>"Paste this into my code."</em> or extract clipboard into KG.</p></div>
+        <div class="card cc"><div class="ct">Shell Execution</div><p style="font-size:12px;margin:0"><code style="font-family:var(--f4);font-size:10px;color:var(--c1)">subprocess</code> — run any terminal command. Scripts, git, docker, package installs — all from voice.</p></div>
+        <div class="card cg"><div class="ct">Screen Vision</div><p style="font-size:12px;margin:0"><code style="font-family:var(--f4);font-size:10px;color:var(--c2)">mss + Pillow</code> — capture screen regions, send to vision LLM. <em>"What's on my screen?"</em></p></div>
+        <div class="card cp"><div class="ct">Notifications</div><p style="font-size:12px;margin:0"><code style="font-family:var(--f4);font-size:10px;color:var(--c3)">plyer / notify-send</code> — desktop alerts. Notify when long agent tasks complete in the background.</p></div>
+        </div>
+        
+        <div class="h2">OS Daemon Code</div>
+        <pre><code><span class="cm"># agents/os_agent.py</span>
+        <span class="kw">import</span> psutil, subprocess, pyperclip, mss
+        <span class="kw">from</span> watchdog.observers <span class="kw">import</span> <span class="ty">Observer</span>
+        <span class="kw">from</span> watchdog.events <span class="kw">import</span> <span class="ty">FileSystemEventHandler</span>
+        
+        <span class="kw">class</span> <span class="ty">OSAgent</span><span class="pu">:</span>
+            <span class="kw">def</span> <span class="fn">__init__</span><span class="pu">(</span>self, kg, llm<span class="pu">)</span><span class="pu">:</span>
+                self.kg <span class="op">=</span> kg
+                self.llm <span class="op">=</span> llm
+                self.observer <span class="op">=</span> <span class="ty">Observer</span><span class="pu">()</span>
+        
+            <span class="kw">def</span> <span class="fn">status</span><span class="pu">(</span>self<span class="pu">)</span> <span class="op">-&gt;</span> dict<span class="pu">:</span>
+                <span class="kw">return</span> <span class="pu">{</span>
+                    <span class="st">"cpu"</span> <span class="pu">:</span> psutil.cpu_percent<span class="pu">(</span>interval<span class="pu">=</span><span class="nm">0.5</span><span class="pu">)</span><span class="pu">,</span>
+                    <span class="st">"ram"</span> <span class="pu">:</span> psutil.virtual_memory<span class="pu">()</span>.percent<span class="pu">,</span>
+                    <span class="st">"disk"</span><span class="pu">:</span> psutil.disk_usage<span class="pu">(</span><span class="st">'/'</span><span class="pu">)</span>.percent<span class="pu">,</span>
+                    <span class="st">"procs"</span><span class="pu">:</span><span class="pu">[</span>p.name<span class="pu">()</span> <span class="kw">for</span> p <span class="kw">in</span> psutil.process_iter<span class="pu">()</span><span class="pu">][:</span><span class="nm">15</span><span class="pu">]</span>
+                <span class="pu">}</span>
+        
+            <span class="kw">def</span> <span class="fn">run</span><span class="pu">(</span>self, cmd<span class="pu">:</span> str, cwd<span class="pu">=</span><span class="kw">None</span><span class="pu">)</span> <span class="op">-&gt;</span> str<span class="pu">:</span>
+                r <span class="op">=</span> subprocess.run<span class="pu">(</span>cmd, shell<span class="pu">=</span><span class="kw">True</span><span class="pu">,</span>
+                      capture_output<span class="pu">=</span><span class="kw">True</span>, text<span class="pu">=</span><span class="kw">True</span><span class="pu">,</span>
+                      timeout<span class="pu">=</span><span class="nm">30</span>, cwd<span class="pu">=</span>cwd<span class="pu">)</span>
+                <span class="kw">return</span> r.stdout <span class="op">+</span> r.stderr
+        
+            <span class="kw">def</span> <span class="fn">get_clipboard</span><span class="pu">(</span>self<span class="pu">)</span>     <span class="op">-&gt;</span> str<span class="pu">:</span> <span class="kw">return</span> pyperclip.paste<span class="pu">()</span>
+            <span class="kw">def</span> <span class="fn">set_clipboard</span><span class="pu">(</span>self, t<span class="pu">:</span>str<span class="pu">)</span>     <span class="pu">:</span> pyperclip.copy<span class="pu">(</span>t<span class="pu">)</span>
+        
+            <span class="kw">def</span> <span class="fn">screenshot</span><span class="pu">(</span>self, path<span class="pu">=</span><span class="st">"/tmp/screen.png"</span><span class="pu">)</span><span class="pu">:</span>
+                <span class="kw">with</span> mss.<span class="ty">mss</span><span class="pu">()</span> <span class="kw">as</span> s<span class="pu">:</span>
+                    s.shot<span class="pu">(</span>output<span class="pu">=</span>path<span class="pu">)</span>
+                <span class="kw">return</span> path
+        
+            <span class="kw">def</span> <span class="fn">watch_dir</span><span class="pu">(</span>self, path<span class="pu">:</span> str<span class="pu">)</span><span class="pu">:</span>
+                <span class="kw">class</span> <span class="ty">H</span><span class="pu">(</span><span class="ty">FileSystemEventHandler</span><span class="pu">)</span><span class="pu">:</span>
+                    <span class="kw">def</span> <span class="fn">on_modified</span><span class="pu">(</span>h, e<span class="pu">)</span><span class="pu">:</span>
+                        <span class="kw">if not</span> e.is_directory<span class="pu">:</span>
+                            self.kg.ingest_file<span class="pu">(</span>e.src_path<span class="pu">)</span>
+                self.observer.schedule<span class="pu">(</span><span class="ty">H</span><span class="pu">(),</span> path, recursive<span class="pu">=</span><span class="kw">True</span><span class="pu">)</span>
+                self.observer.start<span class="pu">()</span><span class="lang">PYTHON</span></code></pre>
+
+        <div class="h2">Custom Wake Word Training</div>
+        <p>"Hey LORA" isn't a built-in wake word — openwakeword ships with generic wake words ("hey jarvis", "alexa") and provides a training pipeline for custom ones. Training requires synthetic data generation (no need to record yourself thousands of times) using TTS-generated samples plus background noise augmentation.</p>
+        <pre><code><span class="cm"># voice/train_wakeword.py — Generate "Hey LORA" detector</span>
+<span class="kw">from</span> openwakeword.train <span class="kw">import</span> train_model
+<span class="kw">from</span> piper <span class="kw">import</span> <span class="ty">PiperVoice</span>  <span class="cm"># fast local TTS for synthetic data</span>
+
+<span class="cm"># Step 1: Generate hundreds of synthetic "Hey LORA" samples</span>
+<span class="cm"># across different TTS voices, speeds, and pitches</span>
+phrases <span class="op">=</span> <span class="pu">[</span><span class="st">"hey lora"</span><span class="pu">,</span> <span class="st">"hey laura"</span><span class="pu">,</span> <span class="st">"ay lora"</span><span class="pu">,</span> <span class="st">"hey lora computer"</span><span class="pu">]</span>
+voices <span class="op">=</span> <span class="pu">[</span><span class="st">"en_US-amy-medium"</span><span class="pu">,</span> <span class="st">"en_US-ryan-high"</span><span class="pu">,</span> <span class="st">"en_GB-alan-medium"</span><span class="pu">]</span>
+
+<span class="kw">for</span> phrase <span class="kw">in</span> phrases<span class="pu">:</span>
+    <span class="kw">for</span> voice <span class="kw">in</span> voices<span class="pu">:</span>
+        generate_samples<span class="pu">(</span>phrase, voice, n<span class="pu">=</span><span class="nm">200</span><span class="pu">,</span>
+            pitch_range<span class="pu">=(</span><span class="nm">0.85</span>,<span class="nm">1.15</span><span class="pu">),</span> speed_range<span class="pu">=(</span><span class="nm">0.9</span>,<span class="nm">1.1</span><span class="pu">))</span>
+
+<span class="cm"># Step 2: Mix with negative samples (background speech, music, silence)</span>
+<span class="cm"># from freely available datasets (MUSAN, FMA)</span>
+
+<span class="cm"># Step 3: Train the ONNX model</span>
+train_model<span class="pu">(</span>
+    positive_data_path<span class="pu">=</span><span class="st">"./samples/hey_lora/"</span><span class="pu">,</span>
+    negative_data_path<span class="pu">=</span><span class="st">"./samples/negative/"</span><span class="pu">,</span>
+    output_path<span class="pu">=</span><span class="st">"./models/hey_lora.onnx"</span><span class="pu">,</span>
+    epochs<span class="pu">=</span><span class="nm">200</span><span class="pu">)</span>
+
+<span class="cm"># Step 4: Drop the .onnx into openwakeword's model dir,</span>
+<span class="cm"># load it: oww.Model(wakeword_models=["./models/hey_lora.onnx"])</span><span class="lang">PYTHON</span></code></pre>
+
+        <div class="h2">"Brain for the OS" — The Always-On Reasoning Loop</div>
+        <p>The most ambitious part of this project: making L.O.R.A. feel like it's <em>aware</em> of what's happening on your machine, not just a chatbot you summon. This is achieved with a low-frequency background loop that periodically samples system state, screen content, and active windows — but writes <em>only meaningful changes</em> to the KG to avoid flooding it. The Reasoning Agent reviews this stream periodically and can proactively surface insights.</p>
+        <pre><code><span class="cm"># core/brain_loop.py — The ambient awareness loop</span>
+<span class="kw">import</span> asyncio, hashlib
+
+<span class="kw">class</span> <span class="ty">BrainLoop</span><span class="pu">:</span>
+    <span class="kw">def</span> <span class="fn">__init__</span><span class="pu">(</span>self, os_agent, kg, reasoning_agent, interval<span class="pu">=</span><span class="nm">30</span><span class="pu">)</span><span class="pu">:</span>
+        self.os    <span class="op">=</span> os_agent
+        self.kg    <span class="op">=</span> kg
+        self.brain <span class="op">=</span> reasoning_agent
+        self.interval <span class="op">=</span> interval  <span class="cm"># seconds between samples</span>
+        self._last_hash <span class="op">=</span> <span class="kw">None</span>
+
+    <span class="kw">async def</span> <span class="fn">run</span><span class="pu">(</span>self<span class="pu">)</span><span class="pu">:</span>
+        <span class="kw">while</span> <span class="kw">True</span><span class="pu">:</span>
+            state <span class="op">=</span> self.os.status<span class="pu">()</span>
+            active_win <span class="op">=</span> self.os.active_window_title<span class="pu">()</span>
+            fingerprint <span class="op">=</span> hashlib.md5<span class="pu">(</span>
+                <span class="st">f"{active_win}{state['cpu']>80}"</span>.encode<span class="pu">()</span><span class="pu">)</span>.hexdigest<span class="pu">()</span>
+
+            <span class="cm"># Only write to KG if context meaningfully changed</span>
+            <span class="kw">if</span> fingerprint <span class="op">!=</span> self._last_hash<span class="pu">:</span>
+                self.kg.upsert_entity<span class="pu">(</span><span class="st">"SystemState"</span><span class="pu">,</span> <span class="pu">{</span>
+                    <span class="st">"ts"</span><span class="pu">:</span> int<span class="pu">(</span>time.time<span class="pu">())</span><span class="pu">,</span>
+                    <span class="st">"active_window"</span><span class="pu">:</span> active_win<span class="pu">,</span>
+                    <span class="st">"cpu"</span><span class="pu">:</span> state<span class="pu">[</span><span class="st">"cpu"</span><span class="pu">]</span><span class="pu">,</span>
+                    <span class="st">"ram"</span><span class="pu">:</span> state<span class="pu">[</span><span class="st">"ram"</span><span class="pu">]</span>
+                <span class="pu">}</span><span class="pu">)</span>
+                self._last_hash <span class="op">=</span> fingerprint
+
+                <span class="cm"># Trigger proactive reasoning every ~10 changes</span>
+                <span class="kw">if</span> self.kg.count<span class="pu">(</span><span class="st">"SystemState"</span><span class="pu">)</span> <span class="op">%</span> <span class="nm">10</span> <span class="op">==</span> <span class="nm">0</span><span class="pu">:</span>
+                    insight <span class="op">=</span> <span class="kw">await</span> self.brain.reason<span class="pu">(</span>
+                        <span class="st">"Based on recent system activity, is there"</span>
+                        <span class="st">" anything the user might want help with?"</span><span class="pu">)</span>
+                    <span class="kw">if</span> insight.actionable<span class="pu">:</span>
+                        self.os.notify<span class="pu">(</span><span class="st">"L.O.R.A."</span>, insight.message<span class="pu">)</span>
+
+            <span class="kw">await</span> asyncio.sleep<span class="pu">(</span>self.interval<span class="pu">)</span><span class="lang">PYTHON</span></code></pre>
+        <div class="ibox io"><span class="ibox-ic">⚠️</span><span><strong>Privacy by design:</strong> The brain loop NEVER sends screen captures or window titles to cloud LLMs by default — only the local Ollama model processes ambient state. Cloud providers (Groq, Gemini) are only invoked when the user explicitly asks a question. Add a <code style="font-family:var(--f4);color:var(--c4)">privacy_mode</code> flag that disables the brain loop entirely for sensitive work sessions.</span></div>
+
+        <div class="h2">Real-Time Voice Interruption (Barge-In)</div>
+        <p>A natural assistant should be interruptible — if L.O.R.A. is mid-sentence and you start talking, it should stop and listen. This requires running the microphone listener and the TTS playback <em>concurrently</em> rather than sequentially, with the mic able to cancel playback.</p>
+        <pre><code><span class="cm"># voice/barge_in.py — Interruptible playback</span>
+<span class="kw">import</span> asyncio, sounddevice <span class="kw">as</span> sd
+
+<span class="kw">class</span> <span class="ty">InterruptibleSpeaker</span><span class="pu">:</span>
+    <span class="kw">def</span> <span class="fn">__init__</span><span class="pu">(</span>self, vad_model<span class="pu">)</span><span class="pu">:</span>
+        self.vad <span class="op">=</span> vad_model
+        self._stop <span class="op">=</span> asyncio.<span class="ty">Event</span><span class="pu">()</span>
+
+    <span class="kw">async def</span> <span class="fn">speak_with_interrupt</span><span class="pu">(</span>self, audio_chunks, mic_stream<span class="pu">)</span><span class="pu">:</span>
+        self._stop.clear<span class="pu">()</span>
+        play_task <span class="op">=</span> asyncio.create_task<span class="pu">(</span>self._play<span class="pu">(</span>audio_chunks<span class="pu">))</span>
+        listen_task <span class="op">=</span> asyncio.create_task<span class="pu">(</span>self._watch_for_speech<span class="pu">(</span>mic_stream<span class="pu">))</span>
+
+        done, pending <span class="op">=</span> <span class="kw">await</span> asyncio.wait<span class="pu">(</span>
+            <span class="pu">{</span>play_task, listen_task<span class="pu">}</span>,
+            return_when<span class="pu">=</span>asyncio.<span class="ty">FIRST_COMPLETED</span><span class="pu">)</span>
+
+        <span class="kw">if</span> listen_task <span class="kw">in</span> done<span class="pu">:</span>
+            sd.stop<span class="pu">()</span>  <span class="cm"># user started talking — cut off TTS</span>
+            play_task.cancel<span class="pu">()</span>
+            <span class="kw">return</span> <span class="st">"interrupted"</span>
+        <span class="kw">return</span> <span class="st">"completed"</span>
+
+    <span class="kw">async def</span> <span class="fn">_watch_for_speech</span><span class="pu">(</span>self, mic_stream<span class="pu">)</span><span class="pu">:</span>
+        <span class="kw">async for</span> chunk <span class="kw">in</span> mic_stream<span class="pu">:</span>
+            <span class="kw">if</span> self.vad<span class="pu">(</span>chunk<span class="pu">)</span> <span class="op">></span> <span class="nm">0.6</span><span class="pu">:</span>  <span class="cm"># speech probability</span>
+                <span class="kw">return</span><span class="lang">PYTHON</span></code></pre>
+
+        <div class="h2">Voice Component Comparison Table</div>
+        <table class="tbl">
+        <thead><tr><th>Component</th><th>Option A</th><th>Option B</th><th>L.O.R.A. Pick &amp; Why</th></tr></thead>
+        <tbody>
+        <tr><td><strong>STT</strong></td><td>faster-whisper (local)</td><td>Deepgram / AssemblyAI (cloud)</td><td><span class="tag tg">faster-whisper</span> — zero cost, zero latency to network, works offline. Cloud only beats it on noisy audio.</td></tr>
+        <tr><td><strong>TTS</strong></td><td>Kokoro 82M (local)</td><td>ElevenLabs (cloud)</td><td><span class="tag tg">Kokoro</span> — near-ElevenLabs quality, fully free, no per-character cost. ElevenLabs only if voice cloning is required.</td></tr>
+        <tr><td><strong>Wake Word</strong></td><td>openwakeword</td><td>Picovoice Porcupine</td><td><span class="tag tg">openwakeword</span> — fully open source and free for unlimited custom wake words. Porcupine requires a paid key for custom words at scale.</td></tr>
+        <tr><td><strong>VAD</strong></td><td>silero-vad</td><td>WebRTC VAD</td><td><span class="tag tg">silero-vad</span> — much higher accuracy on real speech vs. WebRTC's simple energy thresholding. Tiny model, negligible cost.</td></tr>
+        </tbody>
+        </table>
+      </div>
+
+      <div id="t6" class="panel" style="display:none">
+        <div class="stitle">IMPLEMENTATION BLUEPRINT</div>
+        <div class="ssub">// Full Stack · Directory · Roadmap · Dependencies</div>
+        
+        <div class="h2">Complete Technology Stack</div>
+        <table class="tbl">
+        <thead><tr><th>Layer</th><th>Choice</th><th>Why</th></tr></thead>
+        <tbody>
+        <tr><td><strong>Graph DB</strong></td><td><span class="tag tc">Neo4j 5.x CE</span></td><td>Free, vector index built-in, Cypher, LLMs generate correct queries</td></tr>
+        <tr><td><strong>Graph-RAG</strong></td><td><span class="tag tg">LightRAG</span></td><td>10× cheaper than GraphRAG, incremental updates, local LLM support</td></tr>
+        <tr><td><strong>Agent Framework</strong></td><td><span class="tag tpp">LangGraph / Custom</span></td><td>LangGraph for stateful flows; custom loop for full control</td></tr>
+        <tr><td><strong>Backend API</strong></td><td><span class="tag tc">FastAPI + uvicorn</span></td><td>Async Python, WebSocket support, auto-docs, WebSocket live agent updates</td></tr>
+        <tr><td><strong>Frontend</strong></td><td><span class="tag tg">React + React Flow</span></td><td>React Flow = perfect interactive node-edge KG visualization</td></tr>
+        <tr><td><strong>Primary LLM</strong></td><td><span class="tag tc">Groq Llama-3.3-70b</span></td><td>Free tier, 250 tok/s, best speed for agentic inner loops</td></tr>
+        <tr><td><strong>Long Context LLM</strong></td><td><span class="tag tg">Gemini 2.0 Flash</span></td><td>1M token context, free tier, ideal for long documents</td></tr>
+        <tr><td><strong>Local LLM</strong></td><td><span class="tag tpp">Ollama + Qwen2.5:14b</span></td><td>No rate limits, full privacy, works offline for sensitive OS tasks</td></tr>
+        <tr><td><strong>Embeddings</strong></td><td><span class="tag tg">nomic-embed-text (Ollama)</span></td><td>768-dim, local, free, fast, matches Neo4j vector index dim</td></tr>
+        <tr><td><strong>STT</strong></td><td><span class="tag tc">faster-whisper base.en</span></td><td>INT8, 50ms latency, built-in VAD, 74MB, pure local</td></tr>
+        <tr><td><strong>TTS</strong></td><td><span class="tag tg">Kokoro 82M (hexgrad)</span></td><td>Near-human, Apache 2.0, 57 voices, CPU-capable</td></tr>
+        <tr><td><strong>VAD</strong></td><td><span class="tag tpp">silero-vad</span></td><td>2MB, essential — stops Whisper hallucinating on silence</td></tr>
+        <tr><td><strong>Web Crawler</strong></td><td><span class="tag tc">Playwright async</span></td><td>Handles JS-rendered pages, stealth mode, headless</td></tr>
+        <tr><td><strong>Code Sandbox</strong></td><td><span class="tag tg">Docker SDK (Python)</span></td><td>Isolated execution, network-disabled, memory-limited containers</td></tr>
+        <tr><td><strong>OS Monitoring</strong></td><td><span class="tag tpp">psutil + watchdog</span></td><td>Process control, CPU/RAM stats, file system events</td></tr>
+        </tbody>
+        </table>
+        
+        <div class="h2">Project Directory Structure</div>
+        <pre><code>lora/
+        ├── core/
+        │   ├── kg_client.py        <span class="cm"># Neo4j wrapper + hybrid search</span>
+        │   ├── llm_router.py       <span class="cm"># Provider waterfall</span>
+        │   ├── orchestrator.py     <span class="cm"># Central routing + planning agent</span>
+        │   └── embed.py            <span class="cm"># nomic-embed via Ollama</span>
+        ├── agents/
+        │   ├── base.py             <span class="cm"># BaseAgent ABC (KG hooks built in)</span>
+        │   ├── research.py         <span class="cm"># Web crawl + LightRAG ingestion</span>
+        │   ├── code.py             <span class="cm"># Code gen + Docker sandbox exec</span>
+        │   ├── docker_agent.py     <span class="cm"># Build/run/logs/stop containers</span>
+        │   ├── database.py         <span class="cm"># Natural language → Cypher queries</span>
+        │   ├── git_agent.py        <span class="cm"># add/commit/push/branch/PR</span>
+        │   ├── file_agent.py       <span class="cm"># Read/write, PDF/DOCX parse</span>
+        │   ├── os_agent.py         <span class="cm"># Shell, processes, screen, clipboard</span>
+        │   ├── memory.py           <span class="cm"># KG CRUD + vector similarity</span>
+        │   └── analysis.py         <span class="cm"># Data analysis, charting</span>
+        ├── voice/
+        │   ├── pipeline.py         <span class="cm"># VAD → Whisper → LLM → Kokoro loop</span>
+        │   └── wake_word.py        <span class="cm"># openwakeword "Hey LORA"</span>
+        ├── rag/
+        │   ├── lightrag_setup.py   <span class="cm"># LightRAG init, query modes</span>
+        │   └── web_to_kg.py        <span class="cm"># Playwright crawler + ingestion</span>
+        ├── api/
+        │   ├── main.py             <span class="cm"># FastAPI: REST + WebSocket</span>
+        │   └── schemas.py          <span class="cm"># Pydantic models</span>
+        ├── frontend/               <span class="cm"># React + React Flow dashboard</span>
+        │   └── src/
+        │       ├── KGViewer.jsx    <span class="cm"># Live graph visualization</span>
+        │       ├── AgentPanel.jsx  <span class="cm"># Agent status + task queue</span>
+        │       └── VoiceInput.jsx  <span class="cm"># Browser voice → agent</span>
+        ├── scripts/
+        │   ├── bootstrap_schema.cypher
+        │   └── seed_agents.py
+        ├── data/
+        │   ├── neo4j_data/         <span class="cm"># Docker volume</span>
+        │   └── lightrag_working/   <span class="cm"># LightRAG cache + graph</span>
+        ├── docker-compose.yml
+        ├── requirements.txt
+        └── main.py                 <span class="cm"># Entry point: boots everything</span><span class="lang">TREE</span></code></pre>
+        
+        <div class="h2">9-Phase Implementation Roadmap</div>
+        <div class="rphase"><div class="rnum">1</div><div class="rcont"><div class="rtitle">Neo4j + Schema Bootstrap</div><div class="rdesc">Spin up Neo4j via Docker. Define L.O.R.A. schema (node types, constraints, vector indexes). Write and test KGClient wrapper. Verify CRUD and vector search work end-to-end.</div><div class="rtags"><span class="rtag">Neo4j</span><span class="rtag">Docker</span><span class="rtag">Cypher</span><span class="rtag">~3 days</span></div></div></div>
+        
+        <div class="rphase"><div class="rnum">2</div><div class="rcont"><div class="rtitle">LLM Router + BaseAgent</div><div class="rdesc">Build provider waterfall (Groq → Gemini → Cerebras → Ollama) with automatic rate-limit fallback. Create BaseAgent ABC that all specialized agents inherit — with built-in KG read/write hooks.</div><div class="rtags"><span class="rtag">Groq</span><span class="rtag">Gemini</span><span class="rtag">Ollama</span><span class="rtag">~2 days</span></div></div></div>
+        
+        <div class="rphase"><div class="rnum">3</div><div class="rcont"><div class="rtitle">Orchestrator + Memory Agent</div><div class="rdesc">Build the central Orchestrator with LLM-driven task decomposition, DAG execution with dependency resolution. Memory Agent handles all KG CRUD for other agents — the single source of truth interface.</div><div class="rtags"><span class="rtag">LangGraph</span><span class="rtag">Neo4j</span><span class="rtag">~4 days</span></div></div></div>
+        
+        <div class="rphase"><div class="rnum">4</div><div class="rcont"><div class="rtitle">Research Agent + LightRAG</div><div class="rdesc">Integrate LightRAG for NotebookLM-like research. Build Playwright web crawler. Web-to-KG pipeline. Test hybrid retrieval on real topics. This makes L.O.R.A. a genuine research assistant.</div><div class="rtags"><span class="rtag">LightRAG</span><span class="rtag">Playwright</span><span class="rtag">~5 days</span></div></div></div>
+        
+        <div class="rphase"><div class="rnum">5</div><div class="rcont"><div class="rtitle">Code + Docker + Git Agents</div><div class="rdesc">Code Agent with Docker sandboxed execution (safe Python runs). Docker Agent manages container lifecycle. Git Agent: smart commit messages, branch management, PR creation. All results stored in KG.</div><div class="rtags"><span class="rtag">Docker SDK</span><span class="rtag">GitPython</span><span class="rtag">~5 days</span></div></div></div>
+        
+        <div class="rphase"><div class="rnum">6</div><div class="rcont"><div class="rtitle">OS Brain + File Agent</div><div class="rdesc">OS daemon: psutil monitoring, subprocess execution, file watcher, clipboard, screen capture. L.O.R.A. becomes an intelligent OS layer — aware of what's running, what files changed, what's on screen.</div><div class="rtags"><span class="rtag">psutil</span><span class="rtag">watchdog</span><span class="rtag">mss</span><span class="rtag">~3 days</span></div></div></div>
+        
+        <div class="rphase"><div class="rnum">7</div><div class="rcont"><div class="rtitle">Voice Pipeline</div><div class="rdesc">faster-whisper + Kokoro TTS + silero-vad + openwakeword. "Hey LORA" activates the pipeline. Full voice command loop connected to Orchestrator. Test 20+ real voice commands end-to-end.</div><div class="rtags"><span class="rtag">faster-whisper</span><span class="rtag">Kokoro</span><span class="rtag">openwakeword</span><span class="rtag">~4 days</span></div></div></div>
+        
+        <div class="rphase"><div class="rnum">8</div><div class="rcont"><div class="rtitle">FastAPI Backend + React Dashboard</div><div class="rdesc">REST + WebSocket API for real-time agent status. React + React Flow frontend: live KG graph, agent task queue panel, voice input, session history. The visual brain of L.O.R.A.</div><div class="rtags"><span class="rtag">FastAPI</span><span class="rtag">React Flow</span><span class="rtag">WebSocket</span><span class="rtag">~7 days</span></div></div></div>
+        
+        <div class="rphase"><div class="rnum">9</div><div class="rcont"><div class="rtitle">Integration, Tuning &amp; Memory Decay</div><div class="rdesc">End-to-end testing. Tune agent prompts. Add KG memory decay (importance scoring with time-based decay). Implement agent feedback loops — store what worked in KG so agents improve over time.</div><div class="rtags"><span class="rtag">Testing</span><span class="rtag">Prompt Tuning</span><span class="rtag">Memory Decay</span><span class="rtag">~7 days</span></div></div></div>
+        
+        <div class="h2">requirements.txt</div>
+        <pre><code><span class="cm"># ── Graph & RAG ──────────────────</span>
+        neo4j<span class="op">>=</span><span class="nm">5.20.0</span>
+        lightrag-hku<span class="op">>=</span><span class="nm">1.3.0</span>
+        
+        <span class="cm"># ── LLM Providers ────────────────</span>
+        groq<span class="op">>=</span><span class="nm">0.11.0</span>
+        google-generativeai<span class="op">>=</span><span class="nm">0.8.0</span>
+        openai<span class="op">>=</span><span class="nm">1.45.0</span>
+        ollama<span class="op">>=</span><span class="nm">0.3.0</span>
+        
+        <span class="cm"># ── Agents ───────────────────────</span>
+        langgraph<span class="op">>=</span><span class="nm">0.2.0</span>
+        langchain-core<span class="op">>=</span><span class="nm">0.3.0</span>
+        docker<span class="op">>=</span><span class="nm">7.1.0</span>
+        gitpython<span class="op">>=</span><span class="nm">3.1.43</span>
+        
+        <span class="cm"># ── Voice ────────────────────────</span>
+        faster-whisper<span class="op">>=</span><span class="nm">1.0.3</span>
+        kokoro<span class="op">>=</span><span class="nm">0.9.4</span>
+        sounddevice<span class="op">>=</span><span class="nm">0.4.6</span>
+        silero-vad<span class="op">>=</span><span class="nm">5.1</span>
+        openwakeword<span class="op">>=</span><span class="nm">0.6.0</span>
+        
+        <span class="cm"># ── Web & Crawling ────────────────</span>
+        playwright<span class="op">>=</span><span class="nm">1.45.0</span>
+        beautifulsoup4<span class="op">>=</span><span class="nm">4.12.3</span>
+        httpx<span class="op">>=</span><span class="nm">0.27.0</span>
+        
+        <span class="cm"># ── OS Integration ────────────────</span>
+        psutil<span class="op">>=</span><span class="nm">6.0.0</span>
+        watchdog<span class="op">>=</span><span class="nm">4.0.0</span>
+        pyperclip<span class="op">>=</span><span class="nm">1.9.0</span>
+        mss<span class="op">>=</span><span class="nm">9.0.1</span>
+        
+        <span class="cm"># ── API Server ────────────────────</span>
+        fastapi<span class="op">>=</span><span class="nm">0.112.0</span>
+        uvicorn<span class="op">>=</span><span class="nm">0.30.6</span>
+        websockets<span class="op">>=</span><span class="nm">13.0.0</span>
+        pydantic<span class="op">>=</span><span class="nm">2.8.0</span>
+        
+        <span class="cm"># ── Utilities ─────────────────────</span>
+        python-dotenv<span class="op">>=</span><span class="nm">1.0.1</span>
+        rich<span class="op">>=</span><span class="nm">13.7.1</span>
+        loguru<span class="op">>=</span><span class="nm">0.7.2</span>
+        PyMuPDF<span class="op">>=</span><span class="nm">1.24.0</span>     <span class="cm"># PDF parsing</span>
+        python-docx<span class="op">>=</span><span class="nm">1.1.0</span>  <span class="cm"># DOCX parsing</span><span class="lang">REQUIREMENTS</span></code></pre>
+        
+        <div class="h2">Bootstrap Entry Point</div>
+        <pre><code><span class="cm"># main.py — Start L.O.R.A. with one command: python main.py</span>
+        <span class="kw">import</span> asyncio
+        <span class="kw">from</span> rich.console <span class="kw">import</span> <span class="ty">Console</span>
+        <span class="kw">from</span> core.kg_client   <span class="kw">import</span> <span class="ty">KGClient</span>
+        <span class="kw">from</span> core.llm_router  <span class="kw">import</span> <span class="ty">LLMRouter</span>
+        <span class="kw">from</span> core.orchestrator<span class="kw">import</span> <span class="ty">Orchestrator</span>
+        <span class="kw">from</span> agents <span class="kw">import</span> <span class="pu">(</span>ResearchAgent, CodeAgent, DockerAgent,
+            DatabaseAgent, GitAgent, FileAgent, OSAgent,
+            MemoryAgent, AnalysisAgent<span class="pu">)</span>
+        <span class="kw">from</span> voice.pipeline   <span class="kw">import</span> <span class="ty">VoicePipeline</span>
+        <span class="kw">from</span> api.main         <span class="kw">import</span> <span class="fn">start_api</span>
+        <span class="kw">from</span> rag.lightrag_setup <span class="kw">import</span> <span class="fn">build_research_rag</span>
+        
+        console <span class="op">=</span> <span class="ty">Console</span><span class="pu">()</span>
+        
+        <span class="kw">async def</span> <span class="fn">main</span><span class="pu">()</span><span class="pu">:</span>
+            console.print<span class="pu">(</span><span class="st">"[cyan]⬡  L.O.R.A. v1.0 — INITIALIZING[/]"</span><span class="pu">)</span>
+        
+            kg  <span class="op">=</span> <span class="ty">KGClient</span><span class="pu">()</span>
+            llm <span class="op">=</span> <span class="ty">LLMRouter</span><span class="pu">()</span>
+            rag <span class="op">=</span> <span class="kw">await</span> build_research_rag<span class="pu">(</span><span class="st">"./data/lightrag_working"</span><span class="pu">)</span>
+        
+            agents <span class="op">=</span> <span class="pu">{</span>
+                <span class="st">"research"</span> <span class="pu">:</span> <span class="ty">ResearchAgent</span><span class="pu">(</span>kg, llm, rag<span class="pu">)</span><span class="pu">,</span>
+                <span class="st">"code"</span>     <span class="pu">:</span> <span class="ty">CodeAgent</span><span class="pu">(</span>kg, llm<span class="pu">)</span><span class="pu">,</span>
+                <span class="st">"docker"</span>   <span class="pu">:</span> <span class="ty">DockerAgent</span><span class="pu">(</span>kg, llm<span class="pu">)</span><span class="pu">,</span>
+                <span class="st">"database"</span> <span class="pu">:</span> <span class="ty">DatabaseAgent</span><span class="pu">(</span>kg, llm<span class="pu">)</span><span class="pu">,</span>
+                <span class="st">"git"</span>      <span class="pu">:</span> <span class="ty">GitAgent</span><span class="pu">(</span>kg, llm<span class="pu">)</span><span class="pu">,</span>
+                <span class="st">"file"</span>     <span class="pu">:</span> <span class="ty">FileAgent</span><span class="pu">(</span>kg, llm<span class="pu">)</span><span class="pu">,</span>
+                <span class="st">"os"</span>       <span class="pu">:</span> <span class="ty">OSAgent</span><span class="pu">(</span>kg, llm<span class="pu">)</span><span class="pu">,</span>
+                <span class="st">"memory"</span>   <span class="pu">:</span> <span class="ty">MemoryAgent</span><span class="pu">(</span>kg, llm<span class="pu">)</span><span class="pu">,</span>
+                <span class="st">"analysis"</span> <span class="pu">:</span> <span class="ty">AnalysisAgent</span><span class="pu">(</span>kg, llm<span class="pu">)</span>
+            <span class="pu">}</span>
+        
+            orch  <span class="op">=</span> <span class="ty">Orchestrator</span><span class="pu">(</span>agents, kg, llm<span class="pu">)</span>
+            voice <span class="op">=</span> <span class="ty">VoicePipeline</span><span class="pu">(</span>orch<span class="pu">)</span>
+        
+            console.print<span class="pu">(</span><span class="st">"[green]✓  All agents online. Voice active.[/]"</span><span class="pu">)</span>
+            <span class="kw">await</span> asyncio.gather<span class="pu">(</span>
+                start_api<span class="pu">(</span>orch, kg<span class="pu">)</span><span class="pu">,</span>        <span class="cm"># FastAPI on :8000</span>
+                voice.run_loop<span class="pu">()</span>             <span class="cm"># Wake word listener</span>
+            <span class="pu">)</span>
+        
+        <span class="kw">if</span> __name__ <span class="op">==</span> <span class="st">"__main__"</span><span class="pu">:</span>
+            asyncio.run<span class="pu">(</span>main<span class="pu">()</span><span class="pu">)</span><span class="lang">PYTHON</span></code></pre>
+        <div class="ibox ig"><span class="ibox-ic">🚀</span><span><strong>Quick start:</strong> <code style="font-family:var(--f4);color:var(--c2)">docker-compose up -d</code> → <code style="font-family:var(--f4);color:var(--c2)">python scripts/seed_agents.py</code> → <code style="font-family:var(--f4);color:var(--c2)">python main.py</code>. Neo4j browser at <code style="font-family:var(--f4);color:var(--c2)">localhost:7474</code>, API docs at <code style="font-family:var(--f4);color:var(--c2)">localhost:8000/docs</code>, KG dashboard at <code style="font-family:var(--f4);color:var(--c2)">localhost:3000</code>.</span></div>
+      </div>
+
+    </main>
+  </div><!-- .body -->
+</div><!-- .wrap -->
+
+<script>
+
+
+/* ─── SIDEBAR ───────────────────────────────── */
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+/* ─── TAB SWITCHING ─────────────────────────── */
+function sw(id){
+  /* hide all panels by setting inline style */
+  for(var i=1;i<=6;i++){
+    var p=document.getElementById('t'+i);
+    if(p) p.style.display='none';
+  }
+  /* show target */
+  var target=document.getElementById(id);
+  if(target) target.style.display='block';
+  /* update nav highlights */
+  var navs=document.querySelectorAll('.ni');
+  for(var k=0;k<navs.length;k++) navs[k].classList.remove('act');
+  var nav=document.querySelector('[data-tab="'+id+'"]');
+  if(nav) nav.classList.add('act');
+  /* scroll to top */
+  document.getElementById('content').scrollTop=0;
+  /* close mobile sidebar */
+  closeSidebar();
+}
+
+/* ─── AGENT DATA ─────────────────────────────── */
+var AD={
+orchestrator:{title:'ORCHESTRATOR',
+  role:'Central brain. Receives every task (text or voice). Decomposes goals into subtasks using LLM planning, routes to specialized agents, resolves by dependency order, synthesizes results, logs the full session to the KG.',
+  tools:['LLM Planning','KG Vector Search','Agent Registry','Task DAG'],
+  kg:'<strong>Reads:</strong> Concept/Task nodes as planning context.<br><strong>Writes:</strong> Session nodes, Task nodes, plan traces.',
+  model:'<span class="tag tc">Groq Llama-3.3-70b</span> — fastest. Falls back to <span class="tag tg">Gemini 2.0 Flash</span> for long context.',
+  code:`async def handle(self, task):
+    ctx  = self.kg.vector_search(embed(task))
+    plan = await self.llm.plan(task, ctx)
+    res  = await self.execute_dag(plan.steps)
+    return await self.synthesize(task, res)`},
+research:{title:'RESEARCH AGENT',
+  role:'Browses internet on demand. Crawls with Playwright (JS-rendered pages), extracts text, feeds into LightRAG for automatic KG construction. Deep-dive: 5-10 pages per topic with entity extraction and cross-document synthesis.',
+  tools:['Playwright','BeautifulSoup','LightRAG','Neo4j writer'],
+  kg:'<strong>Reads:</strong> Existing Document nodes to skip re-research.<br><strong>Writes:</strong> Document + Concept nodes, CONTAINS/RELATES_TO edges.',
+  model:'<span class="tag tg">Gemini 2.0 Flash</span> for long synthesis. <span class="tag tc">Groq</span> for extraction.',
+  code:`async def research(self, topic, urls):
+    for url in urls:
+        text = await self.crawl(url)
+        await self.rag.ainsert(text[:8000])
+    return await self.rag.aquery(topic)`},
+code:{title:'CODE AGENT',
+  role:'Writes, executes and debugs code. Generates from natural language, runs in sandboxed Docker (network-disabled, memory-limited), auto-debugs on errors. Stores successful patterns as CodeSnippet nodes in KG.',
+  tools:['LLM codegen','Docker sandbox','File writer','KG snippets'],
+  kg:'<strong>Reads:</strong> Similar CodeSnippet nodes via vector search.<br><strong>Writes:</strong> CodeSnippet on success. PRODUCED edge on Task.',
+  model:'<span class="tag tc">Groq Llama-3.3-70b</span> general. <span class="tag tpp">Deepseek-Coder (Ollama)</span> for algorithms.',
+  code:`def exec_python(self, code, timeout=30):
+    return self.docker.containers.run(
+        "python:3.11-alpine",
+        command=f'python3 -c "{code}"',
+        remove=True, network_disabled=True,
+        mem_limit="128m")`},
+docker:{title:'DOCKER AGENT',
+  role:'Manages Docker container lifecycle. Builds images, runs containers with configs, streams logs, manages networks. Primary sandbox for Code Agent. Deploys services as part of larger workflows.',
+  tools:['Docker SDK','Shell fallback','Log streamer','Networks'],
+  kg:'<strong>Writes:</strong> Container nodes, BUILD_FROM/DEPLOYS edges, logs for Analysis.',
+  model:'<span class="tag tg">Groq Llama-3.1-8b</span> — lightweight, sufficient for Docker commands.',
+  code:`def run_service(self, image, ports, env):
+    return self.client.containers.run(
+        image, detach=True,
+        ports=ports, environment=env,
+        network="lora_network")`},
+database:{title:'DATABASE AGENT',
+  role:'Primary Neo4j operator. Translates natural language to Cypher, executes queries, returns structured JSON. Handles schema evolution — dynamically adds node types and relationships. Runs multi-hop analytics.',
+  tools:['LLM Cypher gen','Neo4j driver','Schema introspector'],
+  kg:'<strong>Full read/write.</strong> Executes arbitrary Cypher. Returns structured data to other agents.',
+  model:'<span class="tag tc">Groq Llama-3.3-70b</span> — LLMs know Cypher well from training data.',
+  code:`async def nl_query(self, question):
+    schema = self.kg.get_schema()
+    cypher = await self.llm.generate(
+        f"Schema:{schema}\\nQ:{question}\\nCypher:")
+    return self.kg.execute(cypher)`},
+git:{title:'GIT AGENT',
+  role:'Full version control. Stages files, writes LLM-generated commit messages from diffs, creates branches, pushes to remotes, creates PRs via GitHub/GitLab API. Commit history stored in KG.',
+  tools:['GitPython','GitHub API','Shell git'],
+  kg:'<strong>Writes:</strong> Commit nodes, MODIFIED edges to Code/File nodes, Branch nodes.',
+  model:'<span class="tag tg">Gemini 2.0 Flash</span> for commit messages. <span class="tag tc">Groq</span> for PRs.',
+  code:`def smart_commit(self, repo_path):
+    repo = Repo(repo_path)
+    diff = repo.git.diff("HEAD")
+    msg  = self.llm.commit_msg(diff)
+    repo.git.add("--all")
+    repo.index.commit(msg)`},
+file:{title:'FILE AGENT',
+  role:'Reads and writes the file system. Handles PDFs (PyMuPDF), DOCX, images, code, markdown, CSV, JSON. Converts any file to text for KG ingestion. Watches directories for changes and auto-ingests.',
+  tools:['pathlib','PyMuPDF','python-docx','watchdog'],
+  kg:'<strong>Writes:</strong> Document nodes with embeddings. CONTAINS edges to Concepts.',
+  model:'<span class="tag tc">Groq Llama-3.1-8b</span> fast summaries. <span class="tag tg">Gemini Flash</span> for image PDFs.',
+  code:`def ingest_pdf(self, path):
+    doc  = fitz.open(path)
+    text = " ".join(p.get_text() for p in doc)
+    n    = ingest_text(text, self.kg, self.embed, self.llm)
+    return f"Ingested {n} entities"`},
+os:{title:'OS BRAIN AGENT',
+  role:'System-level integration — the hands of L.O.R.A. Runs shell commands, monitors processes and hardware, captures screenshots for vision analysis, reads/writes clipboard, watches file changes. All local for privacy.',
+  tools:['psutil','subprocess','mss','pyperclip','watchdog'],
+  kg:'<strong>Writes:</strong> SystemState snapshots. Command logs. OS events linked to Task nodes.',
+  model:'<span class="tag tpp">Ollama Qwen2.5:7b</span> — local-only. OS ops never go to cloud.',
+  code:`async def what_is_on_screen(self):
+    path = self.screenshot()
+    img  = base64.b64encode(open(path,"rb").read())
+    return await self.llm.vision(img, "Describe what you see")`},
+memory:{title:'MEMORY AGENT',
+  role:'KG guardian. Single interface all agents use for read/write. Handles CRUD, vector similarity, multi-hop traversal, importance scoring, and memory decay. Centralises all KG interaction for consistency.',
+  tools:['KGClient','Vector search','Graph traversal','Importance scorer'],
+  kg:'<strong>Full ownership.</strong> All agents call Memory Agent instead of Neo4j directly.',
+  model:'<span class="tag tc">Groq Llama-3.1-8b</span> for summaries. Most ops are pure graph queries.',
+  code:`def smart_retrieve(self, query, embed_fn):
+    vec   = self.kg.vector_search(embed_fn(query), k=5)
+    names = [r["node.name"] for r in vec]
+    nbrs  = [self.kg.neighborhood(n, 2) for n in names[:3]]
+    return self._merge(vec, nbrs)`},
+analysis:{title:'ANALYSIS AGENT',
+  role:'Data analysis, statistical reasoning, chart generation. Processes structured data from KG or files. Generates insights from agent telemetry (task success rates, tool usage, KG growth). Identifies patterns across sessions.',
+  tools:['pandas','matplotlib','plotly','scipy'],
+  kg:'<strong>Reads:</strong> Task/Session nodes for performance analytics.<br><strong>Writes:</strong> AnalysisReport nodes.',
+  model:'<span class="tag tg">Gemini 2.0 Flash</span> for long CSV. <span class="tag tc">Groq</span> for fast stats.',
+  code:`def agent_performance(self):
+    rows = self.kg.execute(
+        "MATCH (a:Agent)-[:EXECUTED]->(t:Task)"
+        " RETURN a.name, t.status, count(*) AS n"
+        " ORDER BY n DESC")
+    return pd.DataFrame(rows)`},
+reasoning:{title:'REASONING AGENT',
+  role:'Complex multi-hop reasoning over the KG. Answers questions needing synthesis across many nodes. Finds non-obvious connections, runs inference chains. Used when plain retrieval is insufficient.',
+  tools:['LightRAG hybrid','Graph path finding','Chain-of-thought'],
+  kg:'<strong>Heavy reader.</strong> Multi-hop paths, complex Cypher, community summaries via LightRAG global mode.',
+  model:'<span class="tag tg">Gemini 2.0 Flash</span> for reasoning chains. <span class="tag tpp">Claude via OpenRouter</span> for hardest tasks.',
+  code:`async def reason(self, question):
+    ents = self.kg.vector_search(self.embed(question), k=10)
+    ctx  = [self.kg.neighborhood(e["node.name"], depth=3)
+            for e in ents[:3]]
+    return await self.llm.chain_of_thought(question, ctx)`}
+};
+
+function showAgent(key){
+  var d=AD[key]; if(!d) return;
+  var panel=document.getElementById('adetail');
+  panel.style.display='block';
+  document.getElementById('ad-title').textContent='⧡ '+d.title;
+  document.getElementById('ad-role').textContent=d.role;
+  document.getElementById('ad-kg').innerHTML=d.kg;
+  document.getElementById('ad-model').innerHTML=d.model;
+  var safe=d.code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  document.getElementById('ad-code-inner').innerHTML=safe;
+  document.getElementById('ad-tools').innerHTML=d.tools.map(function(t){
+    return '<span class="achip ach-p" style="cursor:default;font-size:11px">'+t+'</span>';
+  }).join('');
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* ─── KG CANVAS ─────────────────────────────── */
+(function(){
+  var C=document.getElementById('kgc'); if(!C) return;
+  var ctx=C.getContext('2d'),W,H,frame=0;
+  var NDS=[
+    {id:0,lbl:'Knowledge\nGraph',r:24,col:'#00d9ff'},
+    {id:1,lbl:'Ontology',r:15,col:'#00ffaa'},
+    {id:2,lbl:'Entity',r:15,col:'#a066ff'},
+    {id:3,lbl:'Relation',r:13,col:'#ff8c00'},
+    {id:4,lbl:'Triple',r:13,col:'#ff3e7a'},
+    {id:5,lbl:'Agent',r:19,col:'#00d9ff'},
+    {id:6,lbl:'LLM',r:15,col:'#00ffaa'},
+    {id:7,lbl:'Vector\nIndex',r:13,col:'#a066ff'},
+    {id:8,lbl:'RAG',r:14,col:'#ff8c00'},
+    {id:9,lbl:'Memory',r:14,col:'#ff3e7a'},
+    {id:10,lbl:'Tool',r:12,col:'#00d9ff'},
+    {id:11,lbl:'Cypher',r:12,col:'#00ffaa'}
+  ];
+  var EDS=[
+    {s:0,t:1,lbl:'has schema'},{s:0,t:2,lbl:'contains'},
+    {s:0,t:4,lbl:'stores as'},{s:2,t:3,lbl:'linked by'},
+    {s:5,t:0,lbl:'queries'},{s:5,t:6,lbl:'uses'},
+    {s:6,t:0,lbl:'extracts to'},{s:8,t:0,lbl:'reads from'},
+    {s:8,t:7,lbl:'indexes via'},{s:0,t:9,lbl:'stored in'},
+    {s:10,t:5,lbl:'extends'},{s:11,t:0,lbl:'queries via'},
+    {s:4,t:1,lbl:'follows'},{s:4,t:2,lbl:'subject'}
+  ];
+  function init(){
+    W=C.width=C.offsetWidth; H=C.height=280;
+    NDS.forEach(function(n,i){
+      var a=(i/NDS.length)*Math.PI*2;
+      n.x=W/2+100*Math.cos(a); n.y=H/2+80*Math.sin(a);
+      n.vx=0; n.vy=0;
+    });
+  }
+  function sim(){
+    var rep=5500,k=0.04,rest=112,damp=0.86;
+    NDS.forEach(function(n){n.fx=0;n.fy=0;});
+    for(var i=0;i<NDS.length;i++)
+      for(var j=i+1;j<NDS.length;j++){
+        var a=NDS[i],b=NDS[j],dx=b.x-a.x,dy=b.y-a.y;
+        var d=Math.sqrt(dx*dx+dy*dy)||1,f=rep/(d*d);
+        a.fx-=f*dx/d; a.fy-=f*dy/d; b.fx+=f*dx/d; b.fy+=f*dy/d;
+      }
+    EDS.forEach(function(e){
+      var a=NDS[e.s],b=NDS[e.t],dx=b.x-a.x,dy=b.y-a.y;
+      var d=Math.sqrt(dx*dx+dy*dy)||1,f=k*(d-rest);
+      a.fx+=f*dx/d; a.fy+=f*dy/d; b.fx-=f*dx/d; b.fy-=f*dy/d;
+    });
+    NDS.forEach(function(n){
+      n.fx+=(W/2-n.x)*0.008; n.fy+=(H/2-n.y)*0.008;
+      n.vx=(n.vx+n.fx*0.016)*damp; n.vy=(n.vy+n.fy*0.016)*damp;
+      n.x=Math.max(n.r+4,Math.min(W-n.r-4,n.x+n.vx));
+      n.y=Math.max(n.r+4,Math.min(H-n.r-4,n.y+n.vy));
+    });
+  }
+  function draw(){
+    frame++; if(frame<300||frame%3===0) sim();
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#010110'; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='rgba(0,217,255,0.04)'; ctx.lineWidth=1;
+    for(var x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(var y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    EDS.forEach(function(e){
+      var a=NDS[e.s],b=NDS[e.t],p=0.15+0.05*Math.sin(frame*0.02+e.s);
+      ctx.save(); ctx.strokeStyle=a.col; ctx.globalAlpha=p; ctx.lineWidth=2;
+      ctx.shadowBlur=6; ctx.shadowColor=a.col;
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.strokeStyle=a.col; ctx.globalAlpha=0.25; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.globalAlpha=0.45; ctx.fillStyle='#8892a4';
+      ctx.font='8px monospace'; ctx.textAlign='center';
+      ctx.fillText(e.lbl,(a.x+b.x)/2,(a.y+b.y)/2-3); ctx.restore();
+    });
+    NDS.forEach(function(n){
+      var p=0.8+0.2*Math.sin(frame*0.025+n.id);
+      ctx.save(); ctx.globalAlpha=0.18*p; ctx.fillStyle=n.col;
+      ctx.shadowBlur=16*p; ctx.shadowColor=n.col;
+      ctx.beginPath(); ctx.arc(n.x,n.y,n.r+5,0,Math.PI*2); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.fillStyle='#080820'; ctx.strokeStyle=n.col;
+      ctx.lineWidth=1.5; ctx.shadowBlur=7; ctx.shadowColor=n.col;
+      ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill(); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.fillStyle=n.col; ctx.font='bold 9px sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      var lns=n.lbl.split('\n');
+      if(lns.length>1){ctx.fillText(lns[0],n.x,n.y-5);ctx.fillText(lns[1],n.x,n.y+5);}
+      else ctx.fillText(n.lbl,n.x,n.y);
+      ctx.restore();
+    });
+    requestAnimationFrame(draw);
+  }
+  init(); window.addEventListener('resize',init); draw();
+})();
+
+/* ─── WIRE ALL CLICKS ───────────────────────── */
+/* Nav tabs */
+var navEls=document.querySelectorAll('.ni');
+for(var i=0;i<navEls.length;i++){
+  (function(el){ el.addEventListener('click',function(){ sw(el.getAttribute('data-tab')); }); })(navEls[i]);
+}
+/* Agent chips */
+var chipEls=document.querySelectorAll('[data-agent]');
+for(var j=0;j<chipEls.length;j++){
+  (function(el){ el.addEventListener('click',function(){ showAgent(el.getAttribute('data-agent')); }); })(chipEls[j]);
+}
+/* Hamburger + overlay */
+document.getElementById('hamBtn').addEventListener('click', openSidebar);
+document.getElementById('overlay').addEventListener('click', closeSidebar);
+</script>
+</body>
+</html>

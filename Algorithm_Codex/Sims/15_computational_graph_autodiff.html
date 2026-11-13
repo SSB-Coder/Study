@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Computational Graph & Autodiff — Algorithm Codex</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0b0f19;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .header { text-align: center; max-width: 820px; margin-bottom: 20px; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: #a855f7; margin-bottom: 8px; }
+    .desc { color: #94a3b8; font-size: 0.95rem; line-height: 1.5; }
+    .nav-bar { margin-top: 8px; margin-bottom: 16px; }
+    .nav-bar a {
+      color: #38bdf8; text-decoration: none; font-size: 0.85rem;
+      border: 1px solid #1e293b; padding: 4px 12px; border-radius: 4px;
+    }
+    .sim-card {
+      background: #111827; border: 1px solid #1f2937; border-radius: 12px;
+      padding: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      display: flex; flex-direction: column; align-items: center; max-width: 860px; width: 100%;
+    }
+    canvas { background: #030712; border: 1px solid #374151; border-radius: 8px; margin-bottom: 16px; }
+    .controls {
+      display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; align-items: center;
+      background: #1f2937; padding: 12px 18px; border-radius: 8px; width: 100%;
+    }
+    button {
+      background: #9333ea; color: white; border: none; padding: 8px 16px;
+      border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+    }
+    button:hover { background: #7e22ce; }
+    button.active { background: #10b981; }
+    .slider-group { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #cbd5e1; }
+    .status-text {
+      margin-top: 12px; font-family: monospace; font-size: 0.9rem; color: #c084fc; text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Computational Graph & Tape-Based Autodiff Engine</h1>
+    <p class="desc">
+      Interactive Directed Acyclic Graph (DAG) visualizing how <strong>PyTorch autograd</strong> and <strong>JAX</strong> compute gradients.
+      Target expression: $\mathcal{L} = (x_1 \cdot x_2) + \sin(x_1) + \text{ReLU}(x_2)$.
+      Step through forward evaluation and reverse-mode topological backpropagation!
+    </p>
+    <div class="nav-bar"><a href="index.html">&larr; Return to Simulation Hub</a></div>
+  </div>
+
+  <div class="sim-card">
+    <canvas id="dagCanvas" width="820" height="420"></canvas>
+
+    <div class="controls">
+      <button id="stepForwardBtn">Step Forward Pass</button>
+      <button id="stepBackwardBtn">Step Backward Pass</button>
+      <button id="resetGraphBtn">Reset Computation</button>
+      <div class="slider-group">
+        <label for="x1Slider">Input x1:</label>
+        <input type="range" id="x1Slider" min="-30" max="30" value="15">
+        <span id="x1Val">1.5</span>
+      </div>
+      <div class="slider-group">
+        <label for="x2Slider">Input x2:</label>
+        <input type="range" id="x2Slider" min="-30" max="30" value="20">
+        <span id="x2Val">2.0</span>
+      </div>
+    </div>
+
+    <div class="status-text" id="statusText">Ready. Click 'Step Forward Pass' to propagate values.</div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("dagCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let forwardStep = 0;
+    let backwardStep = 0;
+
+    // DAG Node Definitions
+    // Target: L = (x1 * x2) + sin(x1) + relu(x2)
+    // Nodes:
+    // 0: x1 (Input)
+    // 1: x2 (Input)
+    // 2: h1 = x1 * x2 (Mul)
+    // 3: h2 = sin(x1) (Sin)
+    // 4: h3 = relu(x2) (ReLU)
+    // 5: h4 = h1 + h2 (Add)
+    // 6: L  = h4 + h3 (Add, Loss)
+    const nodes = [
+      { id: 0, label: "x1", type: "input", x: 80, y: 140, val: 1.5, grad: 0, fDone: false, bDone: false },
+      { id: 1, label: "x2", type: "input", x: 80, y: 280, val: 2.0, grad: 0, fDone: false, bDone: false },
+      { id: 2, label: "Mul (*)", type: "op", x: 260, y: 110, val: 0, grad: 0, fDone: false, bDone: false, parents: [0, 1] },
+      { id: 3, label: "Sin", type: "op", x: 260, y: 210, val: 0, grad: 0, fDone: false, bDone: false, parents: [0] },
+      { id: 4, label: "ReLU", type: "op", x: 260, y: 310, val: 0, grad: 0, fDone: false, bDone: false, parents: [1] },
+      { id: 5, label: "Add (+)", type: "op", x: 480, y: 160, val: 0, grad: 0, fDone: false, bDone: false, parents: [2, 3] },
+      { id: 6, label: "Loss (L)", type: "loss", x: 680, y: 230, val: 0, grad: 1.0, fDone: false, bDone: false, parents: [5, 4] }
+    ];
+
+    const topoOrder = [0, 1, 2, 3, 4, 5, 6];
+    const reverseTopo = [6, 5, 4, 3, 2, 1, 0];
+
+    function updateInputs() {
+      const x1 = parseFloat(document.getElementById("x1Slider").value) / 10.0;
+      const x2 = parseFloat(document.getElementById("x2Slider").value) / 10.0;
+      document.getElementById("x1Val").innerText = x1.toFixed(1);
+      document.getElementById("x2Val").innerText = x2.toFixed(1);
+      nodes[0].val = x1;
+      nodes[1].val = x2;
+      resetGraph();
+    }
+
+    function resetGraph() {
+      forwardStep = 0;
+      backwardStep = 0;
+      for (let n of nodes) {
+        n.fDone = false;
+        n.bDone = false;
+        n.grad = n.id === 6 ? 1.0 : 0.0;
+        if (n.type !== "input") n.val = 0;
+      }
+      nodes[0].fDone = true;
+      nodes[1].fDone = true;
+      document.getElementById("statusText").innerText = "Inputs updated. Click 'Step Forward Pass'.";
+      draw();
+    }
+
+    function stepForward() {
+      if (forwardStep >= topoOrder.length) {
+        document.getElementById("statusText").innerText = "Forward pass complete! Ready for 'Step Backward Pass'.";
+        return;
+      }
+
+      const nodeIdx = topoOrder[forwardStep];
+      const n = nodes[nodeIdx];
+
+      if (n.id === 2) n.val = nodes[0].val * nodes[1].val;
+      else if (n.id === 3) n.val = Math.sin(nodes[0].val);
+      else if (n.id === 4) n.val = Math.max(0, nodes[1].val);
+      else if (n.id === 5) n.val = nodes[2].val + nodes[3].val;
+      else if (n.id === 6) n.val = nodes[5].val + nodes[4].val;
+
+      n.fDone = true;
+      forwardStep++;
+      document.getElementById("statusText").innerText = `Forward Pass: Evaluated Node ${n.label} = ${n.val.toFixed(4)}`;
+      draw();
+    }
+
+    function stepBackward() {
+      if (forwardStep < topoOrder.length) {
+        // Run full forward first
+        while (forwardStep < topoOrder.length) stepForward();
+      }
+
+      if (backwardStep >= reverseTopo.length) {
+        // Analytical gradients
+        const x1 = nodes[0].val;
+        const x2 = nodes[1].val;
+        const exact_dL_dx1 = x2 + Math.cos(x1);
+        const exact_dL_dx2 = x1 + (x2 > 0 ? 1.0 : 0.0);
+        document.getElementById("statusText").innerText = 
+          `Backward Complete! Autodiff dL/dx1=${nodes[0].grad.toFixed(4)} (Exact: ${exact_dL_dx1.toFixed(4)}), dL/dx2=${nodes[1].grad.toFixed(4)} (Exact: ${exact_dL_dx2.toFixed(4)})`;
+        return;
+      }
+
+      const nodeIdx = reverseTopo[backwardStep];
+      const n = nodes[nodeIdx];
+      n.bDone = true;
+
+      // Propagate adjoints to parents
+      if (n.id === 6) {
+        // L = h4 + h3 -> dL/dh4 = 1 * grad, dL/dh3 = 1 * grad
+        nodes[5].grad += n.grad * 1.0;
+        nodes[4].grad += n.grad * 1.0;
+      } else if (n.id === 5) {
+        // h4 = h1 + h2 -> dL/dh1 = grad, dL/dh2 = grad
+        nodes[2].grad += n.grad * 1.0;
+        nodes[3].grad += n.grad * 1.0;
+      } else if (n.id === 4) {
+        // h3 = relu(x2) -> dL/dx2 = grad * (x2 > 0)
+        nodes[1].grad += n.grad * (nodes[1].val > 0 ? 1.0 : 0.0);
+      } else if (n.id === 3) {
+        // h2 = sin(x1) -> dL/dx1 = grad * cos(x1)
+        nodes[0].grad += n.grad * Math.cos(nodes[0].val);
+      } else if (n.id === 2) {
+        // h1 = x1 * x2 -> dL/dx1 = grad * x2, dL/dx2 = grad * x1
+        nodes[0].grad += n.grad * nodes[1].val;
+        nodes[1].grad += n.grad * nodes[0].val;
+      }
+
+      backwardStep++;
+      document.getElementById("statusText").innerText = `Backward Pass: Backpropagated adjoint from ${n.label} (grad=${n.grad.toFixed(4)})`;
+      draw();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw Edges
+      for (let n of nodes) {
+        if (!n.parents) continue;
+        for (let pId of n.parents) {
+          const parent = nodes[pId];
+
+          ctx.beginPath();
+          ctx.moveTo(parent.x + 40, parent.y);
+          ctx.lineTo(n.x - 40, n.y);
+          
+          // Color based on active phase
+          if (parent.bDone && n.bDone) {
+            ctx.strokeStyle = "#ec4899"; // Pink for gradient backprop
+            ctx.lineWidth = 2.5;
+          } else if (parent.fDone && n.fDone) {
+            ctx.strokeStyle = "#38bdf8"; // Cyan for forward pass
+            ctx.lineWidth = 2.0;
+          } else {
+            ctx.strokeStyle = "#334155";
+            ctx.lineWidth = 1.0;
+          }
+          ctx.stroke();
+
+          // Arrowhead
+          const angle = Math.atan2(n.y - parent.y, (n.x - 40) - (parent.x + 40));
+          ctx.beginPath();
+          ctx.moveTo(n.x - 40, n.y);
+          ctx.lineTo(n.x - 48, n.y - 4);
+          ctx.lineTo(n.x - 48, n.y + 4);
+          ctx.fillStyle = ctx.strokeStyle;
+          ctx.fill();
+        }
+      }
+
+      // Draw Nodes
+      for (let n of nodes) {
+        const w = 90;
+        const h = 54;
+        const rx = n.x - w / 2;
+        const ry = n.y - h / 2;
+
+        ctx.beginPath();
+        ctx.roundRect(rx, ry, w, h, 8);
+        ctx.fillStyle = n.bDone ? "#3b0764" : n.fDone ? "#0f172a" : "#111827";
+        ctx.fill();
+        ctx.strokeStyle = n.bDone ? "#ec4899" : n.fDone ? "#a855f7" : "#374151";
+        ctx.lineWidth = n.bDone || n.fDone ? 2 : 1;
+        ctx.stroke();
+
+        // Labels
+        ctx.font = "bold 12px sans-serif";
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "center";
+        ctx.fillText(n.label, n.x, n.y - 12);
+
+        // Forward Value
+        ctx.font = "11px monospace";
+        ctx.fillStyle = "#38bdf8";
+        ctx.fillText(`val:${n.fDone ? n.val.toFixed(2) : "?"}`, n.x, n.y + 4);
+
+        // Backward Gradient
+        ctx.fillStyle = "#ec4899";
+        ctx.fillText(`grad:${n.bDone ? n.grad.toFixed(2) : (n.id === 6 ? "1.0" : "?")}`, n.x, n.y + 18);
+      }
+
+      // Legend
+      ctx.textAlign = "left";
+      ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+      ctx.fillRect(10, 10, 240, 65);
+      ctx.strokeStyle = "#334155";
+      ctx.strokeRect(10, 10, 240, 65);
+
+      ctx.font = "11px sans-serif";
+      ctx.fillStyle = "#38bdf8"; ctx.fillText("● Blue text: Forward Primal Value", 20, 30);
+      ctx.fillStyle = "#ec4899"; ctx.fillText("● Pink text: Backward Adjoint Gradient", 20, 48);
+    }
+
+    document.getElementById("stepForwardBtn").addEventListener("click", stepForward);
+    document.getElementById("stepBackwardBtn").addEventListener("click", stepBackward);
+    document.getElementById("resetGraphBtn").addEventListener("click", resetGraph);
+    document.getElementById("x1Slider").addEventListener("input", updateInputs);
+    document.getElementById("x2Slider").addEventListener("input", updateInputs);
+
+    updateInputs();
+  </script>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recommender Systems: Matrix Factorization — Algorithm Codex</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0b0f19;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .header { text-align: center; max-width: 800px; margin-bottom: 20px; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: #60a5fa; margin-bottom: 8px; }
+    .desc { color: #94a3b8; font-size: 0.95rem; line-height: 1.5; }
+    .nav-bar { margin-top: 8px; margin-bottom: 16px; }
+    .nav-bar a {
+      color: #38bdf8; text-decoration: none; font-size: 0.85rem;
+      border: 1px solid #1e293b; padding: 4px 12px; border-radius: 4px;
+    }
+    .sim-card {
+      background: #111827; border: 1px solid #1f2937; border-radius: 12px;
+      padding: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      display: flex; flex-direction: column; align-items: center; max-width: 950px; width: 100%;
+    }
+    .canvas-container {
+      display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px;
+    }
+    canvas { background: #030712; border: 1px solid #374151; border-radius: 8px; }
+    .controls {
+      display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center;
+      background: #1f2937; padding: 12px 18px; border-radius: 8px; width: 100%; max-width: 900px;
+    }
+    button {
+      background: #2563eb; color: white; border: none; padding: 8px 16px;
+      border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+    }
+    button:hover { background: #1d4ed8; }
+    button.secondary { background: #374151; }
+    button.secondary:hover { background: #4b5563; }
+    .stats {
+      margin-top: 12px; font-family: monospace; font-size: 0.9rem; color: #38bdf8;
+      display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Recommender Systems: Matrix Factorization (SGD)</h1>
+    <p class="desc">
+      Watch Stochastic Gradient Descent decompose a sparse User-Item rating matrix into low-rank latent preference vectors $P$ and $Q$.
+      Observed ratings (solid) guide the alignment, accurately predicting unobserved movie ratings (dashed).
+    </p>
+    <div class="nav-bar"><a href="index.html">&larr; Return to Simulation Hub</a></div>
+  </div>
+
+  <div class="sim-card">
+    <div class="canvas-container">
+      <div>
+        <div style="text-align:center; font-size:0.85rem; color:#94a3b8; margin-bottom:4px;">Rating Matrix (Observed vs Predicted)</div>
+        <canvas id="matrixCanvas" width="420" height="380"></canvas>
+      </div>
+      <div>
+        <div style="text-align:center; font-size:0.85rem; color:#94a3b8; margin-bottom:4px;">Latent Factor Space (Users: Blue, Items: Amber)</div>
+        <canvas id="latentCanvas" width="420" height="380"></canvas>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="btnStep">SGD Step</button>
+      <button id="btnAuto">Auto Train</button>
+      <button id="btnReset" class="secondary">Reset Matrix</button>
+      <label style="font-size:0.85rem; color:#94a3b8;">Learning Rate:
+        <input type="range" id="lrRange" min="0.01" max="0.1" step="0.01" value="0.04">
+      </label>
+    </div>
+
+    <div class="stats">
+      <span>Epoch: <strong id="statEpoch">0</strong></span>
+      <span>Observed RMSE: <strong id="statTrainRMSE">0.00</strong></span>
+      <span>Unobserved Test RMSE: <strong id="statTestRMSE">0.00</strong></span>
+    </div>
+  </div>
+
+  <script>
+    const mCanvas = document.getElementById("matrixCanvas");
+    const mCtx = mCanvas.getContext("2d");
+    const lCanvas = document.getElementById("latentCanvas");
+    const lCtx = lCanvas.getContext("2d");
+
+    const nUsers = 5, nItems = 5, kFactors = 2;
+    let trueP = [], trueQ = [], R = [], P = [], Q = [];
+    let epoch = 0, isRunning = false, animId = null;
+
+    function initData() {
+      epoch = 0;
+      trueP = [
+        [0.8, -0.2], [-0.7, 0.6], [0.5, 0.7], [-0.6, -0.6], [0.1, 0.9]
+      ];
+      trueQ = [
+        [0.9, -0.1], [-0.8, 0.5], [0.4, 0.8], [-0.5, -0.7], [0.2, 0.8]
+      ];
+      R = [];
+      for (let u = 0; u < nUsers; u++) {
+        R[u] = [];
+        for (let i = 0; i < nItems; i++) {
+          let dot = trueP[u][0]*trueQ[i][0] + trueP[u][1]*trueQ[i][1];
+          let rating = Math.min(5, Math.max(1, 3.0 + dot * 2.0));
+          // Mask 40% as unobserved (0)
+          let observed = (u + i) % 2 === 0 || (u === i);
+          R[u][i] = { val: rating, observed: observed };
+        }
+      }
+      P = [];
+      for (let u = 0; u < nUsers; u++) P[u] = [(Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5];
+      Q = [];
+      for (let i = 0; i < nItems; i++) Q[i] = [(Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5];
+      draw();
+    }
+
+    function sgdStep() {
+      const lr = parseFloat(document.getElementById("lrRange").value);
+      const reg = 0.02;
+      for (let u = 0; u < nUsers; u++) {
+        for (let i = 0; i < nItems; i++) {
+          if (R[u][i].observed) {
+            let pred = P[u][0]*Q[i][0] + P[u][1]*Q[i][1] + 3.0;
+            let err = R[u][i].val - pred;
+            for (let f = 0; f < kFactors; f++) {
+              let p_old = P[u][f];
+              P[u][f] += lr * (err * Q[i][f] - reg * P[u][f]);
+              Q[i][f] += lr * (err * p_old - reg * Q[i][f]);
+            }
+          }
+        }
+      }
+      epoch++;
+    }
+
+    function draw() {
+      // 1. Draw Matrix Heatmap
+      mCtx.clearRect(0, 0, mCanvas.width, mCanvas.height);
+      const cellW = 60, cellH = 50, startX = 70, startY = 60;
+
+      mCtx.font = "11px sans-serif";
+      mCtx.fillStyle = "#94a3b8";
+      for (let i = 0; i < nItems; i++) mCtx.fillText("Item " + (i+1), startX + i*cellW + 12, startY - 12);
+      for (let u = 0; u < nUsers; u++) mCtx.fillText("User " + (u+1), startX - 55, startY + u*cellH + 30);
+
+      let trainSqErr = 0, trainCount = 0, testSqErr = 0, testCount = 0;
+
+      for (let u = 0; u < nUsers; u++) {
+        for (let i = 0; i < nItems; i++) {
+          let pred = Math.min(5, Math.max(1, P[u][0]*Q[i][0] + P[u][1]*Q[i][1] + 3.0));
+          let actual = R[u][i].val;
+          let obs = R[u][i].observed;
+
+          let diff = actual - pred;
+          if (obs) { trainSqErr += diff*diff; trainCount++; }
+          else { testSqErr += diff*diff; testCount++; }
+
+          let x = startX + i*cellW, y = startY + u*cellH;
+          let normVal = (pred - 1) / 4.0;
+          mCtx.fillStyle = `rgb(${Math.floor(20 + normVal*180)}, ${Math.floor(40 + normVal*100)}, ${Math.floor(80 + (1-normVal)*100)})`;
+          mCtx.fillRect(x, y, cellW-4, cellH-4);
+
+          if (obs) {
+            mCtx.strokeStyle = "#38bdf8";
+            mCtx.lineWidth = 2;
+            mCtx.strokeRect(x, y, cellW-4, cellH-4);
+          } else {
+            mCtx.strokeStyle = "#475569";
+            mCtx.lineWidth = 1;
+            mCtx.setLineDash([3, 3]);
+            mCtx.strokeRect(x, y, cellW-4, cellH-4);
+            mCtx.setLineDash([]);
+          }
+
+          mCtx.fillStyle = "#ffffff";
+          mCtx.font = "bold 12px sans-serif";
+          mCtx.fillText(pred.toFixed(1), x + 18, y + 22);
+          mCtx.fillStyle = "#94a3b8";
+          mCtx.font = "9px sans-serif";
+          mCtx.fillText(obs ? `act:${actual.toFixed(1)}` : "pred?", x + 12, y + 36);
+        }
+      }
+
+      document.getElementById("statEpoch").innerText = epoch;
+      document.getElementById("statTrainRMSE").innerText = Math.sqrt(trainSqErr / Math.max(1, trainCount)).toFixed(3);
+      document.getElementById("statTestRMSE").innerText = Math.sqrt(testSqErr / Math.max(1, testCount)).toFixed(3);
+
+      // 2. Draw Latent Space
+      lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
+      const cx = lCanvas.width / 2, cy = lCanvas.height / 2, scale = 140;
+
+      // Axes
+      lCtx.strokeStyle = "#1f2937";
+      lCtx.lineWidth = 1;
+      lCtx.beginPath();
+      lCtx.moveTo(0, cy); lCtx.lineTo(lCanvas.width, cy);
+      lCtx.moveTo(cx, 0); lCtx.lineTo(cx, lCanvas.height);
+      lCtx.stroke();
+
+      // Users
+      for (let u = 0; u < nUsers; u++) {
+        let px = cx + P[u][0] * scale, py = cy - P[u][1] * scale;
+        lCtx.fillStyle = "#38bdf8";
+        lCtx.beginPath();
+        lCtx.arc(px, py, 6, 0, Math.PI * 2);
+        lCtx.fill();
+        lCtx.fillStyle = "#e2e8f0";
+        lCtx.font = "11px sans-serif";
+        lCtx.fillText("U" + (u+1), px + 8, py + 4);
+      }
+
+      // Items
+      for (let i = 0; i < nItems; i++) {
+        let qx = cx + Q[i][0] * scale, qy = cy - Q[i][1] * scale;
+        lCtx.fillStyle = "#f59e0b";
+        lCtx.beginPath();
+        lCtx.rect(qx-5, qy-5, 10, 10);
+        lCtx.fill();
+        lCtx.fillStyle = "#fbbf24";
+        lCtx.font = "11px sans-serif";
+        lCtx.fillText("I" + (i+1), qx + 8, qy + 4);
+      }
+    }
+
+    document.getElementById("btnStep").addEventListener("click", () => { sgdStep(); draw(); });
+    document.getElementById("btnAuto").addEventListener("click", () => {
+      isRunning = !isRunning;
+      document.getElementById("btnAuto").innerText = isRunning ? "Stop" : "Auto Train";
+      if (isRunning) loop();
+    });
+    document.getElementById("btnReset").addEventListener("click", () => {
+      isRunning = false;
+      document.getElementById("btnAuto").innerText = "Auto Train";
+      initData();
+    });
+
+    function loop() {
+      if (!isRunning) return;
+      sgdStep();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    initData();
+  </script>
+</body>
+</html>

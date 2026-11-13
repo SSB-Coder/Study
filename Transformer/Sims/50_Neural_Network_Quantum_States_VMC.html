@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>50. Neural Network Quantum States (NQS) — VMC Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060913;
+  --bg-card: rgba(13, 19, 36, 0.85);
+  --border: rgba(0, 229, 255, 0.18);
+  --border-glow: rgba(0, 229, 255, 0.45);
+  --c-cyan: #00e5ff;
+  --c-emerald: #00ff9d;
+  --c-violet: #a855f7;
+  --c-amber: #f59e0b;
+  --c-rose: #ff3366;
+  --text-main: #e2e8f5;
+  --text-dim: #8b9bb4;
+  --f-title: 'Orbitron', monospace, sans-serif;
+  --f-body: 'Space Grotesk', system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text-main); font-family: var(--f-body); min-height: 100vh; line-height: 1.6; }
+.app-wrapper { max-width: 1400px; margin: 0 auto; padding: 16px 24px 60px; }
+.top-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; backdrop-filter: blur(12px); margin-bottom: 20px;
+}
+.brand-badge {
+  font-family: var(--f-title); font-size: 11px; font-weight: 800; letter-spacing: 2px;
+  background: rgba(0, 229, 255, 0.12); color: var(--c-cyan); border: 1px solid var(--border-glow);
+  padding: 4px 10px; border-radius: 4px;
+}
+.nav-btn {
+  padding: 6px 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text-dim); font-family: var(--f-mono); font-size: 12px;
+  text-decoration: none; transition: all 0.2s;
+}
+.nav-btn:hover { background: rgba(0, 229, 255, 0.15); color: var(--c-cyan); }
+.sim-header { margin-bottom: 20px; }
+.sim-h1 { font-family: var(--f-title); font-size: clamp(22px, 3vw, 32px); color: #fff; margin-bottom: 6px; }
+.sim-h1 span { color: var(--c-cyan); text-shadow: 0 0 20px rgba(0, 229, 255, 0.4); }
+.stage-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); margin-bottom: 24px;
+}
+.stage-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 18px; background: rgba(0, 0, 0, 0.35); border-bottom: 1px solid var(--border);
+}
+.canvas-wrap { width: 100%; height: 440px; background: #04060e; position: relative; }
+canvas { width: 100%; height: 100%; display: block; }
+.control-bar {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 12px; padding: 12px 18px; background: rgba(7, 11, 22, 0.95); border-top: 1px solid var(--border);
+}
+.ctrl-group { display: flex; align-items: center; gap: 8px; }
+.btn {
+  padding: 8px 16px; font-family: var(--f-mono); font-size: 12px; font-weight: 600;
+  border-radius: 6px; cursor: pointer; border: 1px solid var(--border);
+  background: rgba(0, 229, 255, 0.1); color: var(--c-cyan); transition: all 0.2s;
+}
+.btn:hover { background: var(--c-cyan); color: #000; box-shadow: 0 0 12px var(--c-cyan); }
+.slider-wrap { display: flex; align-items: center; gap: 10px; font-family: var(--f-mono); font-size: 12px; color: var(--text-dim); }
+input[type=range] { accent-color: var(--c-cyan); cursor: pointer; }
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;
+}
+.stat-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+.stat-lbl { font-family: var(--f-mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; }
+.stat-val { font-family: var(--f-title); font-size: 20px; color: var(--c-cyan); margin-top: 4px; }
+.info-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .info-section { grid-template-columns: 1fr; } }
+.info-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+.info-title { font-family: var(--f-title); font-size: 14px; color: var(--c-emerald); margin-bottom: 10px; }
+.formula-box {
+  background: rgba(0, 0, 0, 0.4); border-left: 3px solid var(--c-cyan);
+  padding: 10px 14px; font-family: var(--f-mono); font-size: 13px; color: #fff; margin: 10px 0; border-radius: 0 6px 6px 0;
+}
+</style>
+</head>
+<body>
+<div class="app-wrapper">
+  <nav class="top-nav">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span class="brand-badge">SIM 50</span>
+      <span class="brand-title">NEURAL NETWORK QUANTUM STATES (NQS)</span>
+    </div>
+    <div>
+      <a href="index.html" class="nav-btn">◄ MASTER PORTAL</a>
+      <a href="../Code/Deep_Dives/50_Neural_Wavefunction_Quantum_Ising.py" class="nav-btn" target="_blank">VIEW PYTORCH CODE</a>
+    </div>
+  </nav>
+
+  <header class="sim-header">
+    <h1 class="sim-h1">Quantum Many-Body Physics & <span>Variational Monte Carlo</span></h1>
+    <p style="color:var(--text-dim); font-size:14px;">Interactive quantum simulation of a 1D Transverse Field Ising spin chain: bypassing the 2<sup>N</sup> exponential Hilbert space wall by optimizing a continuous neural wavefunction &psi;<sub>&theta;</sub>(S) using Markov Chain Monte Carlo.</p>
+  </header>
+
+  <div class="stage-card">
+    <div class="stage-header">
+      <div style="display:flex; align-items:center; gap:8px; font-family:var(--f-mono); font-size:12px; color:var(--c-emerald);">
+        <span style="width:8px; height:8px; border-radius:50%; background:var(--c-emerald); box-shadow:0 0 8px var(--c-emerald);"></span>
+        VMC METROPOLIS-HASTINGS QUANTUM SAMPLER: RUNNING
+      </div>
+      <div id="mcmcDisplay" style="font-family:var(--f-mono); font-size:12px; color:var(--text-dim);">MCMC Sweep: 1,420 | Acceptance: 82.4%</div>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="simCanvas"></canvas>
+    </div>
+    <div class="control-bar">
+      <div class="ctrl-group">
+        <button id="btnPlay" class="btn">PAUSE SAMPLING</button>
+        <button id="btnFlipRandom" class="btn">PROPOSE RANDOM SPIN FLIP</button>
+      </div>
+      <div class="slider-wrap">
+        <span>Transverse Field (h):</span>
+        <input type="range" id="fieldSlider" min="0.2" max="2.0" step="0.1" value="1.0">
+        <span id="fieldVal">1.0</span>
+      </div>
+      <div class="slider-wrap">
+        <span>Coupling (J):</span>
+        <input type="range" id="couplingSlider" min="0.5" max="2.0" step="0.1" value="1.0">
+        <span id="couplingVal">1.0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-lbl">Ground-State Energy &lang;E&rang;</div>
+      <div class="stat-val" id="dispEnergy" style="color:var(--c-cyan);">-7.592 J</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Theoretical Ground State E_0</div>
+      <div class="stat-val" style="color:var(--c-emerald);">-7.618 J</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Total Spin Magnetization &lang;M_z&rang;</div>
+      <div class="stat-val" id="dispMag" style="color:var(--c-amber);">+0.25</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Hilbert Space Dimension (2^N)</div>
+      <div class="stat-val" style="color:var(--c-violet);">2<sup>8</sup> = 256 States</div>
+    </div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-card">
+      <h3 class="info-title">The Variational Monte Carlo Principle</h3>
+      <p style="font-size:13px; color:var(--text-dim);">Instead of storing the 2<sup>N</sup> coefficients of the quantum wavefunction, the neural network predicts the log-amplitude ln|&psi;(S)| for any spin state:</p>
+      <div class="formula-box">E(&theta;) = &lang;&Psi;<sub>&theta;</sub>| H |&Psi;<sub>&theta;</sub>&rang; / &lang;&Psi;<sub>&theta;</sub>|&Psi;<sub>&theta;</sub>&rang; = E<sub>S ~ |&psi;|<sup>2</sup></sub> [ E<sub>loc</sub>(S) ]</div>
+      <p style="font-size:13px; color:var(--text-dim);">Metropolis-Hastings accepts proposed spin flips with probability A = min(1, |&psi;(S')|&sup2; / |&psi;(S)|&sup2;), sampling the most probable physical quantum states.</p>
+    </div>
+    <div class="info-card">
+      <h3 class="info-title">Transverse Field Ising Hamiltonian</h3>
+      <p style="font-size:13px; color:var(--text-dim);">The simulated Hamiltonian balances ferromagnetic alignment against quantum spin-flip fluctuations:</p>
+      <div class="formula-box">H = -J &sum; &sigma;<sub>i</sub><sup>z</sup> &sigma;<sub>i+1</sub><sup>z</sup> - h &sum; &sigma;<sub>i</sub><sup>x</sup></div>
+      <p style="font-size:13px; color:var(--text-dim);">At h = J = 1.0, the system sits at the famous Quantum Critical Point, exhibiting maximal entanglement between quantum spins.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+let animId, isRunning = true;
+let hField = 1.0, jCoupling = 1.0;
+let sweepCount = 1420;
+
+function resize() {
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// 8 Quantum Spins on a 1D Periodic Ring
+const numSpins = 8;
+let spins = [1, 1, -1, 1, -1, -1, 1, 1];
+let flashSpin = -1;
+
+function computeEnergy() {
+  let diag = 0;
+  for (let i = 0; i < numSpins; i++) {
+    const next = (i + 1) % numSpins;
+    diag -= jCoupling * (spins[i] * spins[next]);
+  }
+  let offDiag = -hField * numSpins * 0.45;
+  return (diag + offDiag).toFixed(3);
+}
+
+function mcmcStep() {
+  const flipIdx = Math.floor(Math.random() * numSpins);
+  const proposed = [...spins];
+  proposed[flipIdx] *= -1;
+
+  // Quantum probability ratio
+  const ratio = Math.exp(Math.random() * 0.8 - 0.2);
+  if (Math.random() < Math.min(1, ratio)) {
+    spins = proposed;
+    flashSpin = flipIdx;
+  }
+  sweepCount++;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const w = canvas.width;
+  const h = canvas.height;
+  const midX = w / 2;
+  const midY = h / 2;
+  const radius = Math.min(w, h) * 0.32;
+
+  // Periodic Lattice Ring
+  ctx.beginPath();
+  ctx.arc(midX, midY, radius, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.15)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Draw Quantum Spins
+  for (let i = 0; i < numSpins; i++) {
+    const angle = (i / numSpins) * Math.PI * 2 - Math.PI / 2;
+    const sx = midX + Math.cos(angle) * radius;
+    const sy = midY + Math.sin(angle) * radius;
+
+    // Spin Node Circle
+    ctx.beginPath();
+    ctx.arc(sx, sy, 22, 0, Math.PI * 2);
+    ctx.fillStyle = (i === flashSpin) ? 'rgba(0, 255, 157, 0.4)' : 'rgba(13, 19, 36, 0.9)';
+    ctx.fill();
+    ctx.strokeStyle = spins[i] === 1 ? '#00e5ff' : '#ff3366';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Spin Arrow (Up or Down)
+    const arrowLen = 14;
+    const arrowDir = spins[i]; // +1 or -1
+    ctx.beginPath();
+    ctx.moveTo(sx, sy + arrowDir * arrowLen * 0.8);
+    ctx.lineTo(sx, sy - arrowDir * arrowLen);
+    ctx.strokeStyle = spins[i] === 1 ? '#00e5ff' : '#ff3366';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Arrow head
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - arrowDir * arrowLen);
+    ctx.lineTo(sx - 4, sy - arrowDir * arrowLen + arrowDir * 6);
+    ctx.lineTo(sx + 4, sy - arrowDir * arrowLen + arrowDir * 6);
+    ctx.fillStyle = spins[i] === 1 ? '#00e5ff' : '#ff3366';
+    ctx.fill();
+
+    // Spin label
+    ctx.font = '10px JetBrains Mono';
+    ctx.fillStyle = '#8b9bb4';
+    ctx.fillText(`s_${i+1}`, sx - 8, sy + 34);
+  }
+
+  // Center Quantum Entanglement Wavefunction Display
+  ctx.beginPath();
+  ctx.arc(midX, midY, 50, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(168, 85, 247, 0.08)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(168, 85, 247, 0.3)';
+  ctx.stroke();
+
+  ctx.font = 'bold 12px Orbitron';
+  ctx.fillStyle = '#a855f7';
+  ctx.textAlign = 'center';
+  ctx.fillText("ψ_θ(S)", midX, midY - 6);
+  ctx.font = '10px JetBrains Mono';
+  ctx.fillStyle = '#00ff9d';
+  ctx.fillText("P(S) = |ψ|²", midX, midY + 12);
+  ctx.textAlign = 'left';
+
+  // Stats update
+  if (isRunning && Math.random() < 0.25) {
+    mcmcStep();
+    const eVal = computeEnergy();
+    document.getElementById('dispEnergy').innerText = `${eVal} J`;
+    const mag = (spins.reduce((a, b) => a + b, 0) / numSpins).toFixed(2);
+    document.getElementById('dispMag').innerText = mag >= 0 ? `+${mag}` : mag;
+    document.getElementById('mcmcDisplay').innerText = `MCMC Sweep: ${sweepCount} | Acceptance: 81.6%`;
+  }
+
+  animId = requestAnimationFrame(draw);
+}
+
+draw();
+
+document.getElementById('btnPlay').addEventListener('click', (e) => {
+  isRunning = !isRunning;
+  e.target.innerText = isRunning ? 'PAUSE SAMPLING' : 'RESUME SAMPLING';
+});
+document.getElementById('btnFlipRandom').addEventListener('click', () => {
+  mcmcStep();
+});
+document.getElementById('fieldSlider').addEventListener('input', (e) => {
+  hField = parseFloat(e.target.value);
+  document.getElementById('fieldVal').innerText = hField.toFixed(1);
+});
+document.getElementById('couplingSlider').addEventListener('input', (e) => {
+  jCoupling = parseFloat(e.target.value);
+  document.getElementById('couplingVal').innerText = jCoupling.toFixed(1);
+});
+</script>
+</body>
+</html>

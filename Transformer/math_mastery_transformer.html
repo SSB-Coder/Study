@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mathematics for Transformers & Neural Networks — Complete Mastery Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    tags: 'ams'
+  },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+  :root {
+    --bg:       #0a0e17;
+    --surface:  #111827;
+    --border:   #1e2d45;
+    --accent1:  #3b82f6;   /* electric blue */
+    --accent2:  #8b5cf6;   /* violet */
+    --accent3:  #06b6d4;   /* cyan */
+    --accent4:  #f59e0b;   /* amber — warnings/labels */
+    --accent5:  #10b981;   /* emerald — formulas */
+    --text:     #e2e8f0;
+    --muted:    #94a3b8;
+    --code-bg:  #0d1520;
+    --badge-bg: #1a2744;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    line-height: 1.75;
+    min-height: 100vh;
+  }
+
+  /* ── Starfield hero ── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 24px 60px;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59,130,246,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(139,92,246,0.10) 0%, transparent 60%),
+      var(--bg);
+  }
+
+  .stars { position: absolute; inset: 0; pointer-events: none; }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+    animation: twinkle var(--d) ease-in-out infinite alternate;
+  }
+  @keyframes twinkle { from { opacity: 0.1; } to { opacity: 0.8; } }
+
+  .hero-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent3);
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-family: 'Lora', serif;
+    font-size: clamp(2.4rem, 6vw, 5rem);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    max-width: 880px;
+    margin: 0 auto 28px;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    background: linear-gradient(90deg, var(--accent1), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 600px;
+    margin: 0 auto 48px;
+    line-height: 1.7;
+  }
+
+  .progress-bar-hero {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .pbar {
+    width: 240px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .pbar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent1), var(--accent2));
+  }
+
+  /* ── TOC sidebar ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+    gap: 48px;
+  }
+
+  .toc {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+    height: fit-content;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .toc::-webkit-scrollbar { width: 4px; }
+  .toc::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .toc-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent3);
+    margin-bottom: 16px;
+  }
+
+  .toc ul { list-style: none; }
+  .toc li { margin-bottom: 2px; }
+  .toc a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: all 0.18s;
+  }
+  .toc a:hover { background: var(--border); color: var(--text); }
+  .toc a .pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent1);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  .toc a .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── Main content ── */
+  .main { min-width: 0; }
+
+  /* ── Phase divider ── */
+  .phase {
+    margin: 72px 0 40px;
+    position: relative;
+  }
+  .phase::before {
+    content: '';
+    display: block;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent1) 0%, var(--accent2) 40%, transparent 100%);
+    margin-bottom: 20px;
+  }
+  .phase-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent3);
+    margin-bottom: 10px;
+  }
+  .phase-label .badge {
+    background: var(--badge-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 10px;
+    color: var(--accent1);
+    letter-spacing: 0.1em;
+  }
+  .phase h2 {
+    font-family: 'Lora', serif;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text);
+  }
+
+  /* ── Topic cards ── */
+  .topic-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 32px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .topic-card:hover { border-color: rgba(59,130,246,0.35); }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 24px 28px 20px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .card-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .card-meta { flex: 1; min-width: 0; }
+  .card-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .card-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .card-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--code-bg);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .card-progress {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .pct-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .mini-bar {
+    width: 80px; height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .mini-fill {
+    height: 100%;
+    border-radius: 99px;
+  }
+
+  .card-body {
+    padding: 0 28px 28px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Section heads inside card ── */
+  .section-head {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent4);
+    margin: 24px 0 10px;
+  }
+
+  p { color: var(--muted); margin-bottom: 12px; line-height: 1.8; }
+  p strong { color: var(--text); font-weight: 600; }
+
+  /* ── Formula boxes ── */
+  .formula-box {
+    background: var(--code-bg);
+    border: 1px solid rgba(16,185,129,0.25);
+    border-left: 3px solid var(--accent5);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+  .formula-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent5);
+    margin-bottom: 10px;
+  }
+  .formula-box .MJX-TEX, .formula-box mjx-container { color: #a7f3d0; }
+
+  /* ── Info grids ── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .info-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .info-card-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent1);
+    margin-bottom: 6px;
+  }
+  .info-card p { font-size: 13px; margin-bottom: 0; }
+
+  /* ── Key insight callout ── */
+  .insight {
+    background: rgba(139,92,246,0.08);
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .insight::before {
+    content: '💡 Key Insight: ';
+    font-weight: 700;
+    color: var(--accent2);
+  }
+
+  /* ── Code block ── */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 14px 0;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #93c5fd;
+    line-height: 1.6;
+  }
+  .code-block .c { color: var(--muted); font-style: italic; }
+  .code-block .k { color: #c084fc; }
+  .code-block .n { color: #a7f3d0; }
+  .code-block .s { color: #fbbf24; }
+
+  /* ── Warning / prerequisite ── */
+  .prereq {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--text);
+    margin: 14px 0;
+  }
+  .prereq::before { content: '⚠ Prerequisites: '; font-weight: 700; color: var(--accent4); }
+
+  /* ── Ordered step lists ── */
+  .steps { counter-reset: step; list-style: none; margin: 14px 0; }
+  .steps li {
+    counter-increment: step;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .steps li:last-child { border-bottom: none; }
+  .steps li::before {
+    content: counter(step, decimal-leading-zero);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent1);
+    background: var(--badge-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 7px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── Color accents per topic ── */
+  .c-blue { color: var(--accent1); }
+  .c-violet { color: var(--accent2); }
+  .c-cyan { color: var(--accent3); }
+  .c-amber { color: var(--accent4); }
+  .c-emerald { color: var(--accent5); }
+
+  .bg-blue   { background: rgba(59,130,246,0.15); }
+  .bg-violet { background: rgba(139,92,246,0.15); }
+  .bg-cyan   { background: rgba(6,182,212,0.15); }
+  .bg-amber  { background: rgba(245,158,11,0.15); }
+  .bg-emerald{ background: rgba(16,185,129,0.15); }
+  .bg-red    { background: rgba(239,68,68,0.15); }
+  .bg-pink   { background: rgba(236,72,153,0.15); }
+  .bg-orange { background: rgba(249,115,22,0.15); }
+
+  .fill-blue   { background: linear-gradient(90deg, var(--accent1), #2563eb); }
+  .fill-violet { background: linear-gradient(90deg, var(--accent2), #7c3aed); }
+  .fill-cyan   { background: linear-gradient(90deg, var(--accent3), #0891b2); }
+  .fill-amber  { background: linear-gradient(90deg, var(--accent4), #d97706); }
+  .fill-emerald{ background: linear-gradient(90deg, var(--accent5), #059669); }
+  .fill-red    { background: linear-gradient(90deg, #ef4444, #dc2626); }
+  .fill-pink   { background: linear-gradient(90deg, #ec4899, #db2777); }
+  .fill-orange { background: linear-gradient(90deg, #f97316, #ea580c); }
+  .fill-grad   { background: linear-gradient(90deg, var(--accent1), var(--accent2), var(--accent3)); }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  th {
+    background: var(--badge-bg);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 9px 14px;
+    color: var(--muted);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  td.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent5); }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 40px 24px;
+    font-size: 13px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+  footer span { color: var(--accent1); }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .toc { position: relative; top: 0; max-height: none; display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ HERO ══════════════ -->
+<header class="hero">
+  <div class="stars" id="stars"></div>
+  <div class="hero-eyebrow">Transformer / LLM Study Repository — Mathematics Mastery Guide</div>
+  <h1>From Zero to <em>100%</em><br>Mathematical Fluency</h1>
+  <p class="hero-sub">
+    Every equation, every algorithm, every intuition — structured as a progressive journey from high-school arithmetic to frontier AGI research mathematics.
+  </p>
+  <div class="progress-bar-hero">
+    <span>0%</span>
+    <div class="pbar"><div class="pbar-fill" style="width:100%"></div></div>
+    <span>100%</span>
+  </div>
+</header>
+
+<!-- ══════════════ LAYOUT ══════════════ -->
+<div class="layout">
+
+  <!-- ── TOC ── -->
+  <nav class="toc">
+    <div class="toc-title">Contents</div>
+    <ul>
+      <li><a href="#ph0"><span class="dot" style="background:var(--accent3)"></span> Phase 0: Pre-Foundations<span class="pct">0–10%</span></a></li>
+      <li><a href="#ph1"><span class="dot" style="background:var(--accent1)"></span> Phase 1: Linear Algebra<span class="pct">10–25%</span></a></li>
+      <li><a href="#ph2"><span class="dot" style="background:var(--accent2)"></span> Phase 2: Calculus<span class="pct">25–40%</span></a></li>
+      <li><a href="#ph3"><span class="dot" style="background:var(--accent5)"></span> Phase 3: Probability<span class="pct">40–50%</span></a></li>
+      <li><a href="#ph4"><span class="dot" style="background:var(--accent4)"></span> Phase 4: Optimization<span class="pct">50–60%</span></a></li>
+      <li><a href="#ph5"><span class="dot" style="background:#ef4444"></span> Phase 5: Attention Math<span class="pct">60–70%</span></a></li>
+      <li><a href="#ph6"><span class="dot" style="background:#ec4899"></span> Phase 6: Advanced Arch<span class="pct">70–80%</span></a></li>
+      <li><a href="#ph7"><span class="dot" style="background:#f97316"></span> Phase 7: Info Theory<span class="pct">80–88%</span></a></li>
+      <li><a href="#ph8"><span class="dot" style="background:#a78bfa"></span> Phase 8: Frontier Math<span class="pct">88–95%</span></a></li>
+      <li><a href="#ph9"><span class="dot" style="background:#34d399"></span> Phase 9: Research Tier<span class="pct">95–100%</span></a></li>
+    </ul>
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+
+    <!-- ════ PHASE 0 ════ -->
+    <div class="phase" id="ph0">
+      <div class="phase-label"><span class="badge">0 → 10%</span> PHASE 0</div>
+      <h2>Pre-Foundations — The Language of Numbers</h2>
+    </div>
+
+    <!-- Topic: Arithmetic & Functions -->
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-cyan" style="font-size:22px">🔢</div>
+        <div class="card-meta">
+          <div class="card-eyebrow c-cyan">Pre-Foundation</div>
+          <div class="card-title">Arithmetic, Functions & Notation</div>
+          <div class="card-chips">
+            <span class="chip">scalars</span><span class="chip">functions</span><span class="chip">summation</span><span class="chip">products</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label c-cyan">0–5%</span>
+          <div class="mini-bar"><div class="mini-fill fill-cyan" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="section-head">Why This Matters</div>
+        <p>Every neural network equation uses mathematical notation that can feel cryptic if you haven't seen it. Before touching any matrix, you must be comfortable reading function notation, sums, and products.</p>
+
+        <div class="section-head">Core Concepts</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <div class="info-card-title">Scalars vs. Vectors vs. Matrices</div>
+            <p>A scalar is a single number ($x = 5$). A vector is a list of numbers ($\mathbf{x} = [1, 2, 3]$). A matrix is a 2D grid. Tensors are N-dimensional grids — everything in deep learning is a tensor.</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">Sigma Notation</div>
+            <p>$$\sum_{i=1}^{n} x_i = x_1 + x_2 + \cdots + x_n$$</p>
+            <p>This appears in every loss function. Read it as "sum over all values from $i=1$ to $n$."</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">Function Notation</div>
+            <p>$f(x) = x^2$ means "when you put $x$ in, you get $x^2$ out." In neural nets, activation functions like $\text{ReLU}(z) = \max(0, z)$ are functions applied element-wise to every number in a vector.</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">Logarithms</div>
+            <p>$\log(x)$ measures the "order of magnitude" of $x$. Since probabilities near 0 are tiny, we use $\log(\hat{p})$ to avoid numerical underflow. $\log(1) = 0$, $\log(0) \to -\infty$.</p>
+          </div>
+        </div>
+
+        <div class="insight">The weight update rule $W \leftarrow W - \alpha \cdot \nabla W$ is just arithmetic: subtract a scaled gradient from a number. Every deep learning algorithm reduces to this.</div>
+      </div>
+    </div>
+
+    <!-- Topic: Exponential & Softmax -->
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-cyan">📈</div>
+        <div class="card-meta">
+          <div class="card-eyebrow c-cyan">Pre-Foundation</div>
+          <div class="card-title">Exponentials, Sigmoid & Softmax</div>
+          <div class="card-chips">
+            <span class="chip">$e^x$</span><span class="chip">sigmoid</span><span class="chip">softmax</span><span class="chip">probability</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label c-cyan">5–10%</span>
+          <div class="mini-bar"><div class="mini-fill fill-cyan" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="section-head">The Exponential Function — The Engine of Probabilities</div>
+        <p>The number $e \approx 2.718$ appears everywhere in AI because of a beautiful property: $\frac{d}{dx}e^x = e^x$ (it is its own derivative). This makes calculus on exponentials clean and efficient.</p>
+
+        <div class="formula-box">
+          <div class="formula-label">Sigmoid — Binary Squasher</div>
+          $$\sigma(z) = \frac{1}{1 + e^{-z}}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Takes any real number $z$ and outputs a value between 0 and 1. This is used in binary classification and inside LSTM gates.</p>
+        </div>
+
+        <div class="formula-box">
+          <div class="formula-label">Softmax — Multi-Class Probability</div>
+          $$\text{softmax}(z_i) = \frac{e^{z_i}}{\sum_{j=1}^{K} e^{z_j}}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Converts a vector of raw scores (logits) into a probability distribution that sums to 1. Every LLM outputs its next-word prediction through Softmax.</p>
+        </div>
+
+        <div class="insight">Softmax is used at the core of the Attention mechanism ($\text{softmax}(QK^T / \sqrt{d_k})$). Mastering it is non-negotiable.</div>
+      </div>
+    </div>
+
+
+    <!-- ════ PHASE 1 ════ -->
+    <div class="phase" id="ph1">
+      <div class="phase-label"><span class="badge">10 → 25%</span> PHASE 1</div>
+      <h2>Linear Algebra — The Language Neural Networks Speak</h2>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-blue">🔷</div>
+        <div class="card-meta">
+          <div class="card-eyebrow c-blue">Linear Algebra</div>
+          <div class="card-title">Vectors, Matrices & Dot Products</div>
+          <div class="card-chips">
+            <span class="chip">vectors</span><span class="chip">dot product</span><span class="chip">matrix multiply</span><span class="chip">transpose</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label c-blue">10–16%</span>
+          <div class="mini-bar"><div class="mini-fill fill-blue" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="section-head">Why Neural Networks Are Just Matrix Multiplication</div>
+        <p>A layer of neurons takes an input vector $\mathbf{x}$, multiplies it by a weight matrix $W$, and adds a bias vector $\mathbf{b}$. That's it. Billions of parameters = millions of matrix multiplications stacked together.</p>
+
+        <div class="formula-box">
+          <div class="formula-label">Dot Product — Similarity Measure</div>
+          $$\mathbf{a} \cdot \mathbf{b} = \sum_{i=1}^{n} a_i b_i = \|\mathbf{a}\| \|\mathbf{b}\| \cos\theta$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">The dot product is the <strong style="color:var(--text)">core of attention</strong>. When $Q$ and $K$ are multiplied ($QK^T$), each cell is a dot product measuring how much one word "attends" to another.</p>
+        </div>
+
+        <div class="formula-box">
+          <div class="formula-label">Single Neuron — Forward Pass</div>
+          $$z = \mathbf{W} \cdot \mathbf{x} + b, \qquad a = f(z)$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">$\mathbf{W}$ has shape $(n_{\text{out}}, n_{\text{in}})$, $\mathbf{x}$ has shape $(n_{\text{in}}, 1)$, so $\mathbf{W}\mathbf{x}$ gives a vector of shape $(n_{\text{out}}, 1)$.</p>
+        </div>
+
+        <div class="formula-box">
+          <div class="formula-label">Layer Forward Pass — Full Batch</div>
+          $$Z^{[l]} = W^{[l]} A^{[l-1]} + b^{[l]}, \qquad A^{[l]} = g^{[l]}(Z^{[l]})$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Where $m$ = batch size, $n_l$ = neurons in layer $l$, $n_{l-1}$ = neurons in previous layer. $W^{[l]} \in \mathbb{R}^{n_l \times n_{l-1}}$, $A^{[l-1]} \in \mathbb{R}^{n_{l-1} \times m}$.</p>
+        </div>
+
+        <div class="section-head">Dimension Tracking — The Critical Skill</div>
+        <table>
+          <thead><tr><th>Symbol</th><th>Shape</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">X</td><td class="mono">(n_features, batch)</td><td>Input matrix</td></tr>
+            <tr><td class="mono">W[l]</td><td class="mono">(n_l, n_{l-1})</td><td>Weight matrix for layer l</td></tr>
+            <tr><td class="mono">b[l]</td><td class="mono">(n_l, 1)</td><td>Bias vector</td></tr>
+            <tr><td class="mono">Z[l]</td><td class="mono">(n_l, batch)</td><td>Pre-activation output</td></tr>
+            <tr><td class="mono">A[l]</td><td class="mono">(n_l, batch)</td><td>Post-activation output</td></tr>
+          </tbody>
+        </table>
+
+        <div class="insight">If a shape mismatch throws an error in PyTorch, it means your matrix dimensions are incompatible. Learning to read shapes is the single most practical linear algebra skill for ML.</div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-blue">📐</div>
+        <div class="card-meta">
+          <div class="card-eyebrow c-blue">Linear Algebra</div>
+          <div class="card-title">Eigenvalues, Norms & Matrix Decompositions</div>
+          <div class="card-chips">
+            <span class="chip">eigenvalues</span><span class="chip">SVD</span><span class="chip">L2 norm</span><span class="chip">LoRA</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label c-blue">16–25%</span>
+          <div class="mini-bar"><div class="mini-fill fill-blue" style="width:70%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="section-head">Norms — Measuring Vector Size</div>
+        <div class="formula-box">
+          <div class="formula-label">L2 Norm (Euclidean Length)</div>
+          $$\|\mathbf{x}\|_2 = \sqrt{\sum_{i=1}^{n} x_i^2}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Used in gradient clipping (preventing exploding gradients) and in weight decay / L2 regularization: $\mathcal{L}_{\text{reg}} = \mathcal{L} + \lambda \|W\|_2^2$.</p>
+        </div>
+
+        <div class="section-head">Singular Value Decomposition (SVD) — Foundation of LoRA</div>
+        <p>Every matrix $W$ of shape $(m, n)$ can be factored as:</p>
+        <div class="formula-box">
+          <div class="formula-label">SVD Decomposition</div>
+          $$W = U \Sigma V^T$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">$U$ and $V$ are orthogonal matrices; $\Sigma$ is a diagonal matrix of "singular values" representing the importance of each component.</p>
+        </div>
+        <div class="insight">LoRA (Low-Rank Adaptation) — the algorithm used to fine-tune LLMs on consumer hardware — is directly built on SVD. Instead of updating all weights $W$ (huge), it learns two tiny matrices $A$ and $B$ such that $\Delta W = AB$, where $\text{rank}(AB) \ll \text{rank}(W)$. This insight comes directly from SVD.</div>
+
+        <div class="formula-box">
+          <div class="formula-label">Eigenvalue Equation</div>
+          $$A\mathbf{v} = \lambda \mathbf{v}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">An eigenvector $\mathbf{v}$ of matrix $A$ is a direction that only gets scaled (by $\lambda$) when $A$ is applied, never rotated. This appears in the analysis of gradient descent stability and in the Mamba SSM's $A$ matrix.</p>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ════ PHASE 2 ════ -->
+    <div class="phase" id="ph2">
+      <div class="phase-label"><span class="badge">25 → 40%</span> PHASE 2</div>
+      <h2>Calculus — How Neural Networks Learn</h2>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-violet">∂</div>
+        <div class="card-meta">
+          <div class="card-eyebrow c-violet">Calculus</div>
+          <div class="card-title">Derivatives, The Chain Rule & Gradients</div>
+          <div class="card-chips">
+            <span class="chip">$\partial f / \partial x$</span><span class="chip">chain rule</span><span class="chip">gradient</span><span class="chip">Jacobian</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label c-violet">25–32%</span>
+          <div class="mini-bar"><div class="mini-fill fill-violet" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="section-head">Derivatives — Measuring Sensitivity</div>
+        <p>A derivative $\frac{df}{dx}$ tells you how much the output $f$ changes when you nudge the input $x$ by a tiny amount. The gradient $\nabla_\mathbf{x} f$ is the vector of all partial derivatives — it points in the direction of steepest ascent of $f$.</p>
+
+        <div class="section-head">Common Activation Derivatives — Memorize These</div>
+        <table>
+          <thead><tr><th>Activation $f(z)$</th><th>Derivative $f'(z)$</th><th>Used In</th></tr></thead>
+          <tbody>
+            <tr><td>$\sigma(z) = \frac{1}{1+e^{-z}}$</td><td>$\sigma(z)(1-\sigma(z))$</td><td>Binary output, LSTM gates</td></tr>
+            <tr><td>$\tanh(z)$</td><td>$1 - \tanh^2(z)$</td><td>RNN hidden states</td></tr>
+            <tr><td>$\text{ReLU}(z) = \max(0,z)$</td><td>$\mathbf{1}[z > 0]$</td><td>MLP hidden layers</td></tr>
+            <tr><td>$\text{GELU}(z)$</td><td>Approximated via $\Phi(z)$</td><td>Transformers (GPT, BERT)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="section-head">The Chain Rule — The Engine of Backpropagation</div>
+        <p>If $L = f(g(h(x)))$, then:</p>
+        <div class="formula-box">
+          <div class="formula-label">Chain Rule (Multi-layer)</div>
+          $$\frac{dL}{dx} = \frac{dL}{df} \cdot \frac{df}{dg} \cdot \frac{dg}{dh} \cdot \frac{dh}{dx}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">This is applied <em>backwards</em> through the network layers. Each layer receives a gradient from the layer above and multiplies it by its local derivative, then passes it down.</p>
+        </div>
+
+        <div class="insight">The magical cancellation at the output layer: when using Sigmoid + Binary Cross-Entropy, the output gradient simplifies to just $dZ^{[L]} = A^{[L]} - Y$. This is called the "perfect pairing" — the derivative chain simplifies to prediction minus truth.</div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-violet">⬅️</div>
+        <div class="card-meta">
+          <div class="card-eyebrow c-violet">Calculus</div>
+          <div class="card-title">Backpropagation — The Complete Algorithm</div>
+          <div class="card-chips">
+            <span class="chip">backprop</span><span class="chip">BPTT</span><span class="chip">vanishing gradient</span><span class="chip">gradient flow</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label c-violet">32–40%</span>
+          <div class="mini-bar"><div class="mini-fill fill-violet" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="section-head">Full Backprop Equations — Layer by Layer</div>
+        <div class="prereq">Requires comfort with matrix transpose $A^T$, element-wise multiply $*$, and the chain rule from the previous section.</div>
+
+        <div class="formula-box">
+          <div class="formula-label">Output Layer Gradients (Layer L)</div>
+          $$dZ^{[L]} = A^{[L]} - Y$$
+          $$dW^{[L]} = \frac{1}{m} dZ^{[L]} (A^{[L-1]})^T$$
+          $$db^{[L]} = \frac{1}{m} \sum_{i=1}^{m} dZ^{[L](i)}$$
+        </div>
+
+        <div class="formula-box">
+          <div class="formula-label">Hidden Layer Gradients (Layer l)</div>
+          $$dZ^{[l]} = (W^{[l+1]})^T dZ^{[l+1]} \,*\, g'^{[l]}(Z^{[l]})$$
+          $$dW^{[l]} = \frac{1}{m} dZ^{[l]} (A^{[l-1]})^T$$
+          $$db^{[l]} = \frac{1}{m} \sum_{i=1}^{m} dZ^{[l](i)}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">The $*$ is element-wise multiplication. The $(W^{[l+1]})^T$ routes the error signal from the upper layer backward into the current layer.</p>
+        </div>
+
+        <div class="section-head">Backpropagation Through Time (BPTT) — Why RNNs Are Hard</div>
+        <p>In an RNN, the hidden state at step $t$ depends on step $t-1$, which depends on $t-2$... Gradients must flow backward through all time steps, causing repeated multiplication:</p>
+        <div class="formula-box">
+          <div class="formula-label">BPTT Gradient Product</div>
+          $$\prod_{j=k+1}^{t} \frac{\partial h_j}{\partial h_{j-1}}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">If the values in this product are $< 1$: gradient <strong style="color:#ef4444">vanishes</strong> to zero (amnesia). If $> 1$: gradient <strong style="color:#ef4444">explodes</strong> to NaN. This is why LSTMs (using additive cell state updates) and Transformers (parallel processing) were invented.</p>
+        </div>
+
+        <div class="section-head">Residual Connections — The Gradient Highway</div>
+        <p>Transformers solve vanishing gradients via skip connections: $y = x + \text{Layer}(x)$. The gradient now has a direct path: $\frac{\partial \mathcal{L}}{\partial x} = \frac{\partial \mathcal{L}}{\partial y}(1 + \frac{\partial \text{Layer}(x)}{\partial x})$. The "+1" guarantees gradients never vanish completely.</p>
+      </div>
+    </div>
+
+
+    <!-- ════ PHASE 3 ════ -->
+    <div class="phase" id="ph3">
+      <div class="phase-label"><span class="badge">40 → 50%</span> PHASE 3</div>
+      <h2>Probability & Statistics — The Foundation of Loss Functions</h2>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-emerald">🎲</div>
+        <div class="card-meta">
+          <div class="card-eyebrow c-emerald">Probability</div>
+          <div class="card-title">Distributions, Cross-Entropy & KL Divergence</div>
+          <div class="card-chips">
+            <span class="chip">Gaussian</span><span class="chip">cross-entropy</span><span class="chip">KL divergence</span><span class="chip">MLE</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label c-emerald">40–47%</span>
+          <div class="mini-bar"><div class="mini-fill fill-emerald" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="section-head">Loss Functions — Why We Use What We Use</div>
+        <p>A loss function is a mathematical measure of how wrong the model is. The choice of loss function is not arbitrary — it derives from probability theory (Maximum Likelihood Estimation).</p>
+
+        <div class="formula-box">
+          <div class="formula-label">Binary Cross-Entropy (Binary Classification)</div>
+          $$\mathcal{L}(y, \hat{y}) = -\left[y \log(\hat{y}) + (1-y)\log(1-\hat{y})\right]$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Used when the output is 0 or 1. The full dataset loss averages this over all $m$ examples: $\mathcal{J} = -\frac{1}{m}\sum_{i=1}^{m}\mathcal{L}(y^{(i)}, \hat{y}^{(i)})$</p>
+        </div>
+
+        <div class="formula-box">
+          <div class="formula-label">Categorical Cross-Entropy (LLM Next-Token Prediction)</div>
+          $$\mathcal{L} = -\sum_{c=1}^{K} y_c \log(\hat{p}_c)$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">For $K$ classes (e.g., $K = 100{,}000$ vocabulary tokens). Since only one true class has $y_c = 1$, this simplifies to $-\log(\hat{p}_{\text{correct}})$: just penalize the model for assigning low probability to the correct next token.</p>
+        </div>
+
+        <div class="formula-box">
+          <div class="formula-label">Kullback-Leibler Divergence — Measuring Distribution Distance</div>
+          $$D_{KL}(P \| Q) = \sum_x P(x) \log \frac{P(x)}{Q(x)}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Used in VAEs (regularizing latent space), RLHF/PPO (preventing model collapse), and information theory. Cross-Entropy $= H(P) + D_{KL}(P \| Q)$, so minimizing cross-entropy IS minimizing KL divergence when the true labels are fixed.</p>
+        </div>
+
+        <div class="section-head">The Gaussian Distribution — Why It's Everywhere</div>
+        <div class="formula-box">
+          <div class="formula-label">Normal Distribution</div>
+          $$\mathcal{N}(x; \mu, \sigma^2) = \frac{1}{\sigma\sqrt{2\pi}} \exp\!\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Used in weight initialization, VAE latent spaces, diffusion model noise schedules ($q(x_t | x_0) = \mathcal{N}(\sqrt{\bar\alpha_t}x_0, (1-\bar\alpha_t)\mathbf{I})$), and the reparameterization trick.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-emerald">📊</div>
+        <div class="card-meta">
+          <div class="card-eyebrow c-emerald">Probability</div>
+          <div class="card-title">Bayesian Thinking, Expectation & MLE</div>
+          <div class="card-chips">
+            <span class="chip">expectation $\mathbb{E}$</span><span class="chip">Bayes theorem</span><span class="chip">MLE</span><span class="chip">prior/posterior</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label c-emerald">47–50%</span>
+          <div class="mini-bar"><div class="mini-fill fill-emerald" style="width:65%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="formula-box">
+          <div class="formula-label">Expected Value</div>
+          $$\mathbb{E}_{x \sim P}[f(x)] = \sum_x P(x) f(x)$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">The GAN loss, diffusion model loss, and RLHF reward use expectation notation. "Average $f(x)$ over all possible $x$ drawn from distribution $P$."</p>
+        </div>
+        <div class="formula-box">
+          <div class="formula-label">Bayes Theorem</div>
+          $$P(\theta | D) = \frac{P(D | \theta) \, P(\theta)}{P(D)}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Posterior = Likelihood × Prior / Evidence. Used in Active Inference and Bayesian neural networks. The ELBO of VAEs is a Bayesian derivation. MLE (Maximum Likelihood Estimation) is Bayes with a flat prior.</p>
+        </div>
+        <div class="insight">Training a neural network by minimizing Cross-Entropy loss is identical to Maximum Likelihood Estimation under the hood. You are finding the weights that maximize the probability of having observed the training data.</div>
+      </div>
+    </div>
+
+
+    <!-- ════ PHASE 4 ════ -->
+    <div class="phase" id="ph4">
+      <div class="phase-label"><span class="badge">50 → 60%</span> PHASE 4</div>
+      <h2>Optimization — Making Billions of Parameters Learn</h2>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-amber">⚙️</div>
+        <div class="card-meta">
+          <div class="card-eyebrow c-amber">Optimization</div>
+          <div class="card-title">Gradient Descent, Adam & Modern Optimizers</div>
+          <div class="card-chips">
+            <span class="chip">SGD</span><span class="chip">momentum</span><span class="chip">Adam</span><span class="chip">AdamW</span><span class="chip">Lion</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label c-amber">50–57%</span>
+          <div class="mini-bar"><div class="mini-fill fill-amber" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="section-head">Standard Gradient Descent</div>
+        <div class="formula-box">
+          <div class="formula-label">Weight Update Rule</div>
+          $$W^{[l]} := W^{[l]} - \alpha \cdot dW^{[l]}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">$\alpha$ is the learning rate (e.g., $3 \times 10^{-4}$). Too high: gradient explodes, loss diverges. Too low: training takes forever.</p>
+        </div>
+
+        <div class="section-head">Adam — Adaptive Moment Estimation (The SOTA Standard)</div>
+        <p>No modern LLM uses vanilla gradient descent. Adam tracks both the mean (first moment) and variance (second moment) of gradients to automatically calibrate step sizes per parameter.</p>
+        <div class="formula-box">
+          <div class="formula-label">Adam Full Update (per parameter)</div>
+          $$m_t = \beta_1 m_{t-1} + (1-\beta_1) g_t \qquad \text{(1st moment: momentum)}$$
+          $$v_t = \beta_2 v_{t-1} + (1-\beta_2) g_t^2 \qquad \text{(2nd moment: variance)}$$
+          $$\hat{m}_t = \frac{m_t}{1-\beta_1^t}, \quad \hat{v}_t = \frac{v_t}{1-\beta_2^t} \qquad \text{(bias correction)}$$
+          $$W_t = W_{t-1} - \alpha \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Defaults: $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\epsilon = 10^{-8}$. The denominator $\sqrt{\hat{v}_t} + \epsilon$ damps the step size for parameters with high gradient variance, preventing overshooting.</p>
+        </div>
+
+        <div class="section-head">AdamW — Weight Decay Decoupled</div>
+        <div class="formula-box">
+          <div class="formula-label">AdamW Update</div>
+          $$W_t = (1 - \alpha\lambda) W_{t-1} - \alpha \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">AdamW (used by GPT-3/4, Llama, Claude) decouples weight decay $\lambda$ from the gradient update. Standard L2 regularization interacts badly with Adam's adaptive learning rates — AdamW fixes this by applying decay directly to weights.</p>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-card">
+            <div class="info-card-title">Cosine Annealing LR Schedule</div>
+            <p>$$\alpha_t = \alpha_{\min} + \frac{1}{2}(\alpha_{\max}-\alpha_{\min})\left(1 + \cos\frac{\pi t}{T}\right)$$</p>
+            <p>Learning rate starts high, decays smoothly to near-zero. Standard for LLM training.</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">Gradient Clipping</div>
+            <p>$$\text{if } \|g\|_2 > \text{clip\_norm}: \quad g \leftarrow g \cdot \frac{\text{clip\_norm}}{\|g\|_2}$$</p>
+            <p>Prevents exploding gradients by rescaling the gradient vector when its norm exceeds a threshold (e.g., 1.0).</p>
+          </div>
+        </div>
+
+        <div class="insight">The Chinchilla Scaling Law shows that for a model with $N$ parameters, optimal training uses exactly $20N$ tokens of data. GPT-3 (175B params) was trained on only 300B tokens — about $1.7\times$ the Chinchilla minimum. Llama-3 8B was trained on 15T tokens, making it "overcooked" but extremely efficient at inference.</div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-amber">📉</div>
+        <div class="card-meta">
+          <div class="card-eyebrow c-amber">Optimization</div>
+          <div class="card-title">Loss Landscapes, Regularization & Normalization</div>
+          <div class="card-chips">
+            <span class="chip">LayerNorm</span><span class="chip">BatchNorm</span><span class="chip">dropout</span><span class="chip">weight decay</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label c-amber">57–60%</span>
+          <div class="mini-bar"><div class="mini-fill fill-amber" style="width:50%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="formula-box">
+          <div class="formula-label">Layer Normalization (Used in All Transformers)</div>
+          $$\hat{x}_i = \frac{x_i - \mu}{\sqrt{\sigma^2 + \epsilon}}, \qquad y_i = \gamma \hat{x}_i + \beta$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">$\mu$ and $\sigma^2$ are computed across the feature dimension. $\gamma$ and $\beta$ are learned scaling parameters. LayerNorm stabilizes training by keeping activations in a consistent scale, preventing gradient explosion.</p>
+        </div>
+        <div class="formula-box">
+          <div class="formula-label">Dropout — Stochastic Regularization</div>
+          $$\tilde{x}_i = \frac{x_i \cdot \text{Bernoulli}(1-p)}{1-p}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Each neuron is randomly zeroed with probability $p$ during training. At inference, all neurons are active. Forces the network to learn redundant representations, reducing overfitting.</p>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ════ PHASE 5 ════ -->
+    <div class="phase" id="ph5">
+      <div class="phase-label"><span class="badge">60 → 70%</span> PHASE 5</div>
+      <h2>Attention Mathematics — The Most Important Algorithm of the Decade</h2>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-red">👁️</div>
+        <div class="card-meta">
+          <div class="card-eyebrow" style="color:#ef4444">Attention</div>
+          <div class="card-title">Scaled Dot-Product Attention — Full Derivation</div>
+          <div class="card-chips">
+            <span class="chip">Q, K, V</span><span class="chip">attention matrix</span><span class="chip">$O(N^2)$</span><span class="chip">masking</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label" style="color:#ef4444">60–65%</span>
+          <div class="mini-bar"><div class="mini-fill fill-red" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="section-head">The Core Idea</div>
+        <p>Every token in a sequence simultaneously compares itself to every other token. A "Query" ($Q$) represents "what am I searching for?", a "Key" ($K$) represents "what do I advertise?", and a "Value" ($V$) is "what I actually deliver when matched."</p>
+
+        <div class="formula-box">
+          <div class="formula-label">Projection Matrices</div>
+          $$Q = X W_Q, \quad K = X W_K, \quad V = X W_V$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">$X \in \mathbb{R}^{N \times d_{\text{model}}}$ is the input sequence ($N$ tokens, $d_{\text{model}}$ dimensions). $W_Q, W_K, W_V \in \mathbb{R}^{d_{\text{model}} \times d_k}$ are learned projection matrices.</p>
+        </div>
+
+        <div class="formula-box">
+          <div class="formula-label">Scaled Dot-Product Attention — The Full Equation</div>
+          $$\text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Step 1: $QK^T \in \mathbb{R}^{N \times N}$ — the attention score matrix. Cell $(i,j)$ measures how much token $i$ attends to token $j$.<br>Step 2: Divide by $\sqrt{d_k}$ — prevents the dot products from growing so large that softmax saturates (near-zero gradients).<br>Step 3: Softmax normalizes each row into probabilities.<br>Step 4: Multiply by $V$ — weighted average of value vectors.</p>
+        </div>
+
+        <div class="section-head">Causal (Masked) Attention — For Autoregressive Generation</div>
+        <div class="formula-box">
+          <div class="formula-label">Masking Future Tokens</div>
+          $$\text{MaskedAttn}(Q, K, V) = \text{softmax}\!\left(\frac{QK^T + M}{\sqrt{d_k}}\right)V$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">$M$ is an upper-triangular matrix with $M_{ij} = -\infty$ for $j > i$ and $0$ otherwise. $e^{-\infty} = 0$, so future tokens receive zero attention weight.</p>
+        </div>
+
+        <div class="section-head">Multi-Head Attention</div>
+        <div class="formula-box">
+          <div class="formula-label">Multi-Head Attention</div>
+          $$\text{head}_i = \text{Attention}(XW_Q^i, XW_K^i, XW_V^i)$$
+          $$\text{MultiHead}(Q,K,V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h) W_O$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">With $h$ heads and $d_{\text{model}}$ dimensions, each head works in $d_k = d_{\text{model}}/h$ dimensions. This allows the model to attend to information from different representation subspaces simultaneously (grammar, semantics, coreference, etc.).</p>
+        </div>
+
+        <div class="insight">The quadratic bottleneck: $QK^T$ requires $O(N^2)$ memory and compute. Doubling the context from 4K to 8K tokens quadruples the cost. This led directly to the invention of FlashAttention, Sparse MoE, and SSM/Mamba architectures.</div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-red">🌀</div>
+        <div class="card-meta">
+          <div class="card-eyebrow" style="color:#ef4444">Attention</div>
+          <div class="card-title">Positional Encodings — Giving Attention a Sense of Order</div>
+          <div class="card-chips">
+            <span class="chip">sinusoidal</span><span class="chip">RoPE</span><span class="chip">ALiBi</span><span class="chip">NTK interpolation</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label" style="color:#ef4444">65–70%</span>
+          <div class="mini-bar"><div class="mini-fill fill-red" style="width:75%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="section-head">Original Sinusoidal Encoding (2017)</div>
+        <div class="formula-box">
+          <div class="formula-label">Absolute Positional Encoding</div>
+          $$PE_{(pos, 2i)} = \sin\!\left(\frac{pos}{10000^{2i/d}}\right), \quad PE_{(pos, 2i+1)} = \cos\!\left(\frac{pos}{10000^{2i/d}}\right)$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Each position gets a unique vector of interleaved sine/cosine waves at different frequencies. Added to the word embedding before the first attention layer. Fails to extrapolate beyond training length.</p>
+        </div>
+
+        <div class="section-head">Rotary Positional Embedding (RoPE) — The Modern Standard</div>
+        <p>Used in Llama, Mistral, Qwen, and all major open-source models. Instead of adding position to the embedding, it <em>rotates</em> the Query and Key vectors based on their position using complex number multiplication.</p>
+        <div class="formula-box">
+          <div class="formula-label">RoPE — Rotation by Position</div>
+          $$q_m = q \cdot e^{im\theta}$$
+          $$k_n = k \cdot e^{in\theta}$$
+          $$\langle q_m, k_n \rangle = \text{Re}[q k^* e^{i(m-n)\theta}]$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">The dot product between $q_m$ and $k_n$ only depends on their relative distance $(m-n)$, not absolute positions. This allows <strong style="color:var(--text)">context length extrapolation</strong> via NTK-aware scaling: divide $\theta$ by a factor $s$ to stretch the model's positional "clock."</p>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ════ PHASE 6 ════ -->
+    <div class="phase" id="ph6">
+      <div class="phase-label"><span class="badge">70 → 80%</span> PHASE 6</div>
+      <h2>Advanced Architectures — Scaling Beyond the Dense Transformer</h2>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-pink">🔀</div>
+        <div class="card-meta">
+          <div class="card-eyebrow" style="color:#ec4899">Advanced Architectures</div>
+          <div class="card-title">Mixture of Experts (MoE) — Sparse Conditional Computation</div>
+          <div class="card-chips">
+            <span class="chip">router</span><span class="chip">top-K</span><span class="chip">load balancing</span><span class="chip">GPT-4</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label" style="color:#ec4899">70–74%</span>
+          <div class="mini-bar"><div class="mini-fill fill-pink" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="section-head">Core Math of Sparse MoE</div>
+        <p>The dense MLP inside each Transformer block is replaced by $N$ parallel expert MLPs and a learned Router. Only the top-$K$ experts are activated per token.</p>
+
+        <div class="formula-box">
+          <div class="formula-label">Router (Gating Network)</div>
+          $$G(x) = \text{Softmax}(W_g \cdot x)$$
+        </div>
+
+        <div class="formula-box">
+          <div class="formula-label">Sparse Top-K Selection</div>
+          $$\text{KeepTopK}(v)_i = \begin{cases} v_i & \text{if } v_i \in \text{TopK}(v) \\ -\infty & \text{otherwise} \end{cases}$$
+          $$G_{\text{sparse}}(x) = \text{Softmax}(\text{KeepTopK}(W_g \cdot x))$$
+        </div>
+
+        <div class="formula-box">
+          <div class="formula-label">MoE Layer Output</div>
+          $$y = \sum_{i=1}^{N} G_{\text{sparse}}(x)_i \cdot E_i(x)$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Because $G_{\text{sparse}}(x)_i = 0$ for non-selected experts, those expert forward passes are never computed. Total parameters = huge; active parameters per token = small.</p>
+        </div>
+
+        <div class="formula-box">
+          <div class="formula-label">Auxiliary Load Balancing Loss</div>
+          $$\mathcal{L}_{\text{aux}} = \alpha \cdot N \cdot \sum_{i=1}^{N} f_i \cdot P_i$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">$f_i$ = fraction of tokens routed to expert $i$; $P_i$ = mean routing probability for expert $i$. Penalizes routing collapse where one expert handles 99% of tokens, starving GPUs for the other experts.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-pink">📓</div>
+        <div class="card-meta">
+          <div class="card-eyebrow" style="color:#ec4899">Advanced Architectures</div>
+          <div class="card-title">State Space Models (Mamba / SSM) — Linear-Time Sequence Modeling</div>
+          <div class="card-chips">
+            <span class="chip">SSM</span><span class="chip">$O(N)$</span><span class="chip">discretization</span><span class="chip">convolution view</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label" style="color:#ec4899">74–80%</span>
+          <div class="mini-bar"><div class="mini-fill fill-pink" style="width:80%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="section-head">Continuous-Time SSM — The Mathematical Kernel</div>
+        <div class="formula-box">
+          <div class="formula-label">Continuous SSM</div>
+          $$h'(t) = A h(t) + B x(t)$$
+          $$y(t) = C h(t)$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">$A$ is the state evolution matrix (how memory decays), $B$ projects input into memory, $C$ projects memory to output. This is a linear ordinary differential equation from control theory.</p>
+        </div>
+
+        <div class="section-head">Discretization — Making It Run on GPUs</div>
+        <div class="formula-box">
+          <div class="formula-label">Zero-Order Hold (ZOH) Discretization</div>
+          $$\bar{A} = \exp(\Delta A), \qquad \bar{B} = (\Delta A)^{-1}(\exp(\Delta A) - I) \cdot \Delta B$$
+          $$h_k = \bar{A} h_{k-1} + \bar{B} x_k, \qquad y_k = C h_k$$
+        </div>
+
+        <div class="section-head">Convolution View — Why Training Is Fast</div>
+        <div class="formula-box">
+          <div class="formula-label">SSM as Convolution (Parallel Training)</div>
+          $$\bar{K} = (C\bar{B},\; C\bar{A}\bar{B},\; C\bar{A}^2\bar{B},\; \ldots)$$
+          $$y = x * \bar{K}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">During training, the entire sequence can be computed via a single convolution (using FFTs in $O(N \log N)$). During inference, only the recurrent formula $h_k = \bar{A}h_{k-1} + \bar{B}x_k$ is used — constant memory regardless of sequence length.</p>
+        </div>
+
+        <div class="insight">Mamba's innovation (Selective SSM): the matrices $B$, $C$, and $\Delta$ are computed as functions of the input $x_k$, not fixed constants. This is equivalent to an LSTM gate — the model learns to selectively ignore irrelevant tokens — while retaining the SSM's parallel training capability.</div>
+      </div>
+    </div>
+
+
+    <!-- ════ PHASE 7 ════ -->
+    <div class="phase" id="ph7">
+      <div class="phase-label"><span class="badge">80 → 88%</span> PHASE 7</div>
+      <h2>Information Theory & Generative Mathematics</h2>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-orange">📡</div>
+        <div class="card-meta">
+          <div class="card-eyebrow" style="color:#f97316">Information Theory</div>
+          <div class="card-title">Shannon Entropy, Manifolds & Latent Space Geometry</div>
+          <div class="card-chips">
+            <span class="chip">entropy</span><span class="chip">bits</span><span class="chip">manifold</span><span class="chip">geodesic</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label" style="color:#f97316">80–84%</span>
+          <div class="mini-bar"><div class="mini-fill fill-orange" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="formula-box">
+          <div class="formula-label">Shannon Entropy — Average Surprise</div>
+          $$H(P) = -\sum_x P(x) \log_2 P(x)$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">A fair coin has $H = 1$ bit (maximum surprise). A double-headed coin has $H = 0$ bits (no surprise). Entropy measures how much information is in a message — and exactly equals the minimum number of bits needed to encode it (Shannon's source coding theorem).</p>
+        </div>
+
+        <div class="formula-box">
+          <div class="formula-label">Cross-Entropy = H(P) + KL Divergence</div>
+          $$H(P, Q) = -\sum_x P(x) \log Q(x) = H(P) + D_{KL}(P \| Q)$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Since $H(P)$ (the entropy of the true labels) is constant during training, minimizing cross-entropy loss is equivalent to minimizing the KL divergence between the model's predictions and the truth.</p>
+        </div>
+
+        <div class="section-head">The Manifold Hypothesis — What LLMs Are Actually Learning</div>
+        <p>High-dimensional data (e.g., a $1024 \times 1024$ pixel image lives in a $3M$-dimensional space) actually clusters on a low-dimensional <strong>manifold</strong> — a curved surface embedded within that space. A neural network learns to "unfold" this manifold so that semantically similar concepts lie close together in Euclidean space.</p>
+
+        <div class="info-grid">
+          <div class="info-card">
+            <div class="info-card-title">Linear Analogy Arithmetic</div>
+            <p>$\vec{v}(\text{King}) - \vec{v}(\text{Man}) + \vec{v}(\text{Woman}) \approx \vec{v}(\text{Queen})$. The manifold of human language has a "gender" direction that is consistent everywhere — discovered purely by gradient descent on text.</p>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">Geodesics in Latent Space</div>
+            <p>In a VAE's latent space, interpolating between a dog embedding and a cat embedding along the manifold (a geodesic) produces a fox — not a blurry mix. This is why smooth latent spaces are architecturally valuable.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-orange">🎨</div>
+        <div class="card-meta">
+          <div class="card-eyebrow" style="color:#f97316">Generative Models</div>
+          <div class="card-title">Diffusion Mathematics — DDPM, ELBO & Score Matching</div>
+          <div class="card-chips">
+            <span class="chip">noise schedule</span><span class="chip">DDPM</span><span class="chip">ELBO</span><span class="chip">U-Net</span><span class="chip">CFG</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label" style="color:#f97316">84–88%</span>
+          <div class="mini-bar"><div class="mini-fill fill-orange" style="width:70%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="section-head">Forward Process — Scheduled Noise Addition</div>
+        <div class="formula-box">
+          <div class="formula-label">Single Noising Step</div>
+          $$q(x_t | x_{t-1}) = \mathcal{N}\!\left(x_t;\, \sqrt{1-\beta_t}\, x_{t-1},\, \beta_t\mathbf{I}\right)$$
+        </div>
+        <div class="formula-box">
+          <div class="formula-label">Skip to Any Step (Reparameterization)</div>
+          $$q(x_t | x_0) = \mathcal{N}\!\left(x_t;\, \sqrt{\bar\alpha_t}\, x_0,\, (1-\bar\alpha_t)\mathbf{I}\right)$$
+          $$x_t = \sqrt{\bar\alpha_t}\, x_0 + \sqrt{1-\bar\alpha_t}\, \boldsymbol\epsilon, \quad \boldsymbol\epsilon \sim \mathcal{N}(0, \mathbf{I})$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">$\bar\alpha_t = \prod_{s=1}^{t}(1-\beta_s)$. This lets us jump directly from clean image $x_0$ to noisy $x_t$ at any timestep without running all $t$ steps sequentially.</p>
+        </div>
+        <div class="formula-box">
+          <div class="formula-label">Training Loss (DDPM — Predict the Noise)</div>
+          $$\mathcal{L}_{\text{simple}} = \mathbb{E}_{t, x_0, \boldsymbol\epsilon}\!\left[\| \boldsymbol\epsilon - \boldsymbol\epsilon_\theta(x_t, t) \|^2\right]$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">The neural network $\boldsymbol\epsilon_\theta$ (a U-Net) predicts the noise $\boldsymbol\epsilon$ that was added to produce $x_t$ from $x_0$. MSE between predicted and actual noise. Remarkably simple for such powerful generation.</p>
+        </div>
+
+        <div class="section-head">VAE Mathematics — The ELBO</div>
+        <div class="formula-box">
+          <div class="formula-label">Evidence Lower Bound (VAE Loss)</div>
+          $$\mathcal{L} = \underbrace{-\mathbb{E}_{q_\phi(z|x)}[\log p_\theta(x|z)]}_{\text{Reconstruction Loss}} + \underbrace{D_{KL}(q_\phi(z|x) \| p(z))}_{\text{Regularization Loss}}$$
+          $$D_{KL} = -\frac{1}{2}\sum_j\left(1 + \log\sigma_j^2 - \mu_j^2 - \sigma_j^2\right)$$
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ════ PHASE 8 ════ -->
+    <div class="phase" id="ph8">
+      <div class="phase-label"><span class="badge">88 → 95%</span> PHASE 8</div>
+      <h2>Frontier Mathematics — Alignment, Hardware & Interpretability</h2>
+    </div>
+
+    <div class="topic-card">
+      <div class="card-header">
+        <div class="card-icon bg-violet">🎯</div>
+        <div class="card-meta">
+          <div class="card-eyebrow c-violet">Alignment Math</div>
+          <div class="card-title">Scaling Laws, RLHF, PPO & DPO</div>
+          <div class="card-chips">
+            <span class="chip">Chinchilla</span><span class="chip">PPO</span><span class="chip">KL penalty</span><span class="chip">DPO</span>
+          </div>
+        </div>
+        <div class="card-progress">
+          <span class="pct-label c-violet">88–92%</span>
+          <div class="mini-bar"><div class="mini-fill fill-violet" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="formula-box">
+          <div class="formula-label">Chinchilla Scaling Laws</div>
+          $$L(N, D) = \frac{A}{N^\alpha} + \frac{B}{D^\beta} + L_\infty$$
+          $$N_{\text{opt}} \propto C^{0.5}, \quad D_{\text{opt}} \propto C^{0.5}$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">Loss follows a power law in both model parameters $N$ and data $D$. Optimal compute budget $C$ splits equally between parameters and data. Conclusion: for every parameter, train on 20 tokens.</p>
+        </div>
+
+        <div class="section-head">PPO — RLHF Optimization</div>
+        <div class="formula-box">
+          <div class="formula-label">PPO Objective with KL Penalty</div>
+          $$\mathcal{L}_{\text{RLHF}}(\theta) = \mathbb{E}\left[r_\phi(x,y) - \beta \, D_{KL}(\pi_\theta \| \pi_{\text{ref}})\right]$$
+          <p style="color:var(--muted); font-size:13px; margin-top:10px; margin-bottom:0">$r_\phi(x,y)$ is the reward model score for response $y$ to prompt $x$. The KL penalty prevents the aligned model $\pi_\theta$ from diverging catastrophically from the reference pre-trained model $\pi_{\
